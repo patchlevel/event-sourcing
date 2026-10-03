@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\Subscription\Subscriber;
 
 interface SubscriberAccessorRepository
 {
-    /** @return iterable<SubscriberAccessor> */
+    /** @return iterable<MetadataSubscriberAccessor> */
     public function all(): iterable;
 
-    public function get(string $id): SubscriberAccessor|null;
+    public function get(string $id): MetadataSubscriberAccessor|null;
 }

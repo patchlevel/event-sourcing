@@ -157,7 +157,7 @@ bin/console event-sourcing:subscription:run
 ```
 By default, the command looks for new events every second (`--sleep=1000`)
 and processes up to 100 events per run (`--message-limit=100`).
-If your store supports it (`DoctrineDbalStore` and `StreamDoctrineDbalStore` with PostgreSQL),
+If your store supports it (`StreamDoctrineDbalStore` and `TaggableDoctrineDbalStore` with PostgreSQL),
 the worker does not poll but waits for a notification from the database, so new events are processed right away.
 
 :::warning
@@ -339,14 +339,10 @@ It is a worker like the subscription run command and supports the same
 ```bash
 bin/console event-sourcing:watch
 ```
-You can limit the output to one stream, or to an aggregate name and aggregate ID.
-The stream and the aggregate options cannot be combined.
-The `--stream` option needs the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore),
-the `--aggregate` and `--aggregate-id` options need the `DoctrineDbalStore`.
+You can limit the output to one stream with the `--stream` option.
 
 ```bash
 bin/console event-sourcing:watch --stream="profile-*"
-bin/console event-sourcing:watch --aggregate=profile --aggregate-id=018d6a1c-5f2b-7f3e-9c4a-2b6a1f0e8d7c
 ```
 ## Debug command
 
@@ -385,13 +381,14 @@ The subscriber repository is optional. If you don't pass it, the subscriber sect
 
 The store migration command copies all events from one store into another one.
 You need it when you switch the store implementation,
-for example from the `DoctrineDbalStore` to the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore).
+for example from the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore)
+to the [TaggableDoctrineDbalStore](store.md#taggabledoctrinedbalstore).
 
 * StoreMigrateCommand: `event-sourcing:store:migrate`
 
 ```php
 use Patchlevel\EventSourcing\Console\Command\StoreMigrateCommand;
-use Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator;
+use Patchlevel\EventSourcing\Message\Translator\ExtractEventTagTranslator;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Application;
 
@@ -404,14 +401,15 @@ $cli->add(
     new StoreMigrateCommand(
         $oldStore,
         $newStore,
-        [new AggregateToStreamHeaderTranslator()],
+        [new ExtractEventTagTranslator()],
     ),
 );
 ```
 The third constructor argument is a list of [translators](message.md#translator)
 that are applied to every message before it is written into the new store.
-The `AggregateToStreamHeaderTranslator` converts the `AggregateHeader` into the stream based headers
-and is what you need for a migration to the `StreamDoctrineDbalStore`.
+The `ExtractEventTagTranslator` reads the tags from the events and adds them as `TagsHeader`,
+which is what you need for a migration to the `TaggableDoctrineDbalStore`.
+If both stores work with the same headers, you can leave the list empty.
 
 Events are written in batches. You can control the batch size with the `buffer` option:
 

@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
-use LogicException;
-use Patchlevel\EventSourcing\Subscription\Engine\CanRefreshSubscriptions;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Refresh;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function sprintf;
 
 #[AsCommand(
     'event-sourcing:subscription:refresh',
@@ -20,16 +17,8 @@ final class SubscriptionRefreshCommand extends SubscriptionCommand
 {
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (!$this->engine instanceof CanRefreshSubscriptions) {
-            throw new LogicException(sprintf(
-                '"%s" does not implement "%s" and cannot call refresh.',
-                $this->engine::class,
-                CanRefreshSubscriptions::class,
-            ));
-        }
-
         $criteria = $this->subscriptionEngineCriteria($input);
-        $this->engine->refresh($criteria);
+        $this->engine->execute(new Refresh($criteria->ids, $criteria->groups));
 
         return 0;
     }

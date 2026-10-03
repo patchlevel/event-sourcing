@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Message;
 
 use Patchlevel\EventSourcing\Metadata\Message\AttributeMessageHeaderRegistryFactory;
 use Patchlevel\EventSourcing\Metadata\Message\HeaderAlreadyInRegistry;
-use Patchlevel\EventSourcing\Store\ArchivedHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\BazHeader;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -15,17 +15,16 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(AttributeMessageHeaderRegistryFactory::class)]
 final class AttributeMessageHeaderRegistryFactoryTest extends TestCase
 {
-    public function testCreateRegistry(): void
+    public function testCreate(): void
     {
-        $factory = new AttributeMessageHeaderRegistryFactory();
-        $registry = $factory->create([__DIR__ . '/../../Fixture/Header']);
+        $registry = (new AttributeMessageHeaderRegistryFactory())->create([
+            __DIR__ . '/../../Fixture',
+        ]);
 
-        self::assertTrue($registry->hasHeaderClass(FooHeader::class));
-        self::assertTrue($registry->hasHeaderClass(BazHeader::class));
-        self::assertTrue($registry->hasHeaderClass(ArchivedHeader::class));
-        self::assertSame('foo', $registry->headerName(FooHeader::class));
         self::assertSame(FooHeader::class, $registry->headerClass('foo'));
+        self::assertSame(BazHeader::class, $registry->headerClass('baz'));
         self::assertSame(FooHeader::class, $registry->headerClass('legacyFoo'));
+        self::assertSame(StreamNameHeader::class, $registry->headerClass('streamName'));
     }
 
     public function testCreateRegistryWithDuplicateAlias(): void

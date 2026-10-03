@@ -7,18 +7,20 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 use Patchlevel\EventSourcing\Console\Command\SubscriptionStatusCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Console\Input\ArrayInput;
-use Symfony\Component\Console\Output\BufferedOutput;
+use RuntimeException;
+use Symfony\Component\Console\Tester\CommandTester;
 
 #[CoversClass(SubscriptionStatusCommand::class)]
 final class SubscriptionStatusCommandTest extends TestCase
 {
-    public function testListAll(): void
+    public function testStatusList(): void
     {
         $engine = $this->createMock(SubscriptionEngine::class);
         $engine
@@ -26,99 +28,113 @@ final class SubscriptionStatusCommandTest extends TestCase
             ->method('subscriptions')
             ->with(new SubscriptionEngineCriteria())
             ->willReturn([
-                new Subscription('profile_1', 'projector', status: Status::Active, position: 10),
-                new Subscription('welcome_email', 'processor', status: Status::Paused, position: 5),
+                new Subscription('foo'),
+                new Subscription('bar', 'other', RunMode::Once, Status::Active, 42),
             ]);
 
-        $command = new SubscriptionStatusCommand($engine);
+        $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
+        $commandTester->execute([]);
 
-        $input = new ArrayInput([]);
-        $output = new BufferedOutput();
+        $display = $commandTester->getDisplay();
 
-        $exitCode = $command->run($input, $output);
-
-        self::assertSame(0, $exitCode);
-
-        $content = $output->fetch();
-
-        self::assertStringContainsString('profile_1', $content);
-        self::assertStringContainsString('active', $content);
-        self::assertStringContainsString('welcome_email', $content);
-        self::assertStringContainsString('paused', $content);
+        self::assertSame(0, $commandTester->getStatusCode());
+        self::assertStringContainsString('foo', $display);
+        self::assertStringContainsString('bar', $display);
+        self::assertStringContainsString('active', $display);
+        self::assertStringContainsString('42', $display);
     }
 
-    public function testListFiltered(): void
+    public function testStatusListFiltered(): void
     {
         $engine = $this->createMock(SubscriptionEngine::class);
         $engine
             ->expects($this->once())
             ->method('subscriptions')
-            ->with(new SubscriptionEngineCriteria(['profile_1', 'profile_2'], ['projector']))
+            ->with(new SubscriptionEngineCriteria(['foo', 'bar'], ['projector']))
             ->willReturn([
-                new Subscription('profile_1', 'projector', status: Status::Active, position: 10),
+                new Subscription('foo', 'projector', RunMode::FromBeginning, Status::Active, 42),
             ]);
 
-        $command = new SubscriptionStatusCommand($engine);
-
-        $input = new ArrayInput([
-            '--id' => ['profile_1', 'profile_2'],
+        $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
+        $commandTester->execute([
+            '--id' => ['foo', 'bar'],
             '--group' => ['projector'],
         ]);
-        $output = new BufferedOutput();
 
-        $exitCode = $command->run($input, $output);
+        $display = $commandTester->getDisplay();
 
-        self::assertSame(0, $exitCode);
-
-        $content = $output->fetch();
-
-        self::assertStringContainsString('profile_1', $content);
-        self::assertStringNotContainsString('welcome_email', $content);
+        self::assertSame(0, $commandTester->getStatusCode());
+        self::assertStringContainsString('foo', $display);
+        self::assertStringContainsString('projector', $display);
     }
 
-    public function testShowOne(): void
+    public function testStatusDetail(): void
     {
         $engine = $this->createMock(SubscriptionEngine::class);
         $engine
             ->expects($this->once())
             ->method('subscriptions')
-            ->with(new SubscriptionEngineCriteria(['profile_1']))
+            ->with(new SubscriptionEngineCriteria(['foo']))
             ->willReturn([
-                new Subscription('profile_1', 'projector', status: Status::Active, position: 10),
+                new Subscription('foo', 'default', RunMode::FromBeginning, Status::Active, 42),
             ]);
 
-        $command = new SubscriptionStatusCommand($engine);
+        $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
+        $commandTester->execute(['id' => 'foo']);
 
-        $input = new ArrayInput(['id' => 'profile_1']);
-        $output = new BufferedOutput();
+        $display = $commandTester->getDisplay();
 
-        $exitCode = $command->run($input, $output);
-
-        self::assertSame(0, $exitCode);
-
-        $content = $output->fetch();
-
-        self::assertStringContainsString('profile_1', $content);
-        self::assertStringContainsString('projector', $content);
-        self::assertStringContainsString('active', $content);
+        self::assertSame(0, $commandTester->getStatusCode());
+        self::assertStringContainsString('foo', $display);
+        self::assertStringContainsString('active', $display);
+        self::assertStringContainsString('42', $display);
     }
 
-    public function testShowOneNotFound(): void
+    public function testStatusDetailWithError(): void
     {
         $engine = $this->createMock(SubscriptionEngine::class);
         $engine
             ->expects($this->once())
             ->method('subscriptions')
-            ->with(new SubscriptionEngineCriteria(['profile_1']))
+            ->with(new SubscriptionEngineCriteria(['foo']))
+            ->willReturn([
+                new Subscription(
+                    'foo',
+                    'default',
+                    RunMode::FromBeginning,
+                    Status::Error,
+                    42,
+                    SubscriptionError::fromThrowable(
+                        Status::Active,
+                        new RuntimeException('something went wrong'),
+                    ),
+                ),
+            ]);
+
+        $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
+        $commandTester->execute(['id' => 'foo']);
+
+        $display = $commandTester->getDisplay();
+
+        self::assertSame(0, $commandTester->getStatusCode());
+        self::assertStringContainsString('foo', $display);
+        self::assertStringContainsString('error', $display);
+        self::assertStringContainsString('something went wrong', $display);
+    }
+
+    public function testStatusNotFound(): void
+    {
+        $engine = $this->createMock(SubscriptionEngine::class);
+        $engine
+            ->expects($this->once())
+            ->method('subscriptions')
+            ->with(new SubscriptionEngineCriteria(['bar']))
             ->willReturn([]);
 
-        $command = new SubscriptionStatusCommand($engine);
-
-        $input = new ArrayInput(['id' => 'profile_1']);
-        $output = new BufferedOutput();
+        $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
 
         $this->expectException(SubscriptionNotFound::class);
 
-        $command->run($input, $output);
+        $commandTester->execute(['id' => 'bar']);
     }
 }

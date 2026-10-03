@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\Stream;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
 final class StoreMessageLoader implements MessageLoader
@@ -18,9 +18,15 @@ final class StoreMessageLoader implements MessageLoader
     }
 
     /** @param list<Subscription> $subscriptions */
-    public function load(int $startIndex, array $subscriptions): Stream
+    public function load(int|null $startIndex, array $subscriptions): Stream
     {
-        return $this->store->load(new Criteria(new FromIndexCriterion($startIndex)));
+        $criteria = new Criteria();
+
+        if ($startIndex !== null) {
+            $criteria = $criteria->add(new FromIndexCriterion($startIndex));
+        }
+
+        return $this->store->load($criteria);
     }
 
     public function lastIndex(): int

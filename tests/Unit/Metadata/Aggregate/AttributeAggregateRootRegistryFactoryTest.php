@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Aggregate;
 
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootAlreadyInRegistry;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
+use Patchlevel\EventSourcing\Metadata\AggregateRoot\NoAggregateRoot;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Message;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -32,5 +33,13 @@ final class AttributeAggregateRootRegistryFactoryTest extends TestCase
 
         $factory = new AttributeAggregateRootRegistryFactory();
         $factory->create([__DIR__ . '/Fixture']);
+    }
+
+    public function testCreateRegistryWithNonAggregateClass(): void
+    {
+        $this->expectException(NoAggregateRoot::class);
+
+        $factory = new AttributeAggregateRootRegistryFactory();
+        $factory->create([__DIR__ . '/InvalidFixture']);
     }
 }

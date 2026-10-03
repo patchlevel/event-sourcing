@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 
 use function sprintf;
 
 final class AggregateOutdated extends RepositoryException
 {
     /** @param class-string<AggregateRoot> $aggregate */
-    public function __construct(string $aggregate, AggregateRootId $id)
+    public function __construct(string $aggregate, Identifier $id)
     {
         parent::__construct(
             sprintf(

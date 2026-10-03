@@ -17,8 +17,6 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\BufferedOutput;
 
-use function iterator_to_array;
-
 #[CoversClass(StoreMigrateCommand::class)]
 final class StoreMigrateCommandTest extends TestCase
 {
@@ -70,7 +68,7 @@ final class StoreMigrateCommandTest extends TestCase
         self::assertStringContainsString('1', $content);
         self::assertStringContainsString('Migration finished', $content);
 
-        self::assertCount(1, iterator_to_array($toStore->load()->getIterator()));
+        self::assertCount(1, $toStore->load()->toList());
     }
 
     public function testTenMessages(): void
@@ -154,7 +152,7 @@ final class StoreMigrateCommandTest extends TestCase
         self::assertStringContainsString('10', $content);
         self::assertStringContainsString('Migration finished', $content);
 
-        self::assertCount(10, iterator_to_array($toStore->load()->getIterator()));
+        self::assertCount(10, $toStore->load()->toList());
     }
 
     public function testTenMessagesWithBufferAt2(): void
@@ -238,7 +236,7 @@ final class StoreMigrateCommandTest extends TestCase
         self::assertStringContainsString('10', $content);
         self::assertStringContainsString('Migration finished', $content);
 
-        self::assertCount(10, iterator_to_array($toStore->load()->getIterator()));
+        self::assertCount(10, $toStore->load()->toList());
     }
 
     public function testTenMessagesWithDroppingTranslator(): void
@@ -325,6 +323,6 @@ final class StoreMigrateCommandTest extends TestCase
         self::assertStringContainsString('10', $content);
         self::assertStringContainsString('Migration finished', $content);
 
-        self::assertCount(1, iterator_to_array($toStore->load()->getIterator()));
+        self::assertCount(1, $toStore->load()->toList());
     }
 }

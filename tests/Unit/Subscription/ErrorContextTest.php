@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription;
 
-use Patchlevel\EventSourcing\Aggregate\CustomId;
+use Patchlevel\EventSourcing\Identifier\CustomId;
 use Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -54,7 +54,7 @@ final class ErrorContextTest extends TestCase
         self::assertArrayHasKey('args', $firstTrace);
         self::assertSame([
             ['string', 'test'],
-            ['object', 'Patchlevel\EventSourcing\Aggregate\CustomId'],
+            ['object', 'Patchlevel\EventSourcing\Identifier\CustomId'],
             ['resource', 'stream'],
             [
                 'array',

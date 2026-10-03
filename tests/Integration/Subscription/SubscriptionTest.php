@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -19,30 +20,46 @@ use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DbalCleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
 use Patchlevel\EventSourcing\Subscription\Cleanup\DefaultCleaner;
 use Patchlevel\EventSourcing\Subscription\Engine\CatchUpSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Reactivate;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Refresh;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup as SetupCommand;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown as TeardownCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\RemoveSubscriptionStreamListener;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
+use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
+use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
-use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventEmitterResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\LookupResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\BatchProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ErrorProducerWithSelfRecoverySubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\LookupSubscriber;
-use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\MigrateAggregateToStreamStoreSubscriber;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\NotificationCollector;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\NotificationEmittingProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileNewProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProcessor;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjection;
@@ -50,10 +67,10 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfilePr
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use function gc_collect_cycles;
 use function iterator_to_array;
-use function sprintf;
 
 #[CoversNothing]
 final class SubscriptionTest extends TestCase
@@ -77,7 +94,7 @@ final class SubscriptionTest extends TestCase
 
     public function testHappyPath(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -125,13 +142,13 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
-        $result = $engine->setup();
+        $result = $engine->execute(new SetupCommand());
 
         self::assertEquals([], $result->errors);
 
-        $result = $engine->boot();
+        $result = $engine->execute(new Boot());
 
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -151,9 +168,9 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -180,7 +197,7 @@ final class SubscriptionTest extends TestCase
         self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('John', $result['name']);
 
-        $result = $engine->remove();
+        $result = $engine->execute(new Remove());
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -203,7 +220,7 @@ final class SubscriptionTest extends TestCase
 
     public function testGapResolver(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -251,13 +268,13 @@ final class SubscriptionTest extends TestCase
             $engine->subscriptions(),
         );
 
-        $result = $engine->setup();
+        $result = $engine->execute(new SetupCommand());
 
         self::assertEquals([], $result->errors);
 
-        $result = $engine->boot();
+        $result = $engine->execute(new Boot());
 
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -277,9 +294,9 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -306,7 +323,7 @@ final class SubscriptionTest extends TestCase
         self::assertSame($profileId->toString(), $result['id']);
         self::assertSame('John', $result['name']);
 
-        $result = $engine->remove();
+        $result = $engine->execute(new Remove());
         self::assertEquals([], $result->errors);
 
         self::assertEquals(
@@ -331,7 +348,7 @@ final class SubscriptionTest extends TestCase
     {
         $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -359,22 +376,24 @@ final class SubscriptionTest extends TestCase
         $subscriber = new ErrorProducerSubscriber();
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
-            new ClockBasedRetryStrategy(
-                $clock,
-                ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
-                ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
-                2,
+            RetryStrategyRepository::withDefault(
+                new ClockBasedRetryStrategy(
+                    $clock,
+                    ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
+                    ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
+                    2,
+                ),
             ),
         );
 
-        $result = $engine->setup();
+        $result = $engine->execute(new SetupCommand());
         self::assertEquals([], $result->errors);
 
-        $result = $engine->boot();
-        self::assertEquals(0, $result->processedMessages);
+        $result = $engine->execute(new Boot());
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -392,9 +411,9 @@ final class SubscriptionTest extends TestCase
 
         // first run, error
 
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -411,9 +430,9 @@ final class SubscriptionTest extends TestCase
 
         // second run, time has not passed yet, no retry, no error
 
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -426,9 +445,9 @@ final class SubscriptionTest extends TestCase
         // third run, time has passed, 1. retry, error again
 
         $clock->sleep(5);
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -446,9 +465,9 @@ final class SubscriptionTest extends TestCase
         // fourth run, time has passed, 2. retry, max retries reached, failed
 
         $clock->sleep(10);
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -466,9 +485,9 @@ final class SubscriptionTest extends TestCase
         // fifth run, time has passed, skip failed subscription
 
         $clock->sleep(20);
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -480,7 +499,7 @@ final class SubscriptionTest extends TestCase
 
         // reactivated subscription
 
-        $engine->reactivate(new SubscriptionEngineCriteria(
+        $engine->execute(new Reactivate(
             ids: ['error_producer'],
         ));
 
@@ -492,9 +511,9 @@ final class SubscriptionTest extends TestCase
 
         // sixth run, error again
 
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -514,9 +533,9 @@ final class SubscriptionTest extends TestCase
         $clock->sleep(5);
         $subscriber->subscribeError = false;
 
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -530,7 +549,7 @@ final class SubscriptionTest extends TestCase
     {
         $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -558,18 +577,20 @@ final class SubscriptionTest extends TestCase
         $subscriber = new ErrorProducerWithSelfRecoverySubscriber();
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
-            new ClockBasedRetryStrategy(
-                $clock,
-                ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
-                ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
-                0,
+            RetryStrategyRepository::withDefault(
+                new ClockBasedRetryStrategy(
+                    $clock,
+                    ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
+                    ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
+                    0,
+                ),
             ),
         );
 
-        $result = $engine->setup(skipBooting: true);
+        $result = $engine->execute(new SetupCommand(skipBooting: true));
         self::assertEquals([], $result->errors);
 
         // add data
@@ -583,9 +604,9 @@ final class SubscriptionTest extends TestCase
 
         // first run, failed -> self recovery
 
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -607,9 +628,9 @@ final class SubscriptionTest extends TestCase
         // second run, failed -> self recovery failed
 
         $subscriber->onFailedError = true;
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -628,7 +649,7 @@ final class SubscriptionTest extends TestCase
     {
         $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -677,22 +698,24 @@ final class SubscriptionTest extends TestCase
         };
 
         $engine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([$subscriber]),
-            new ClockBasedRetryStrategy(
-                $clock,
-                ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
-                ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
-                2,
+            RetryStrategyRepository::withDefault(
+                new ClockBasedRetryStrategy(
+                    $clock,
+                    ClockBasedRetryStrategy::DEFAULT_BASE_DELAY,
+                    ClockBasedRetryStrategy::DEFAULT_DELAY_FACTOR,
+                    2,
+                ),
             ),
         );
 
-        $result = $engine->setup();
+        $result = $engine->execute(new SetupCommand());
         self::assertEquals([], $result->errors);
 
-        $result = $engine->boot();
-        self::assertEquals(0, $result->processedMessages);
+        $result = $engine->execute(new Boot());
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         $subscription = self::findSubscription($engine->subscriptions(), 'error_producer');
@@ -708,9 +731,9 @@ final class SubscriptionTest extends TestCase
 
         $subscriber->subscribeError = true;
 
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];
@@ -734,7 +757,7 @@ final class SubscriptionTest extends TestCase
 
     public function testProcessor(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -769,7 +792,7 @@ final class SubscriptionTest extends TestCase
 
         $engine = new CatchUpSubscriptionEngine(
             new DefaultSubscriptionEngine(
-                $store,
+                new StoreMessageLoader($store),
                 $subscriptionStore,
                 $subscriberAccessorRepository,
             ),
@@ -791,7 +814,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
-        $engine->run();
+        $engine->execute(new Run());
 
         $subscriptions = $engine->subscriptions();
 
@@ -815,7 +838,7 @@ final class SubscriptionTest extends TestCase
     {
         // Test Setup
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -845,15 +868,15 @@ final class SubscriptionTest extends TestCase
         $schemaDirector->create();
 
         $firstEngine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]),
         );
 
         // Deploy first version
 
-        $firstEngine->setup();
-        $firstEngine->boot();
+        $firstEngine->execute(new SetupCommand());
+        $firstEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -873,7 +896,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
-        $firstEngine->run();
+        $firstEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -892,13 +915,13 @@ final class SubscriptionTest extends TestCase
         // deploy second version
 
         $secondEngine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileNewProjection($this->projectionConnection)]),
         );
 
-        $secondEngine->setup();
-        $secondEngine->boot();
+        $secondEngine->execute(new SetupCommand());
+        $secondEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -924,7 +947,7 @@ final class SubscriptionTest extends TestCase
 
         // switch traffic
 
-        $secondEngine->run();
+        $secondEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -950,7 +973,7 @@ final class SubscriptionTest extends TestCase
 
         // shutdown first version
 
-        $firstEngine->teardown();
+        $firstEngine->execute(new TeardownCommand());
 
         self::assertEquals(
             [
@@ -971,7 +994,7 @@ final class SubscriptionTest extends TestCase
     {
         // Test Setup
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -1001,15 +1024,15 @@ final class SubscriptionTest extends TestCase
         $schemaDirector->create();
 
         $firstEngine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileProjection($this->projectionConnection)]),
         );
 
         // Deploy first version
 
-        $firstEngine->setup();
-        $firstEngine->boot();
+        $firstEngine->execute(new SetupCommand());
+        $firstEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -1029,7 +1052,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
-        $firstEngine->run();
+        $firstEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -1048,13 +1071,13 @@ final class SubscriptionTest extends TestCase
         // deploy second version
 
         $secondEngine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileNewProjection($this->projectionConnection)]),
         );
 
-        $secondEngine->setup();
-        $secondEngine->boot();
+        $secondEngine->execute(new SetupCommand());
+        $secondEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -1080,7 +1103,7 @@ final class SubscriptionTest extends TestCase
 
         // switch traffic
 
-        $secondEngine->run();
+        $secondEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -1106,8 +1129,8 @@ final class SubscriptionTest extends TestCase
 
         // rollback
 
-        $firstEngine->setup();
-        $firstEngine->boot();
+        $firstEngine->execute(new SetupCommand());
+        $firstEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -1133,13 +1156,13 @@ final class SubscriptionTest extends TestCase
 
         // reactivating detached subscription
 
-        $firstEngine->reactivate(new SubscriptionEngineCriteria(
+        $firstEngine->execute(new Reactivate(
             ids: ['profile_1'],
         ));
 
         // switch traffic
 
-        $firstEngine->run();
+        $firstEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -1165,7 +1188,7 @@ final class SubscriptionTest extends TestCase
 
         // shutdown second version
 
-        $secondEngine->teardown();
+        $secondEngine->execute(new TeardownCommand());
 
         self::assertEquals(
             [
@@ -1192,7 +1215,7 @@ final class SubscriptionTest extends TestCase
             ),
         ]);
 
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -1222,7 +1245,7 @@ final class SubscriptionTest extends TestCase
         $schemaDirector->create();
 
         $firstEngine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileProjectionWithCleanup($this->projectionConnection)]),
             cleaner: $cleaner,
@@ -1230,8 +1253,8 @@ final class SubscriptionTest extends TestCase
 
         // Deploy first version
 
-        $firstEngine->setup();
-        $firstEngine->boot();
+        $firstEngine->execute(new SetupCommand());
+        $firstEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -1252,7 +1275,7 @@ final class SubscriptionTest extends TestCase
         $profile = Profile::create(ProfileId::generate(), 'John');
         $repository->save($profile);
 
-        $firstEngine->run();
+        $firstEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -1272,14 +1295,14 @@ final class SubscriptionTest extends TestCase
         // deploy second version
 
         $secondEngine = new DefaultSubscriptionEngine(
-            $store,
+            new StoreMessageLoader($store),
             $subscriptionStore,
             new MetadataSubscriberAccessorRepository([new ProfileNewProjection($this->projectionConnection)]),
             cleaner: $cleaner,
         );
 
-        $secondEngine->setup();
-        $secondEngine->boot();
+        $secondEngine->execute(new SetupCommand());
+        $secondEngine->execute(new Boot());
 
         self::assertEquals(
             [
@@ -1306,7 +1329,7 @@ final class SubscriptionTest extends TestCase
 
         // switch traffic
 
-        $secondEngine->run();
+        $secondEngine->execute(new Run());
 
         self::assertEquals(
             [
@@ -1333,7 +1356,7 @@ final class SubscriptionTest extends TestCase
 
         // shutdown second version (with cleanup)
 
-        $secondEngine->teardown();
+        $secondEngine->execute(new TeardownCommand());
 
         self::assertEquals(
             [
@@ -1351,121 +1374,6 @@ final class SubscriptionTest extends TestCase
 
         self::assertFalse(
             $this->projectionConnection->createSchemaManager()->tableExists('projection_profile_1'),
-        );
-    }
-
-    public function testPipeline(): void
-    {
-        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
-
-        $store = new DoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-        );
-
-        $targetStore = new StreamDoctrineDbalStore(
-            $this->projectionConnection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            config: ['table_name' => 'new_eventstore'],
-        );
-
-        $subscriptionStore = new DoctrineSubscriptionStore(
-            $this->connection,
-            $clock,
-        );
-
-        $manager = new DefaultRepositoryManager(
-            new AggregateRootRegistry(['profile' => Profile::class]),
-            $store,
-        );
-
-        $repository = $manager->get(Profile::class);
-
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            new ChainDoctrineSchemaConfigurator([
-                $store,
-                $subscriptionStore,
-            ]),
-        );
-
-        $schemaDirector->create();
-
-        $engine = new DefaultSubscriptionEngine(
-            $store,
-            $subscriptionStore,
-            new MetadataSubscriberAccessorRepository([new MigrateAggregateToStreamStoreSubscriber($targetStore)]),
-        );
-
-        self::assertEquals(
-            [
-                new Subscription(
-                    'migrate',
-                    'default',
-                    RunMode::Once,
-                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
-                ),
-            ],
-            $engine->subscriptions(),
-        );
-
-        $result = $engine->setup();
-
-        self::assertEquals([], $result->errors);
-
-        self::assertTrue(
-            $this->projectionConnection->createSchemaManager()->tableExists('new_eventstore'),
-        );
-
-        $profileId = ProfileId::generate();
-        $profile = Profile::create($profileId, 'John');
-
-        for ($i = 1; $i < 1_000; $i++) {
-            $profile->changeName(sprintf('John %d', $i));
-        }
-
-        $repository->save($profile);
-
-        $result = $engine->boot();
-
-        self::assertEquals(1_000, $result->processedMessages);
-
-        self::assertEquals([], $result->errors);
-
-        self::assertEquals(
-            [
-                new Subscription(
-                    'migrate',
-                    'default',
-                    RunMode::Once,
-                    Status::Finished,
-                    1_000,
-                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
-                ),
-            ],
-            $engine->subscriptions(),
-        );
-
-        // target store check
-
-        $result = $engine->remove();
-        self::assertEquals([], $result->errors);
-
-        self::assertEquals(
-            [
-                new Subscription(
-                    'migrate',
-                    'default',
-                    RunMode::Once,
-                    Status::New,
-                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
-                ),
-            ],
-            $engine->subscriptions(),
-        );
-
-        self::assertFalse(
-            $this->projectionConnection->createSchemaManager()->tableExists('new_eventstore'),
         );
     }
 
@@ -1507,6 +1415,12 @@ final class SubscriptionTest extends TestCase
             [
                 new LookupSubscriber($this->projectionConnection),
             ],
+        );
+
+        $engine = new DefaultSubscriptionEngine(
+            new StoreMessageLoader($store),
+            $subscriptionStore,
+            $subscriberRepository,
             argumentResolvers: [
                 new LookupResolver(
                     $store,
@@ -1515,28 +1429,22 @@ final class SubscriptionTest extends TestCase
             ],
         );
 
-        $engine = new DefaultSubscriptionEngine(
-            new StoreMessageLoader($store),
-            $subscriptionStore,
-            $subscriberRepository,
-        );
-
-        $result = $engine->setup();
+        $result = $engine->execute(new SetupCommand());
 
         self::assertEquals([], $result->errors);
 
-        $result = $engine->boot();
+        $result = $engine->execute(new Boot());
 
-        self::assertEquals(0, $result->processedMessages);
+        self::assertProcessedMessages(0, $result);
         self::assertEquals([], $result->errors);
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
         $repository->save($profile);
 
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(1, $result->processedMessages);
+        self::assertProcessedMessages(1, $result);
         self::assertEquals([], $result->errors);
 
         $result = $this->projectionConnection->fetchAssociative(
@@ -1550,9 +1458,9 @@ final class SubscriptionTest extends TestCase
         $profile->promoteToAdmin();
         $repository->save($profile);
 
-        $result = $engine->run();
+        $result = $engine->execute(new Run());
 
-        self::assertEquals(2, $result->processedMessages);
+        self::assertProcessedMessages(2, $result);
         self::assertEquals([], $result->errors);
 
         $result = $this->projectionConnection->fetchAssociative(
@@ -1566,9 +1474,92 @@ final class SubscriptionTest extends TestCase
         self::assertSame('Hans', $result['name']);
     }
 
+    public function testEventEmitter(): void
+    {
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $collector = new NotificationCollector();
+
+        $subscriberRepository = new MetadataSubscriberAccessorRepository(
+            [
+                new NotificationEmittingProjection(),
+                $collector,
+            ],
+        );
+
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(
+            OnSubscriptionRemoved::class,
+            new RemoveSubscriptionStreamListener($store),
+        );
+
+        $engine = new DefaultSubscriptionEngine(
+            new StoreMessageLoader($store),
+            $subscriptionStore,
+            $subscriberRepository,
+            eventDispatcher: $eventDispatcher,
+            argumentResolvers: [
+                new EventEmitterResolver($store),
+            ],
+        );
+
+        $engine->execute(new SetupCommand());
+        $engine->execute(new Boot());
+
+        $profileId = ProfileId::generate();
+        $repository->save(Profile::create($profileId, 'John'));
+
+        // the emitting projection reacts to ProfileCreated and emits a NotificationSent event
+        // into its projection stream, which the notification subscriber then consumes. Depending
+        // on the database driver this can happen in one or two runs, so we drain the engine.
+        do {
+            $result = $engine->execute(new Run());
+
+            self::assertInstanceOf(ProcessedResult::class, $result);
+            self::assertEquals([], $result->errors);
+        } while ($result->processedMessages > 0);
+
+        self::assertSame(1, $store->count(new Criteria(new StreamCriterion('subscription_emitting'))));
+        self::assertCount(1, $collector->notifications);
+        self::assertEquals($profileId, $collector->notifications[0]->profileId);
+
+        // removing the subscriptions also removes the projection stream
+        $engine->execute(new Remove());
+
+        self::assertNotContains('subscription_emitting', $store->streams());
+        self::assertSame(0, $store->count(new Criteria(new StreamCriterion('subscription_emitting'))));
+    }
+
     public function testRefreshSubscriptions(): void
     {
-        $store = new DoctrineDbalStore(
+        $store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );
@@ -1602,7 +1593,7 @@ final class SubscriptionTest extends TestCase
             $subscriberRepository,
         );
 
-        $engine->setup();
+        $engine->execute(new SetupCommand());
 
         $subscriptions = $engine->subscriptions();
         self::assertCount(1, $subscriptions);
@@ -1623,13 +1614,250 @@ final class SubscriptionTest extends TestCase
             $newSubscriberRepository,
         );
 
-        $engine->refresh();
+        $engine->execute(new Refresh());
 
         $subscriptions = $engine->subscriptions();
         self::assertCount(1, $subscriptions);
         self::assertEquals('test', $subscriptions[0]->id());
         self::assertEquals('new-group', $subscriptions[0]->group());
         self::assertEquals(RunMode::FromNow, $subscriptions[0]->runMode());
+    }
+
+    public function testBatch(): void
+    {
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $projection = new BatchProfileProjection($this->projectionConnection);
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([$projection]);
+
+        $engine = new DefaultSubscriptionEngine(
+            new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+
+        $result = $engine->execute(new SetupCommand());
+        self::assertEquals([], $result->errors);
+
+        $result = $engine->execute(new Boot());
+        self::assertProcessedMessages(0, $result);
+        self::assertEquals([], $result->errors);
+
+        $aliceId = ProfileId::generate();
+        $bobId = ProfileId::generate();
+        $charlieId = ProfileId::generate();
+
+        $repository->save(Profile::create($aliceId, 'Alice'));
+        $repository->save(Profile::create($bobId, 'Bob'));
+        $repository->save(Profile::create($charlieId, 'Charlie'));
+
+        $result = $engine->execute(new Run());
+
+        self::assertProcessedMessages(3, $result);
+        self::assertEquals([], $result->errors);
+
+        // all three events were processed in a single batch: one begin, one flush, no rollback
+        self::assertSame(1, $projection->beginCount);
+        self::assertSame(1, $projection->flushCount);
+        self::assertSame(0, $projection->rollbackCount);
+
+        self::assertEquals(
+            [
+                new Subscription(
+                    'batch_profile',
+                    'projector',
+                    RunMode::FromBeginning,
+                    Status::Active,
+                    3,
+                    lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
+                ),
+            ],
+            $engine->subscriptions(),
+        );
+
+        $aliceRow = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_batch_profile WHERE id = ?',
+            [$aliceId->toString()],
+        );
+
+        self::assertIsArray($aliceRow);
+        self::assertSame('Alice', $aliceRow['name']);
+
+        $bobRow = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_batch_profile WHERE id = ?',
+            [$bobId->toString()],
+        );
+
+        self::assertIsArray($bobRow);
+        self::assertSame('Bob', $bobRow['name']);
+
+        $charlieRow = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_batch_profile WHERE id = ?',
+            [$charlieId->toString()],
+        );
+
+        self::assertIsArray($charlieRow);
+        self::assertSame('Charlie', $charlieRow['name']);
+    }
+
+    public function testBatchRollback(): void
+    {
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+
+        $subscriptionStore = new DoctrineSubscriptionStore(
+            $this->connection,
+            $clock,
+        );
+
+        $manager = new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        );
+
+        $repository = $manager->get(Profile::class);
+
+        $schemaDirector = new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([
+                $store,
+                $subscriptionStore,
+            ]),
+        );
+
+        $schemaDirector->create();
+
+        $projection = new BatchProfileProjection($this->projectionConnection);
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([$projection]);
+
+        $engine = new DefaultSubscriptionEngine(
+            new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+
+        $engine->execute(new SetupCommand());
+        $engine->execute(new Boot());
+
+        // first batch commits successfully
+        $aliceId = ProfileId::generate();
+        $repository->save(Profile::create($aliceId, 'Alice'));
+
+        $result = $engine->execute(new Run());
+
+        self::assertProcessedMessages(1, $result);
+        self::assertEquals([], $result->errors);
+        self::assertSame(1, $projection->flushCount);
+
+        // second batch inserts Bob and then hits a poisoned event, which rolls the batch back
+        $bobId = ProfileId::generate();
+        $bob = Profile::create($bobId, 'Bob');
+        $bob->changeName(BatchProfileProjection::POISON);
+        $repository->save($bob);
+
+        $result = $engine->execute(new Run());
+
+        self::assertCount(1, $result->errors);
+        self::assertSame(2, $projection->beginCount);
+        self::assertSame(1, $projection->flushCount);
+        self::assertSame(1, $projection->rollbackCount);
+
+        $subscription = self::findSubscription($engine->subscriptions(), 'batch_profile');
+
+        // the position stays at the last successfully committed event
+        self::assertEquals(Status::Error, $subscription->status());
+        self::assertEquals(1, $subscription->position());
+
+        // Alice (committed in the first batch) survives, Bob's insert was rolled back
+        $aliceRow = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_batch_profile WHERE id = ?',
+            [$aliceId->toString()],
+        );
+
+        self::assertIsArray($aliceRow);
+        self::assertSame('Alice', $aliceRow['name']);
+
+        $bobRow = $this->projectionConnection->fetchAssociative(
+            'SELECT * FROM projection_batch_profile WHERE id = ?',
+            [$bobId->toString()],
+        );
+
+        self::assertFalse($bobRow);
+    }
+
+    public function testSkipLockedClaim(): void
+    {
+        if ($this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            self::markTestSkipped('SQLite serializes writes and does not support SKIP LOCKED.');
+        }
+
+        $storeWorkerA = new DoctrineSubscriptionStore($this->connection);
+        $storeWorkerB = new DoctrineSubscriptionStore($this->projectionConnection);
+
+        $schemaDirector = new DoctrineSchemaDirector($this->connection, $storeWorkerA);
+        $schemaDirector->create();
+
+        $storeWorkerA->add(new Subscription('a', 'default', RunMode::FromBeginning, Status::Active));
+        $storeWorkerA->add(new Subscription('b', 'default', RunMode::FromBeginning, Status::Active));
+
+        $criteria = new SubscriptionCriteria(status: [Status::Active]);
+
+        $this->connection->beginTransaction();
+        $claimedByA = $storeWorkerA->claim('a', $criteria);
+
+        self::assertNotNull($claimedByA);
+        self::assertSame('a', $claimedByA->id());
+
+        $lockedClaim = $storeWorkerB->claim('a', $criteria);
+        self::assertNull($lockedClaim);
+
+        $claimedByB = $storeWorkerB->claim('b', $criteria);
+        self::assertNotNull($claimedByB);
+        self::assertSame('b', $claimedByB->id());
+
+        $this->connection->commit();
+
+        $reclaimed = $storeWorkerB->claim('a', $criteria);
+        self::assertNotNull($reclaimed);
+        self::assertSame('a', $reclaimed->id());
+    }
+
+    /** @phpstan-assert ProcessedResult $result */
+    private static function assertProcessedMessages(int $expected, Result $result): void
+    {
+        self::assertInstanceOf(ProcessedResult::class, $result);
+        self::assertSame($expected, $result->processedMessages);
     }
 
     /** @param list<Subscription> $subscriptions */

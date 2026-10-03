@@ -7,16 +7,18 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Schema\Table;
 use Generator;
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
+use Patchlevel\EventSourcing\Attribute\BatchRollback;
 use Patchlevel\EventSourcing\Attribute\Cleanup;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
-use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
 #[Projector('profile_1')]
-final class ProfileProjectionWithCleanup implements BatchableSubscriber
+final class ProfileProjectionWithCleanup
 {
     private const TABLE_NAME = 'profile_1';
 
@@ -59,23 +61,21 @@ final class ProfileProjectionWithCleanup implements BatchableSubscriber
         return 'projection_' . self::TABLE_NAME;
     }
 
+    #[BatchBegin]
     public function beginBatch(): void
     {
         $this->connection->beginTransaction();
     }
 
-    public function commitBatch(): void
+    #[BatchFlush]
+    public function flush(): void
     {
         $this->connection->commit();
     }
 
+    #[BatchRollback]
     public function rollbackBatch(): void
     {
         $this->connection->rollBack();
-    }
-
-    public function forceCommit(): bool
-    {
-        return false;
     }
 }

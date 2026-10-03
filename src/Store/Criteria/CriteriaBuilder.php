@@ -10,8 +10,6 @@ final class CriteriaBuilder
 {
     /** @var list<string>|null */
     private array|null $streamName = null;
-    private string|null $aggregateName = null;
-    private string|null $aggregateId = null;
     private int|null $fromIndex = null;
     private int|null $fromPlayhead = null;
     private int|null $toPlayhead = null;
@@ -34,20 +32,6 @@ final class CriteriaBuilder
         } else {
             $this->streamName = [$streamName];
         }
-
-        return $this;
-    }
-
-    public function aggregateName(string|null $aggregateName): self
-    {
-        $this->aggregateName = $aggregateName;
-
-        return $this;
-    }
-
-    public function aggregateId(string|null $aggregateId): self
-    {
-        $this->aggregateId = $aggregateId;
 
         return $this;
     }
@@ -94,14 +78,6 @@ final class CriteriaBuilder
 
         if ($this->streamName !== null) {
             $criteria[] = new StreamCriterion(...$this->streamName);
-        }
-
-        if ($this->aggregateName !== null) {
-            $criteria[] = new AggregateNameCriterion($this->aggregateName);
-        }
-
-        if ($this->aggregateId !== null) {
-            $criteria[] = new AggregateIdCriterion($this->aggregateId);
         }
 
         if ($this->fromPlayhead !== null) {

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
+use Patchlevel\EventSourcing\Identifier\Identifier;
+
 interface AggregateRoot
 {
-    public function aggregateRootId(): AggregateRootId;
+    public function aggregateRootId(): Identifier;
 
     /** @param iterable<object> $events */
     public function catchUp(iterable $events): void;

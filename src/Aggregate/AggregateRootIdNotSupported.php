@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Aggregate;
 
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use RuntimeException;
 
 use function get_debug_type;
@@ -18,7 +19,7 @@ final class AggregateRootIdNotSupported extends RuntimeException
             sprintf(
                 'aggregate root id in class "%s" must be instance of "%s", got "%s"',
                 $aggregateRootClass,
-                AggregateRootId::class,
+                Identifier::class,
                 get_debug_type($value),
             ),
         );

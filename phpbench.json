@@ -2,6 +2,10 @@
   "$schema":"./vendor/phpbench/phpbench/phpbench.schema.json",
   "runner.bootstrap": "vendor/autoload.php",
   "runner.file_pattern": "*Bench.php",
+  "runner.php_config": {
+    "memory_limit": "512M",
+    "xdebug.mode": "off"
+  },
   "report.generators": {
     "diff": {
       "generator": "component",

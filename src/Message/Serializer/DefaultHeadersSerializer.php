@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Metadata\Message\MessageHeaderRegistry;
 use Patchlevel\EventSourcing\Serializer\Encoder\Encoder;
 use Patchlevel\EventSourcing\Serializer\Encoder\JsonEncoder;
 use Patchlevel\Hydrator\Hydrator;
-use Patchlevel\Hydrator\MetadataHydrator;
+use Patchlevel\Hydrator\StackHydrator;
 
 use function in_array;
 use function is_array;
@@ -23,8 +23,8 @@ final class DefaultHeadersSerializer implements HeadersSerializer
     /** @param list<string> $gracefulMissingHeaders */
     public function __construct(
         private readonly MessageHeaderRegistry $messageHeaderRegistry,
-        private readonly Hydrator $hydrator,
-        private readonly Encoder $encoder,
+        private readonly Hydrator $hydrator = new StackHydrator(),
+        private readonly Encoder $encoder = new JsonEncoder(),
         private readonly array $gracefulMissingHeaders = [],
     ) {
         $this->handleAllHeadersGraceful = in_array('*', $this->gracefulMissingHeaders, true);
@@ -94,21 +94,24 @@ final class DefaultHeadersSerializer implements HeadersSerializer
      * @param list<string> $paths
      * @param list<string> $gracefulMissingHeaders
      */
-    public static function createFromPaths(array $paths, array $gracefulMissingHeaders = []): static
-    {
+    public static function createFromPaths(
+        array $paths,
+        array $gracefulMissingHeaders = [],
+        Hydrator $hydrator = new StackHydrator(),
+    ): static {
         return new self(
             (new AttributeMessageHeaderRegistryFactory())->create($paths),
-            new MetadataHydrator(),
+            $hydrator,
             new JsonEncoder(),
             $gracefulMissingHeaders,
         );
     }
 
-    public static function createDefault(): static
+    public static function createDefault(Hydrator $hydrator = new StackHydrator()): static
     {
         return new self(
             MessageHeaderRegistry::createWithInternalHeaders(),
-            new MetadataHydrator(),
+            $hydrator,
             new JsonEncoder(),
             [],
         );

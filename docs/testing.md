@@ -1,4 +1,4 @@
-# Testing
+# Tests
 
 The library's design promotes easily testable code, and we offer several helpers to simplify the testing process even
 further. If you need additional support, we also provide
@@ -6,6 +6,11 @@ a [PHPUnit testing library](https://github.com/patchlevel/event-sourcing-phpunit
 
 ## Testing with patchlevel/event-sourcing-phpunit
 
+The helpers in this section live in a separate package that you install as a dev dependency:
+
+```bash
+composer require --dev patchlevel/event-sourcing-phpunit
+```
 ### Aggregate Unit Tests
 
 There is a special `TestCase` for aggregate tests that you can extend. By extending `AggregateRootTestCase`, you can use
@@ -141,10 +146,11 @@ These methods automatically invoke the appropriate functions defined via attribu
 
 ```php
 use Patchlevel\EventSourcing\PhpUnit\Test\SubscriberUtilities;
-use PHPUnit\Framework\TestCase;
 
 final class ProfileSubscriberTest extends TestCase
 {
+    use SubscriberUtilities;
+
     public function testProfileCreated(): void
     {
         $subscriber = new ProfileSubscriber(/* inject deps or mock tests as needed */);
@@ -219,10 +225,10 @@ You can use the `FrozenClock` in your integration tests to test the time-based b
 ## Tests with UUID
 
 Uuids are randomly generated and can be a problem in tests.
-If you want deterministic tests, you can use the `IncrementalRamseyUuidFactory` from the library.
+If you want deterministic tests, you can use the `FakeRamseyUuidFactory` from the library.
 
 ```php
-use Patchlevel\EventSourcing\Test\IncrementalRamseyUuidFactory;
+use Patchlevel\EventSourcing\Identifier\FakeRamseyUuidFactory;
 use PHPUnit\Framework\TestCase;
 use Ramsey\Uuid\Uuid;
 
@@ -230,7 +236,7 @@ final class ProfileTest extends TestCase
 {
     public function setUp(): void
     {
-        Uuid::setFactory(new IncrementalRamseyUuidFactory());
+        Uuid::setFactory(new FakeRamseyUuidFactory());
     }
 
     public function testCreateProfile(): void
@@ -241,13 +247,12 @@ final class ProfileTest extends TestCase
 }
 ```
 :::warning
-The `IncrementalRamseyUuidFactory` is only for testing purposes
-and supports only uuid version 7, which is used by the library.
+The `FakeRamseyUuidFactory` is only for testing purposes
+and supports only the version 7 which is used by the library.
 :::
 
 ## Learn more
 
-* [How to create an aggregate](aggregate.md)
-* [How to use the clock](clock.md)
-* [How to use subscriptions](subscription.md)
-* [How to use the command bus](command-bus.md)
+* [How to define aggregates](aggregate.md)
+* [How to control time with the clock](clock.md)
+* [How to work with identifiers](identifier.md)

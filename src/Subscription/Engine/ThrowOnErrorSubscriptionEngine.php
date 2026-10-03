@@ -4,81 +4,19 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
-use LogicException;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
-use function sprintf;
-
-final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine, CanRefreshSubscriptions
+final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine
 {
     public function __construct(
         private readonly SubscriptionEngine $parent,
     ) {
     }
 
-    public function setup(SubscriptionEngineCriteria|null $criteria = null, bool $skipBooting = false): Result
+    public function execute(Command $command): Result
     {
-        return $this->throwOnError($this->parent->setup($criteria, $skipBooting));
-    }
-
-    public function boot(SubscriptionEngineCriteria|null $criteria = null, int|null $limit = null): ProcessedResult
-    {
-        return $this->throwOnError($this->parent->boot($criteria, $limit));
-    }
-
-    public function run(SubscriptionEngineCriteria|null $criteria = null, int|null $limit = null): ProcessedResult
-    {
-        return $this->throwOnError($this->parent->run($criteria, $limit));
-    }
-
-    public function teardown(SubscriptionEngineCriteria|null $criteria = null): Result
-    {
-        return $this->throwOnError($this->parent->teardown($criteria));
-    }
-
-    public function remove(SubscriptionEngineCriteria|null $criteria = null): Result
-    {
-        return $this->throwOnError($this->parent->remove($criteria));
-    }
-
-    public function reactivate(SubscriptionEngineCriteria|null $criteria = null): Result
-    {
-        return $this->throwOnError($this->parent->reactivate($criteria));
-    }
-
-    public function pause(SubscriptionEngineCriteria|null $criteria = null): Result
-    {
-        return $this->throwOnError($this->parent->pause($criteria));
-    }
-
-    /** @return list<Subscription> */
-    public function subscriptions(SubscriptionEngineCriteria|null $criteria = null): array
-    {
-        return $this->parent->subscriptions($criteria);
-    }
-
-    public function refresh(SubscriptionEngineCriteria|null $criteria = null): Result
-    {
-        if (!$this->parent instanceof CanRefreshSubscriptions) {
-            throw new LogicException(sprintf(
-                '"%s" does not implement "%s" and cannot call refresh.',
-                $this->parent::class,
-                CanRefreshSubscriptions::class,
-            ));
-        }
-
-        return $this->throwOnError($this->parent->refresh($criteria));
-    }
-
-    /**
-     * @param T $result
-     *
-     * @return T
-     *
-     * @template T of Result|ProcessedResult
-     */
-    private function throwOnError(Result|ProcessedResult $result): Result|ProcessedResult
-    {
+        $result = $this->parent->execute($command);
         $errors = $result->errors;
 
         if ($errors !== []) {
@@ -86,5 +24,11 @@ final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine, CanRef
         }
 
         return $result;
+    }
+
+    /** @return list<Subscription> */
+    public function subscriptions(SubscriptionEngineCriteria|null $criteria = null): array
+    {
+        return $this->parent->subscriptions($criteria);
     }
 }

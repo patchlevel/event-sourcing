@@ -6,10 +6,14 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber\ArgumentRe
 
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
+use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
+use Symfony\Component\TypeInfo\Type;
 
 #[CoversClass(MessageArgumentResolver::class)]
 final class MessageArgumentResolverTest extends TestCase
@@ -20,14 +24,14 @@ final class MessageArgumentResolverTest extends TestCase
 
         self::assertTrue(
             $resolver->support(
-                new ArgumentMetadata('foo', Message::class, false),
+                new ArgumentMetadata('foo', Type::object(Message::class)),
                 'qux',
             ),
         );
 
         self::assertFalse(
             $resolver->support(
-                new ArgumentMetadata('foo', 'bar', false),
+                new ArgumentMetadata('foo', Type::string()),
                 'qux',
             ),
         );
@@ -41,8 +45,8 @@ final class MessageArgumentResolverTest extends TestCase
         self::assertSame(
             $message,
             $resolver->resolve(
-                new ArgumentMetadata('foo', Message::class, false),
-                $message,
+                new ArgumentMetadata('foo', Type::object(Message::class)),
+                new ArgumentResolverContext($message, new Subscription('foo'), new SubscriberMetadata('foo')),
             ),
         );
     }

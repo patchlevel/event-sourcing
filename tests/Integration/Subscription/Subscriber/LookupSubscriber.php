@@ -14,15 +14,14 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Reducer;
 use Patchlevel\EventSourcing\Subscription\Lookup\Lookup;
 use Patchlevel\EventSourcing\Subscription\RunMode;
-use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\AdminPromoted;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
-#[Subscriber('lookup', RunMode::FromBeginning)]
+#[Subscriber(self::SUBSCRIBER_ID, RunMode::FromBeginning)]
 final class LookupSubscriber
 {
-    use SubscriberUtil;
+    private const SUBSCRIBER_ID = 'lookup';
 
     public function __construct(
         private Connection $connection,
@@ -78,6 +77,6 @@ final class LookupSubscriber
 
     private function tableName(): string
     {
-        return 'projection_' . $this->subscriberId();
+        return 'projection_' . self::SUBSCRIBER_ID;
     }
 }

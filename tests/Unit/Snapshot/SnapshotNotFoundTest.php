@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\Aggregate\CustomIdBehaviour;
+use Patchlevel\EventSourcing\Identifier\CustomIdBehaviour;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -16,7 +16,7 @@ final class SnapshotNotFoundTest extends TestCase
 {
     public function testCreate(): void
     {
-        $exception = new SnapshotNotFound(Profile::class, new class ('1') implements AggregateRootId {
+        $exception = new SnapshotNotFound(Profile::class, new class ('1') implements Identifier {
             use CustomIdBehaviour;
         });
 

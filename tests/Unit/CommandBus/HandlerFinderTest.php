@@ -141,4 +141,52 @@ final class HandlerFinderTest extends TestCase
             new HandlerReference(ChangeProfileName::class, 'handle', false),
         ], $result);
     }
+
+    public function testSkipMethodWithoutHandleAttribute(): void
+    {
+        $class = new class () {
+            public function handle(CreateProfile $command): void
+            {
+            }
+        };
+
+        $result = [...HandlerFinder::findInClass($class::class)];
+
+        self::assertSame([], $result);
+    }
+
+    public function testMissingType(): void
+    {
+        $this->expectException(InvalidHandleMethod::class);
+
+        $class = new class () {
+            // phpcs:disable
+            /** @phpstan-ignore-next-line */
+            #[Handle]
+            public function handle($command): void
+            {
+            }
+            // phpcs:enable
+        };
+
+        $result = [...HandlerFinder::findInClass($class::class)];
+
+        self::assertSame([], $result);
+    }
+
+    public function testUnionWithNotObjectType(): void
+    {
+        $this->expectException(InvalidHandleMethod::class);
+
+        $class = new class () {
+            #[Handle]
+            public function handle(CreateProfile|string $command): void
+            {
+            }
+        };
+
+        $result = [...HandlerFinder::findInClass($class::class)];
+
+        self::assertSame([], $result);
+    }
 }

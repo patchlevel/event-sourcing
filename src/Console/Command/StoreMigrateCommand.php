@@ -6,7 +6,6 @@ namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
-use Patchlevel\EventSourcing\Message\Pipe;
 use Patchlevel\EventSourcing\Message\Translator\Translator;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -46,38 +45,23 @@ final class StoreMigrateCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $buffer = InputHelper::positiveIntOrZero($input->getOption('buffer'));
+        $buffer = InputHelper::positiveInt($input->getOption('buffer'));
         $style = new OutputStyle($input, $output);
 
         $style->info('Migration initialization...');
 
         $count = $this->store->count();
-        $messages = $this->store->load();
+        $stream = $this->store->load();
 
         $style->progressStart($count);
 
-        $bufferedMessages = [];
+        $translatedStream = $stream->transform(...$this->translators);
 
-        $pipe = new Pipe(
-            $messages,
-            ...$this->translators,
-        );
+        foreach ($translatedStream->chunk($buffer) as $chunk) {
+            $messages = $chunk->toList();
 
-        foreach ($pipe as $message) {
-            $bufferedMessages[] = $message;
-
-            if (count($bufferedMessages) < $buffer) {
-                continue;
-            }
-
-            $this->newStore->save(...$bufferedMessages);
-            $bufferedMessages = [];
-            $style->progressAdvance($buffer);
-        }
-
-        if (count($bufferedMessages) !== 0) {
-            $this->newStore->save(...$bufferedMessages);
-            $style->progressAdvance(count($bufferedMessages));
+            $this->newStore->save(...$messages);
+            $style->progressAdvance(count($messages));
         }
 
         $style->progressFinish();

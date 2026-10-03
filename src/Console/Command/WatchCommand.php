@@ -10,8 +10,8 @@ use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\ListenableStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\SubscriptionStore;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
@@ -68,18 +68,6 @@ final class WatchCommand extends Command
                 null,
                 InputOption::VALUE_REQUIRED,
                 'Watch messages from a specific stream (e.g. "stream-*")',
-            )
-            ->addOption(
-                'aggregate',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'Filter aggregate name',
-            )
-            ->addOption(
-                'aggregate-id',
-                null,
-                InputOption::VALUE_REQUIRED,
-                'Filter aggregate id',
             );
     }
 
@@ -92,27 +80,11 @@ final class WatchCommand extends Command
         $timeLimit = InputHelper::nullablePositiveInt($input->getOption('time-limit'));
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
         $stream = InputHelper::nullableString($input->getOption('stream'));
-        $aggregate = InputHelper::nullableString($input->getOption('aggregate'));
-        $aggregateId = InputHelper::nullableString($input->getOption('aggregate-id'));
-
-        if ($stream !== null && ($aggregate !== null || $aggregateId !== null)) {
-            $console->error('You can only provide stream or aggregate and aggregate-id');
-
-            return 1;
-        }
 
         $index = $this->currentIndex();
 
-        if ($this->store instanceof SubscriptionStore) {
-            $this->store->setupSubscription();
-        }
-
         $criteriaBuilder = new CriteriaBuilder();
-
         $criteriaBuilder->streamName($stream);
-        $criteriaBuilder->aggregateName($aggregate);
-        $criteriaBuilder->aggregateId($aggregateId);
-
         $criteria = $criteriaBuilder->build();
 
         $errOutput = $output instanceof ConsoleOutputInterface ? $output->getErrorOutput() : $output;
@@ -133,7 +105,7 @@ final class WatchCommand extends Command
 
                 $stream->close();
 
-                if (!$this->store instanceof SubscriptionStore) {
+                if (!$this->store instanceof ListenableStore) {
                     return;
                 }
 
@@ -147,8 +119,7 @@ final class WatchCommand extends Command
             $logger,
         );
 
-        $supportSubscription = $this->store instanceof SubscriptionStore && $this->store->supportSubscription();
-        $worker->run($supportSubscription ? 0 : $sleep);
+        $worker->run($this->store instanceof ListenableStore ? 0 : $sleep);
 
         return Command::SUCCESS;
     }

@@ -46,20 +46,22 @@ final class SubscriptionCollection implements IteratorAggregate, Countable
         return count($this->subscriptions);
     }
 
-    public function lowestPosition(): int
+    public function lowestPosition(): int|null
     {
         $min = null;
 
         foreach ($this->subscriptions as $subscription) {
-            if ($min !== null && $subscription->position() >= $min) {
+            $position = $subscription->position();
+
+            if ($position === null) {
+                return null;
+            }
+
+            if ($min !== null && $position >= $min) {
                 continue;
             }
 
-            $min = $subscription->position();
-        }
-
-        if ($min === null) {
-            return 0;
+            $min = $position;
         }
 
         return $min;

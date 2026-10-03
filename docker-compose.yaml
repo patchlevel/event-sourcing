@@ -1,4 +1,15 @@
+# docker run --rm -it --volume $PWD:/app --net="host" -w /app ghcr.io/patchlevel/php:8.5
 services:
+  php:
+    image: ghcr.io/patchlevel/php:8.5
+    volumes:
+      - .:/app
+    working_dir: /app
+    network_mode: host
+    tty: true
+    stdin_open: true
+    command: sleep infinity
+
   postgres:
     image: postgres:alpine
     environment:

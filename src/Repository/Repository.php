@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Repository;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 
 /** @template T of AggregateRoot */
 interface Repository
@@ -15,9 +15,9 @@ interface Repository
      *
      * @throws AggregateNotFound
      */
-    public function load(AggregateRootId $id): AggregateRoot;
+    public function load(Identifier $id): AggregateRoot;
 
-    public function has(AggregateRootId $id): bool;
+    public function has(Identifier $id): bool;
 
     /**
      * @param T $aggregate

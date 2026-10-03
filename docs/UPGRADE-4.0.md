@@ -1,0 +1,875 @@
+---
+searchable: false
+---
+# Upgrade 4.0
+
+## Aggregates
+
+### Aggregate Root
+
+Method `aggregateRootId` return typehint has been changed from `AggregateRootId` to `Identifier`.
+
+### Aggregate Root Id
+
+`AggregateRootId` was renamed to `Identifier` and moved to the `Patchlevel\EventSourcing\Identifier` namespace.
+
+Following classes have been moved to the `Patchlevel\EventSourcing\Identifier` namespace too:
+
+* `CustomId`
+* `CustomIdBehaviour`
+* `RamseyUuidV7Behaviour`
+* `Uuid`
+
+Return typehint of `fromString` method has been changed from `self` to `static`.
+All typehints of other classes `AggregateRootId` have been changed to `Identifier`.
+
+`Patchlevel\EventSourcing\Test\IncrementalRamseyUuidFactory` has been renamed to
+`Patchlevel\EventSourcing\Identifier\FakeRamseyUuidFactory`.
+
+The `aggregateIdClass()` method of the `Patchlevel\EventSourcing\Serializer\Normalizer\IdNormalizer`
+has been renamed to `identifierClass()`.
+
+### Child Aggregate
+
+We removed our experimental feature of child aggregates.
+This was our first attempt to split aggregates into smaller parts,
+but we found a better way to do this with the `Micro Aggregate` feature.
+
+## Aggregate Repository
+
+Typehints for the `AggregateRepository` have been changed, from `AggregateRootId` to `Identifier`.
+
+## Subscription
+
+The constructor of the `DefaultSubscriptionEngine` class has been changed.
+
+* Instead of passing a `Store` instance, you now need to pass a `MessageLoader` instance.
+* Instead of passing a `RetryStrategy` instance, you now need to pass a `RetryStrategyRepository` instance.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
+use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+
+/**
+ * @var Store $store
+ * @var DoctrineSubscriptionStore $subscriptionStore
+ * @var MetadataSubscriberAccessorRepository $subscriberAccessorRepository
+ * @var RetryStrategy $retryStrategy
+ */
+$subscriptionEngine = new DefaultSubscriptionEngine(
+    $messageLoader,
+    $subscriptionStore,
+    $subscriberAccessorRepository,
+    $retryStrategy,
+);
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
+use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+
+/**
+ * @var Store $store
+ * @var DoctrineSubscriptionStore $subscriptionStore
+ * @var MetadataSubscriberAccessorRepository $subscriberAccessorRepository
+ * @var RetryStrategy $retryStrategy
+ */
+$subscriptionEngine = new DefaultSubscriptionEngine(
+    new GapResolverStoreMessageLoader($store),
+    $subscriptionStore,
+    $subscriberAccessorRepository,
+    RetryStrategyRepository::withDefault($retryStrategy),
+);
+```
+### Subscription Engine Commands
+
+The `SubscriptionEngine` interface has been changed.
+The methods `setup`, `boot`, `run`, `teardown`, `remove`, `reactivate`, `pause` and `refresh` have been replaced
+by a single `execute` method that takes a command object.
+The `ids` and `groups` filters, previously passed via `SubscriptionEngineCriteria`,
+are now constructor parameters of the command objects.
+The `SubscriptionEngineCriteria` is now only used for the `subscriptions` method.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->setup(new SubscriptionEngineCriteria(ids: ['profile_1']), skipBooting: true);
+$subscriptionEngine->boot(new SubscriptionEngineCriteria(ids: ['profile_1']), limit: 100);
+$subscriptionEngine->run(new SubscriptionEngineCriteria(ids: ['profile_1']), limit: 100);
+$subscriptionEngine->teardown(new SubscriptionEngineCriteria(ids: ['profile_1']));
+$subscriptionEngine->remove(new SubscriptionEngineCriteria(ids: ['profile_1']));
+$subscriptionEngine->reactivate(new SubscriptionEngineCriteria(ids: ['profile_1']));
+$subscriptionEngine->pause(new SubscriptionEngineCriteria(ids: ['profile_1']));
+$subscriptionEngine->refresh(new SubscriptionEngineCriteria(ids: ['profile_1']));
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Pause;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Reactivate;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Refresh;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Teardown;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(new Setup(ids: ['profile_1'], skipBooting: true));
+$subscriptionEngine->execute(new Boot(ids: ['profile_1'], limit: 100));
+$subscriptionEngine->execute(new Run(ids: ['profile_1'], limit: 100));
+$subscriptionEngine->execute(new Teardown(ids: ['profile_1']));
+$subscriptionEngine->execute(new Remove(ids: ['profile_1']));
+$subscriptionEngine->execute(new Reactivate(ids: ['profile_1']));
+$subscriptionEngine->execute(new Pause(ids: ['profile_1']));
+$subscriptionEngine->execute(new Refresh(ids: ['profile_1']));
+```
+Further changes:
+
+* The `CanRefreshSubscriptions` interface has been removed. Refresh is now part of the `SubscriptionEngine` interface via the `Refresh` command.
+* `ProcessedResult` now extends `Result`, so the `execute` method always returns a `Result`. The `Boot` and `Run` commands return a `ProcessedResult`.
+* The `DefaultSubscriptionEngine` accepts an optional `EventDispatcherInterface` as last constructor argument to hook into the engine with own listeners.
+
+### SubscriberHelper and SubscriberUtil
+
+The deprecated `Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberHelper`
+and the `Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberUtil` trait have been removed.
+
+If you used them inside a projector to keep the projector id and the table name in sync,
+use a constant instead:
+
+```php
+use Doctrine\DBAL\Connection;
+use Patchlevel\EventSourcing\Attribute\Projector;
+
+#[Projector(self::TABLE)]
+final class HotelProjector
+{
+    // use a const for easier access in the projector & to keep projector id and table name in sync
+    private const TABLE = 'hotel';
+
+    public function __construct(
+        private readonly Connection $db,
+    ) {
+    }
+
+    /** @return list<array{id: string, name: string, guests: int}> */
+    public function getHotels(): array
+    {
+        return $this->db->fetchAllAssociative(sprintf('SELECT id, name, guests FROM %s;', self::TABLE));
+    }
+
+    // ...
+}
+```
+If you still need the subscriber id elsewhere, read it from the metadata instead:
+
+```php
+use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
+
+$metadata = (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class);
+$subscriberId = $metadata->id;
+```
+### SubscriberAccessor and RealSubscriberAccessor
+
+The `Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessor` and
+`Patchlevel\EventSourcing\Subscription\Subscriber\RealSubscriberAccessor` interfaces have been removed.
+Use `Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor` directly.
+
+Accordingly, `SubscriberAccessorRepository::get()` now returns a `MetadataSubscriberAccessor|null`
+instead of a `SubscriberAccessor|null`.
+
+The deprecated methods `id()`, `group()` and `runMode()` on `MetadataSubscriberAccessor` have been removed.
+Use `->metadata()->id`, `->metadata()->group` and `->metadata()->runMode` instead.
+
+### AggregateIdArgumentResolver
+
+The deprecated `Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\AggregateIdArgumentResolver`
+has been removed. Automatically resolving the aggregate id in a stream store is not possible.
+Add the aggregate id to your events instead.
+
+### ArgumentMetadata
+
+The subscriber argument resolver now uses `symfony/type-info` to describe argument types.
+
+`Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata` no longer carries a `string $type`
+and a `bool $allowsNull` property. Instead it now has a single `Symfony\Component\TypeInfo\Type $type` property.
+
+If you implemented a custom `ArgumentResolver`, adjust it to read the type from the new `Type` object.
+
+### ArgumentResolver
+
+The `resolve` method of `Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver`
+no longer receives the `Message` directly. It now receives an `ArgumentResolverContext` that bundles the
+current `message`, `subscription` and `subscriber` metadata.
+
+Before:
+
+```php
+final class CustomResolver implements ArgumentResolver
+{
+    public function resolve(ArgumentMetadata $argument, Message $message): mixed
+    {
+        return $message->header(CustomHeader::class);
+    }
+
+    // ... support()
+}
+```
+After:
+
+```php
+final class CustomResolver implements ArgumentResolver
+{
+    public function resolve(ArgumentMetadata $argument, ArgumentResolverContext $context): mixed
+    {
+        return $context->message->header(CustomHeader::class);
+    }
+
+    // ... support()
+}
+```
+### Custom ArgumentResolver registration
+
+Custom argument resolvers are no longer passed to the `MetadataSubscriberAccessorRepository`.
+They are now passed to the `DefaultSubscriptionEngine`, which forwards them to the message processor.
+
+Before:
+
+```php
+$subscriberRepository = new MetadataSubscriberAccessorRepository(
+    [new MySubscriber()],
+    argumentResolvers: [new MyResolver()],
+);
+
+$engine = new DefaultSubscriptionEngine(
+    $messageLoader,
+    $subscriptionStore,
+    $subscriberRepository,
+);
+```
+After:
+
+```php
+$subscriberRepository = new MetadataSubscriberAccessorRepository(
+    [new MySubscriber()],
+);
+
+$engine = new DefaultSubscriptionEngine(
+    $messageLoader,
+    $subscriptionStore,
+    $subscriberRepository,
+    argumentResolvers: [new MyResolver()],
+);
+```
+The `$argumentResolvers` constructor argument of `MetadataSubscriberAccessor` has been removed as well.
+
+### MessageLoader
+
+The `$startIndex` argument of `Patchlevel\EventSourcing\Subscription\Engine\MessageLoader::load()`
+is now nullable. If you implemented your own message loader, adjust the signature.
+`null` means that there is no position yet and the loader has to start from the beginning.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Store\Stream;
+use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
+
+final class CustomMessageLoader implements MessageLoader
+{
+    public function load(int $startIndex, array $subscriptions): Stream
+    {
+        // ...
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Message\Stream;
+use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
+
+final class CustomMessageLoader implements MessageLoader
+{
+    public function load(int|null $startIndex, array $subscriptions): Stream
+    {
+        // ...
+    }
+}
+```
+### Batchable Subscriber
+
+The `Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber` interface has been removed.
+Batching is now configured with attributes and the subscriber stays stateless: the data you collect
+during a batch lives in a state object that the engine creates, keeps and hands back to your methods.
+
+* `beginBatch()` becomes a `#[BatchBegin]` method that returns the state object.
+* `commitBatch()` becomes a `#[BatchFlush]` method that receives the state object. The batch size is now
+  configured on the attribute (`#[BatchFlush(afterMessages: 1000)]`).
+* `rollbackBatch()` becomes a `#[BatchRollback]` method that receives the state object (optional).
+* `forceCommit()` becomes a `#[BatchShouldFlush]` method that receives the state object (optional).
+* The handler receives the state object through a parameter marked with `#[BatchState]`.
+
+Before:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber;
+
+#[Projector('profile_1')]
+final class MigrationSubscriber implements BatchableSubscriber
+{
+    /** @var array<string, string> */
+    private array $nameChanged = [];
+
+    #[Subscribe(NameChanged::class)]
+    public function handleNameChanged(NameChanged $event): void
+    {
+        $this->nameChanged[$event->userId] = $event->name;
+    }
+
+    public function beginBatch(): void
+    {
+        $this->nameChanged = [];
+    }
+
+    public function commitBatch(): void
+    {
+        // ... persist $this->nameChanged
+        $this->nameChanged = [];
+    }
+
+    public function rollbackBatch(): void
+    {
+    }
+
+    public function forceCommit(): bool
+    {
+        return count($this->nameChanged) > 1000;
+    }
+}
+```
+After:
+
+```php
+use Patchlevel\EventSourcing\Attribute\BatchBegin;
+use Patchlevel\EventSourcing\Attribute\BatchFlush;
+use Patchlevel\EventSourcing\Attribute\BatchRollback;
+use Patchlevel\EventSourcing\Attribute\BatchState;
+
+final class MigrationBatch
+{
+    /** @var array<string, string> */
+    public array $nameChanged = [];
+}
+
+#[Projector('profile_1')]
+final class MigrationSubscriber
+{
+    #[BatchBegin]
+    public function beginBatch(): MigrationBatch
+    {
+        return new MigrationBatch();
+    }
+
+    #[Subscribe(NameChanged::class)]
+    public function handleNameChanged(
+        NameChanged $event,
+        #[BatchState]
+        MigrationBatch $batch,
+    ): void {
+        $batch->nameChanged[$event->userId] = $event->name;
+    }
+
+    #[BatchFlush(afterMessages: 1000)]
+    public function flush(MigrationBatch $batch): void
+    {
+        // ... persist $batch->nameChanged
+    }
+
+    #[BatchRollback]
+    public function rollback(MigrationBatch $batch): void
+    {
+    }
+}
+```
+### Parallel subscription processing
+
+The subscription engine now processes one subscription at a time instead of driving a single shared
+stream across all matching subscriptions. Each subscription is claimed individually with
+`FOR UPDATE SKIP LOCKED`, read from its own position with its own event filter, processed and
+committed in its own short transaction. Several `subscription:run` workers can now process different
+subscriptions in true parallel: a worker that finds a subscription locked by another worker simply
+skips to the next one.
+
+This is mostly transparent, but a few contracts changed.
+
+#### SubscriptionStore
+
+`claim()` and `inLock()` are now mandatory parts of the `SubscriptionStore` interface, and the
+separate `LockableSubscriptionStore` interface has been removed. Every custom store has to implement
+both:
+
+```php
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Subscription;
+
+interface SubscriptionStore
+{
+    // ... get/find/add/update/remove ...
+
+    /**
+     * Claim exactly one subscription via a row lock (SKIP LOCKED). Return null if the row is held
+     * by another worker or no longer matches the criteria.
+     */
+    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null;
+
+    /**
+     * @param Closure():T $closure
+     *
+     * @return T
+     *
+     * @template T
+     */
+    public function inLock(Closure $closure): mixed;
+}
+```
+`find()` no longer locks the matched rows: it is now a plain, unlocked snapshot read. The locking
+happens per subscription inside `claim()`.
+
+#### Message limit is now per subscription
+
+For `Run` and `Boot`, the `limit` used to cap the total number of messages across the shared stream.
+Because there is no shared stream anymore, `limit` now caps the messages **per subscription**. One
+`subscription:run` pass therefore processes up to `limit × number of subscriptions` messages. The
+CLI default of `message-limit=100` now means "100 per subscription". It also defines the
+checkpoint/lock-hold granularity: a unit of at most `limit` messages commits atomically and releases
+the lock afterwards.
+
+#### Error isolation
+
+An error in one subscription no longer aborts the whole run. Transient errors
+(`Doctrine\DBAL\Exception\RetryableException`, which now includes `TransactionCommitNotPossible`)
+are logged and retried on the next pass without landing in `result.errors`. Any other error locks
+that single subscription into status `Error` and surfaces in `result.errors`, while the remaining
+subscriptions keep processing.
+
+#### No global ordering across subscriptions
+
+Subscriptions are processed independently, so there is no global ordering of messages across
+different subscriptions anymore (the per-subscription order is of course preserved). This was never
+guaranteed before either.
+
+## Store
+
+### StreamStore
+
+`StreamStore` interface was merged with `Store` interface.
+
+### DoctrineDbalStore
+
+`DoctrineDbalStore` has been removed in favor of `StreamDoctrineDbalStore`.
+And all the associated classes:
+
+* `Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion`
+* `Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion`
+* `Patchlevel\EventSourcing\Store\DoctrineDbalStore`
+* `Patchlevel\EventSourcing\Store\DoctrineDbalStoreStream`
+
+The methods `aggregateName()` and `aggregateId()` of the `CriteriaBuilder` have been removed too.
+Filter by stream name instead, wildcards are supported.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+
+$criteria = (new CriteriaBuilder())
+    ->aggregateName('profile')
+    ->aggregateId('1')
+    ->build();
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\CriteriaBuilder;
+
+$criteria = (new CriteriaBuilder())
+    ->streamName('profile-1')
+    ->build();
+```
+For the same reason the `--aggregate` and `--aggregate-id` options of the `event-sourcing:watch` command
+have been removed. Use the `--stream` option instead, e.g. `--stream="profile-*"`.
+
+### StreamReadOnlyStore
+
+`StreamReadOnlyStore` was been merged in `ReadOnlyStore`.
+
+### ListenableStore
+
+`Patchlevel\EventSourcing\Store\SubscriptionStore` has been renamed to `Patchlevel\EventSourcing\Store\ListenableStore`
+to avoid confusion with `Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore`.
+The methods `supportSubscription()` and `setupSubscription()` have been removed, only `wait()` is left.
+
+The doctrine stores no longer install a postgres trigger to notify listeners about new events.
+Instead, `save()` and `append()` send the `NOTIFY` themselves, so no setup is needed anymore.
+If a store does not support notifications, `wait()` simply sleeps for the given timeout.
+The first call of `wait()` only starts listening and returns immediately,
+so events stored before that are not missed.
+
+The trigger and the function created by previous versions are no longer used and can be dropped:
+
+```sql
+DROP TRIGGER IF EXISTS notify_trigger ON event_store;
+DROP FUNCTION IF EXISTS notify_event_store();
+```
+
+### Partial index on PostgreSQL
+
+On PostgreSQL, the `StreamDoctrineDbalStore` and `TaggableDoctrineDbalStore` now create a partial index
+on `(stream, playhead) WHERE archived = false` instead of the index on `(stream, playhead, archived)`.
+Loading an aggregate only reads events that are not archived, so the index gets smaller and skips archived events.
+Generate a new migration or run `event-sourcing:schema:update` to apply the change.
+
+## Stream
+
+The stream handling has been reworked. Previously the `Stream` was an interface that every store had to
+implement on its own (`ArrayStream`, `StreamDoctrineDbalStoreStream`, `TaggableDoctrineDbalStoreStream`,
+`GeneratorStream`, ...). Now there is a single generic implementation that you can reuse.
+
+### Stream interface
+
+The `Patchlevel\EventSourcing\Store\Stream` interface has been removed and replaced by the concrete final
+class `Patchlevel\EventSourcing\Message\Stream`.
+
+All stores now return a `Patchlevel\EventSourcing\Message\Stream` from their `load()` method.
+The following store specific stream implementations have been removed:
+
+* `Patchlevel\EventSourcing\Store\ArrayStream`
+* `Patchlevel\EventSourcing\Store\StreamDoctrineDbalStoreStream`
+* `Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStoreStream`
+* `Patchlevel\EventSourcing\Subscription\Engine\GeneratorStream`
+
+The new `Stream` class implements `Iterator` and accepts any `iterable<Message>` in its constructor.
+The `index()`, `position()`, `end()` and `close()` methods remain available.
+In addition there are now the helper methods `toList()`, `toArray()`, `transform()` and `chunk()`.
+
+The `Patchlevel\EventSourcing\Store\StreamClosed` exception has been moved to
+`Patchlevel\EventSourcing\Message\StreamClosed`.
+
+### Pipe
+
+`Patchlevel\EventSourcing\Message\Pipe` has been removed. Use `Stream::transform()` instead.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Message\Pipe;
+
+$messages = (new Pipe($messages, $translator))->toArray();
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Message\Stream;
+
+$messages = (new Stream($messages))->transform($translator)->toList();
+```
+## Message
+
+### AggregateHeader
+
+`Patchlevel\EventSourcing\Aggregate\AggregateHeader` has been removed
+and replaced with the following headers:
+
+* `Patchlevel\EventSourcing\Store\Header\StreamNameHeader`
+* `Patchlevel\EventSourcing\Store\Header\PlayheadHeader`
+* `Patchlevel\EventSourcing\Store\Header\RecordedOnHeader`
+
+### AggregateToStreamHeaderTranslator
+
+`Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator` has been removed.
+It was only needed to migrate from the removed `DoctrineDbalStore` to the `StreamDoctrineDbalStore`,
+so do this migration while you are still on 3.x.
+
+## Hydrator
+
+`patchlevel/hydrator` has been updated to version 2.0.
+It was rebuilt on top of a middleware stack and brings its own breaking changes,
+for example the `MetadataHydrator` was replaced by the `StackHydrator`,
+and custom normalizers now receive a `$context` array in `normalize` and `denormalize`.
+Follow the [hydrator upgrade guide](https://github.com/patchlevel/hydrator/blob/2.0.x/UPGRADE-2.0.md) for these.
+
+## Serializer
+
+### Upcasting
+
+The upcaster of this library has been removed in favor of the `UpcastExtension` of the hydrator.
+This affects the following classes:
+
+* `Patchlevel\EventSourcing\Serializer\Upcast\Upcast`
+* `Patchlevel\EventSourcing\Serializer\Upcast\Upcaster`
+* `Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain`
+
+Implement `Patchlevel\Hydrator\Extension\Upcast\Upcaster` instead and register it on the hydrator.
+The upcaster now gets the class metadata of the resolved event instead of the event name.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
+
+final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
+{
+    public function __invoke(Upcast $upcast): Upcast
+    {
+        if ($upcast->eventName !== 'profile.created') {
+            return $upcast;
+        }
+
+        return $upcast->replacePayloadByKey('email', strtolower($upcast->payload['email']));
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\Hydrator\Extension\Upcast\Upcaster;
+use Patchlevel\Hydrator\Metadata\ClassMetadata;
+
+final class ProfileCreatedEmailLowerCastUpcaster implements Upcaster
+{
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $context
+     *
+     * @return array<string, mixed>
+     */
+    public function upcast(ClassMetadata $metadata, array $data, array $context): array
+    {
+        if ($metadata->className !== ProfileCreated::class) {
+            return $data;
+        }
+
+        $data['email'] = strtolower($data['email']);
+
+        return $data;
+    }
+}
+```
+Upcasters can no longer rename events. Use the `aliases` option of the `#[Event]` attribute instead.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcast;
+use Patchlevel\EventSourcing\Serializer\Upcast\Upcaster;
+
+final class EventNameRenameUpcaster implements Upcaster
+{
+    public function __invoke(Upcast $upcast): Upcast
+    {
+        if ($upcast->eventName === 'profile.created') {
+            return $upcast->replaceEventName('profile.registered');
+        }
+
+        return $upcast;
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Attribute\Event;
+
+#[Event(name: 'profile.registered', aliases: ['profile.created'])]
+final class ProfileRegistered
+{
+}
+```
+### DefaultEventSerializer
+
+The `$upcaster` constructor argument of `DefaultEventSerializer` has been removed.
+`DefaultEventSerializer::createFromPaths()` no longer accepts an upcaster and a cryptographer,
+pass a configured hydrator instead.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Serializer\Upcast\UpcasterChain;
+use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
+
+/** @var PayloadCryptographer $cryptographer */
+$serializer = DefaultEventSerializer::createFromPaths(
+    ['src/Domain'],
+    new UpcasterChain([new ProfileCreatedEmailLowerCastUpcaster()]),
+    $cryptographer,
+);
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\Hydrator\CoreExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\BaseCryptographer;
+use Patchlevel\Hydrator\Extension\Cryptography\CryptographyExtension;
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
+use Patchlevel\Hydrator\Extension\Upcast\UpcastExtension;
+use Patchlevel\Hydrator\StackHydratorBuilder;
+
+/** @var CipherKeyStore $cipherKeyStore */
+$hydrator = (new StackHydratorBuilder())
+    ->useExtension(new CoreExtension())
+    ->useExtension(new UpcastExtension(beforeTransform: [new ProfileCreatedEmailLowerCastUpcaster()]))
+    ->useExtension(new CryptographyExtension(BaseCryptographer::createWithOpenssl($cipherKeyStore)))
+    ->build();
+
+$serializer = DefaultEventSerializer::createFromPaths(['src/Domain'], $hydrator);
+```
+## Snapshot
+
+### DefaultSnapshotStore
+
+`DefaultSnapshotStore::createDefault()` no longer accepts a `PayloadCryptographer` as second argument,
+pass a configured hydrator instead.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\Hydrator\Cryptography\PayloadCryptographer;
+
+/** @var PayloadCryptographer $cryptographer */
+$snapshotStore = DefaultSnapshotStore::createDefault($adapters, $cryptographer);
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
+use Patchlevel\Hydrator\Hydrator;
+
+/** @var Hydrator $hydrator */
+$snapshotStore = DefaultSnapshotStore::createDefault($adapters, $hydrator);
+```
+## Sensitive Data
+
+The legacy cryptography of the hydrator (`PersonalDataPayloadCryptographer`, `#[PersonalData]`, ...)
+has been removed. Use the `CryptographyExtension` of the hydrator instead,
+see the [hydrator upgrade guide](https://github.com/patchlevel/hydrator/blob/2.0.x/UPGRADE-2.0.md#cryptography)
+and the [sensitive data](sensitive-data.md) documentation.
+
+:::danger
+Data encrypted with the legacy `PersonalDataPayloadCryptographer` can no longer be decrypted.
+The new cryptographer does not recognize the legacy format and passes the encrypted value through unchanged.
+Migrate your store and snapshots to the new format while you are still on 3.x,
+where the `CryptographyExtension` can read legacy data with the legacy cryptographer as fallback.
+:::
+
+### Attributes
+
+The attributes have been moved to the cryptography extension and `PersonalData` has been renamed to `SensitiveData`:
+
+* `Patchlevel\Hydrator\Attribute\DataSubjectId` is now `Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId`
+* `Patchlevel\Hydrator\Attribute\PersonalData` is now `Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData`
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Identifier\Uuid;
+use Patchlevel\Hydrator\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Attribute\PersonalData;
+
+final class EmailChanged
+{
+    public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
+        #[PersonalData(fallback: 'unknown')]
+        public readonly string $email,
+    ) {
+    }
+}
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Identifier\Uuid;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\DataSubjectId;
+use Patchlevel\Hydrator\Extension\Cryptography\Attribute\SensitiveData;
+
+final class EmailChanged
+{
+    public function __construct(
+        #[DataSubjectId]
+        public readonly Uuid $profileId,
+        #[SensitiveData(fallback: 'unknown')]
+        public readonly string $email,
+    ) {
+    }
+}
+```
+
+### DoctrineCipherKeyStore
+
+The legacy `Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore`, which used the `crypto_keys` table,
+has been removed.
+`Patchlevel\EventSourcing\Cryptography\ExtensionDoctrineCipherKeyStore` has been renamed to
+`Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore`. It still uses the `cryptography_keys` table.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Cryptography\ExtensionDoctrineCipherKeyStore;
+
+$cipherKeyStore = new ExtensionDoctrineCipherKeyStore($connection);
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
+
+$cipherKeyStore = new DoctrineCipherKeyStore($connection);
+```
+To delete the personal data of a subject, call `removeWithSubjectId()`.
+`remove()` now expects the id of a single cipher key.
+
+before:
+
+```php
+use Patchlevel\Hydrator\Cryptography\Store\CipherKeyStore;
+
+/** @var CipherKeyStore $cipherKeyStore */
+$cipherKeyStore->remove($profileId);
+```
+after:
+
+```php
+use Patchlevel\Hydrator\Extension\Cryptography\Store\CipherKeyStore;
+
+/** @var CipherKeyStore $cipherKeyStore */
+$cipherKeyStore->removeWithSubjectId($profileId);
+```
+## Schema
+
+### DoctrineSchemaSubscriber
+
+The `Patchlevel\EventSourcing\Schema\DoctrineSchemaSubscriber` has been removed.
+use the `Patchlevel\EventSourcing\Schema\DoctrineSchemaListener` instead.

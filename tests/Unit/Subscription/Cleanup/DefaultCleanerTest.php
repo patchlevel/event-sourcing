@@ -93,4 +93,43 @@ final class DefaultCleanerTest extends TestCase
             new Subscription('test', cleanupTasks: [new DropTableTask('test')]),
         );
     }
+
+    public function testSkipsUnsupportedHandler(): void
+    {
+        $unsupportedHandler = new class implements CleanupTaskHandler {
+            public bool $called = false;
+
+            public function __invoke(object $task): void
+            {
+                $this->called = true;
+            }
+
+            public function supports(object $task): bool
+            {
+                return false;
+            }
+        };
+
+        $supportedHandler = new class implements CleanupTaskHandler {
+            public bool $called = false;
+
+            public function __invoke(object $task): void
+            {
+                $this->called = true;
+            }
+
+            public function supports(object $task): bool
+            {
+                return true;
+            }
+        };
+
+        $cleaner = new DefaultCleaner([$unsupportedHandler, $supportedHandler]);
+        $cleaner->cleanup(
+            new Subscription('test', cleanupTasks: [new DropTableTask('test')]),
+        );
+
+        self::assertFalse($unsupportedHandler->called);
+        self::assertTrue($supportedHandler->called);
+    }
 }

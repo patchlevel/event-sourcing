@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -34,7 +35,7 @@ final class SubscriptionSetupCommand extends SubscriptionCommand
         $skipBooting = InputHelper::bool($input->getOption('skip-booting'));
 
         $criteria = $this->subscriptionEngineCriteria($input);
-        $this->engine->setup($criteria, $skipBooting);
+        $this->engine->execute(new Setup($criteria->ids, $criteria->groups, $skipBooting));
 
         return 0;
     }

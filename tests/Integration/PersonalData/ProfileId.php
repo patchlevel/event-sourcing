@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\PersonalData;
 
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
-use Patchlevel\EventSourcing\Aggregate\RamseyUuidV7Behaviour;
+use Patchlevel\EventSourcing\Identifier\Identifier;
+use Patchlevel\EventSourcing\Identifier\RamseyUuidV7Behaviour;
 
-final class ProfileId implements AggregateRootId
+final class ProfileId implements Identifier
 {
     use RamseyUuidV7Behaviour;
 }
