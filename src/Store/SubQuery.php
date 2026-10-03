@@ -54,6 +54,15 @@ final class SubQuery
 
     public function includes(SubQuery $other): bool
     {
+        // Only the last matching event is loaded. That event is only the last event
+        // of the other query as well, if both queries match exactly the same events.
+        if ($this->onlyLastEvent) {
+            return $other->onlyLastEvent
+                && $this->streamName === $other->streamName
+                && self::isSameSet($this->tags, $other->tags)
+                && self::isSameSet($this->events, $other->events);
+        }
+
         if ($this->streamName !== null && $this->streamName !== $other->streamName) {
             return false;
         }
@@ -65,21 +74,16 @@ final class SubQuery
         // events is an allow list: an empty list matches everything, so it is the
         // broadest filter. Otherwise this query only covers the other one when
         // every event the other query allows is also allowed here.
-        if ($this->events !== [] && ($other->events === [] || !self::isSubset($other->events, $this->events))) {
-            return false;
-        }
+        return $this->events === [] || ($other->events !== [] && self::isSubset($other->events, $this->events));
+    }
 
-        if (!$this->onlyLastEvent) {
-            return true;
-        }
-
-        // Only the last matching event is loaded. That event is only the last event
-        // of the other query as well, if both queries match exactly the same events.
-        return $other->onlyLastEvent
-            && $this->streamName === $other->streamName
-            && self::isSubset($other->tags, $this->tags)
-            && ($this->events === []) === ($other->events === [])
-            && self::isSubset($this->events, $other->events);
+    /**
+     * @param list<string> $a
+     * @param list<string> $b
+     */
+    private static function isSameSet(array $a, array $b): bool
+    {
+        return self::isSubset($a, $b) && self::isSubset($b, $a);
     }
 
     /**
