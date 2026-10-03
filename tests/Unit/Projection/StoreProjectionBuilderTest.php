@@ -10,10 +10,14 @@ use Patchlevel\EventSourcing\Projection\CompositeProjection;
 use Patchlevel\EventSourcing\Projection\StoreProjectionBuilder;
 use Patchlevel\EventSourcing\Store\AppendStore;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
+use Patchlevel\EventSourcing\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\IncrementProjection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\VisitsProjection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -41,5 +45,20 @@ final class StoreProjectionBuilderTest extends TestCase
         $builder = new StoreProjectionBuilder($store);
 
         self::assertSame(['count' => 2], $builder->build($projections));
+    }
+
+    public function testBuildWithCheckpoint(): void
+    {
+        $store = new InMemoryStore();
+        $store->save(
+            Message::create(new ProfileVisited(ProfileId::fromString('1')))->withHeader(new TagsHeader(['match'])),
+            Message::create(new SplittingEvent(Email::fromString('foo@bar.com'), 5))
+                ->withHeader(new TagsHeader(['match'])),
+            Message::create(new ProfileVisited(ProfileId::fromString('1')))->withHeader(new TagsHeader(['match'])),
+        );
+
+        $builder = new StoreProjectionBuilder($store);
+
+        self::assertSame(['visits' => 6], $builder->build(['visits' => new VisitsProjection(['match'])]));
     }
 }
