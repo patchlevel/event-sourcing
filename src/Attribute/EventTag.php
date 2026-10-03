@@ -6,7 +6,7 @@ namespace Patchlevel\EventSourcing\Attribute;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PROPERTY)]
+#[Attribute(Attribute::TARGET_PROPERTY | Attribute::TARGET_METHOD)]
 final class EventTag
 {
     public function __construct(

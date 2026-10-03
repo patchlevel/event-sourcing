@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\Serializer;
 use Patchlevel\EventSourcing\Attribute\EventTag;
 use Patchlevel\EventSourcing\Identifier\Identifier;
 use ReflectionClass;
+use ReflectionMethod;
+use ReflectionProperty;
 use Stringable;
 
 use function array_keys;
@@ -27,8 +29,8 @@ final class AttributeEventTagExtractor implements EventTagExtractor
 
         $tags = [];
 
-        foreach ($reflectionClass->getProperties() as $property) {
-            $attributes = $property->getAttributes(EventTag::class);
+        foreach ([...$reflectionClass->getProperties(), ...$reflectionClass->getMethods()] as $member) {
+            $attributes = $member->getAttributes(EventTag::class);
 
             if ($attributes === []) {
                 continue;
@@ -37,11 +39,11 @@ final class AttributeEventTagExtractor implements EventTagExtractor
             /** @var EventTag $attribute */
             $attribute = $attributes[0]->newInstance();
 
-            $value = $property->getValue($event);
+            $value = $this->value($event, $member);
             $values = is_array($value) ? $value : [$value];
 
             foreach ($values as $item) {
-                $tag = $this->tag($event, $property->getName(), $item, $attribute->prefix, $attribute->hash);
+                $tag = $this->tag($event, $member, $item, $attribute->prefix, $attribute->hash);
 
                 if ($tag === null) {
                     continue;
@@ -54,9 +56,22 @@ final class AttributeEventTagExtractor implements EventTagExtractor
         return array_map(strval(...), array_keys($tags));
     }
 
+    private function value(object $event, ReflectionProperty|ReflectionMethod $member): mixed
+    {
+        if ($member instanceof ReflectionProperty) {
+            return $member->getValue($event);
+        }
+
+        if ($member->getNumberOfRequiredParameters() > 0) {
+            throw EventTagExtractorError::methodHasRequiredParameters($event::class, $member->getName());
+        }
+
+        return $member->invoke($event);
+    }
+
     private function tag(
         object $event,
-        string $property,
+        ReflectionProperty|ReflectionMethod $member,
         mixed $value,
         string|null $prefix,
         string|null $hash,
@@ -74,11 +89,11 @@ final class AttributeEventTagExtractor implements EventTagExtractor
         }
 
         if (!is_string($value)) {
-            throw EventTagExtractorError::invalidValueType(
-                $event::class,
-                $property,
-                $value,
-            );
+            if ($member instanceof ReflectionMethod) {
+                throw EventTagExtractorError::invalidMethodValueType($event::class, $member->getName(), $value);
+            }
+
+            throw EventTagExtractorError::invalidValueType($event::class, $member->getName(), $value);
         }
 
         if ($hash) {

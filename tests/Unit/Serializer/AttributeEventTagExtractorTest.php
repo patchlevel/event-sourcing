@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Serializer;
 
+use DateTimeImmutable;
 use Patchlevel\EventSourcing\Attribute\EventTag;
 use Patchlevel\EventSourcing\Identifier\CustomId;
 use Patchlevel\EventSourcing\Serializer\AttributeEventTagExtractor;
@@ -14,6 +15,7 @@ use Stringable;
 
 use function hash;
 use function sprintf;
+use function strtoupper;
 
 #[CoversClass(AttributeEventTagExtractor::class)]
 final class AttributeEventTagExtractorTest extends TestCase
@@ -271,6 +273,133 @@ final class AttributeEventTagExtractorTest extends TestCase
         $this->expectExceptionMessage(
             sprintf(
                 'Event tag value for property "value" in class "%s" must be stringable, float given',
+                $event::class,
+            ),
+        );
+
+        $extractor->extract($event);
+    }
+
+    public function testExtractFromMethod(): void
+    {
+        $extractor = new AttributeEventTagExtractor();
+
+        $event = new class ('1', new DateTimeImmutable('2026-03-01')) {
+            public function __construct(
+                #[EventTag(prefix: 'account')]
+                public string $accountId,
+                public DateTimeImmutable $bookedAt,
+            ) {
+            }
+
+            #[EventTag(prefix: 'account-period')]
+            public function accountPeriod(): string
+            {
+                return $this->accountId . '/' . $this->bookedAt->format('Y');
+            }
+        };
+
+        self::assertSame(['account:1', 'account-period:1/2026'], $extractor->extract($event));
+    }
+
+    public function testExtractFromProtectedMethodWithHash(): void
+    {
+        $extractor = new AttributeEventTagExtractor();
+
+        $event = new class ('foo') {
+            public function __construct(
+                public string $email,
+            ) {
+            }
+
+            #[EventTag(prefix: 'email', hash: 'sha256')]
+            protected function normalizedEmail(): string
+            {
+                return strtoupper($this->email);
+            }
+        };
+
+        self::assertSame(['email:' . hash('sha256', 'FOO')], $extractor->extract($event));
+    }
+
+    public function testExtractFromMethodReturningArray(): void
+    {
+        $extractor = new AttributeEventTagExtractor();
+
+        $event = new class (['1', '2']) {
+            /** @param list<string> $accountIds */
+            public function __construct(
+                public array $accountIds,
+            ) {
+            }
+
+            /** @return list<string|null> */
+            #[EventTag(prefix: 'account')]
+            public function accounts(): array
+            {
+                return [...$this->accountIds, null];
+            }
+        };
+
+        self::assertSame(['account:1', 'account:2'], $extractor->extract($event));
+    }
+
+    public function testExtractFromMethodReturningNull(): void
+    {
+        $extractor = new AttributeEventTagExtractor();
+
+        $event = new class (null) {
+            public function __construct(
+                public string|null $value,
+            ) {
+            }
+
+            #[EventTag]
+            public function nothing(): string|null
+            {
+                return $this->value;
+            }
+        };
+
+        self::assertSame([], $extractor->extract($event));
+    }
+
+    public function testExtractFromMethodWithRequiredParameter(): void
+    {
+        $extractor = new AttributeEventTagExtractor();
+
+        $event = new class {
+            #[EventTag]
+            public function tag(string $value): string
+            {
+                return $value;
+            }
+        };
+
+        $this->expectException(EventTagExtractorError::class);
+        $this->expectExceptionMessage(
+            sprintf('Event tag method "tag" in class "%s" must not have required parameters', $event::class),
+        );
+
+        $extractor->extract($event);
+    }
+
+    public function testExtractFromMethodWithInvalidValueType(): void
+    {
+        $extractor = new AttributeEventTagExtractor();
+
+        $event = new class {
+            #[EventTag]
+            public function tag(): float
+            {
+                return 1.5;
+            }
+        };
+
+        $this->expectException(EventTagExtractorError::class);
+        $this->expectExceptionMessage(
+            sprintf(
+                'Event tag value returned by method "tag" in class "%s" must be stringable, float given',
                 $event::class,
             ),
         );

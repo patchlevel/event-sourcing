@@ -23,4 +23,29 @@ final class EventTagExtractorError extends RuntimeException
             ),
         );
     }
+
+    /** @param class-string $class */
+    public static function invalidMethodValueType(string $class, string $method, mixed $value): self
+    {
+        return new self(
+            sprintf(
+                'Event tag value returned by method "%s" in class "%s" must be stringable, %s given',
+                $method,
+                $class,
+                get_debug_type($value),
+            ),
+        );
+    }
+
+    /** @param class-string $class */
+    public static function methodHasRequiredParameters(string $class, string $method): self
+    {
+        return new self(
+            sprintf(
+                'Event tag method "%s" in class "%s" must not have required parameters',
+                $method,
+                $class,
+            ),
+        );
+    }
 }
