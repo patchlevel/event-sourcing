@@ -733,6 +733,43 @@ final class InMemoryStoreTest extends TestCase
         self::assertSame([$message2], $stream->toList());
     }
 
+    public function testQueryWithEmptySubQueryMatchesAll(): void
+    {
+        $message1 = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+        $message2 = $this->message(new ProfileVisited(ProfileId::fromString('2')), 2, ['profile-2']);
+
+        $store = new InMemoryStore([$message1, $message2]);
+
+        $stream = $store->query(new Query(new SubQuery(), new SubQuery(['profile-1'])));
+
+        self::assertSame([$message1, $message2], $stream->toList());
+    }
+
+    public function testQueryWithEmptyOnlyLastEventSubQuery(): void
+    {
+        $message1 = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+        $message2 = $this->message(new ProfileVisited(ProfileId::fromString('2')), 2, ['profile-2']);
+        $message3 = $this->message(new ProfileVisited(ProfileId::fromString('3')), 3, ['profile-3']);
+
+        $store = new InMemoryStore([$message1, $message2, $message3]);
+
+        $stream = $store->query(new Query(new SubQuery(onlyLastEvent: true), new SubQuery(['profile-1'])));
+
+        self::assertSame([$message1, $message3], $stream->toList());
+    }
+
+    public function testAppendWithoutMessages(): void
+    {
+        $message = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+
+        $store = new InMemoryStore([$message]);
+
+        $store->append([]);
+        $store->append([], new AppendCondition(new Query(), 0));
+
+        self::assertSame([$message], $store->load()->toList());
+    }
+
     public function testAppendAssignsIndex(): void
     {
         $store = new InMemoryStore();
