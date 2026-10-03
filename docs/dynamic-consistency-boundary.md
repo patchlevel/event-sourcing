@@ -94,6 +94,35 @@ A tagged property can also be an array. Each element becomes its own tag, with t
 For example, `#[EventTag(prefix: 'guest')] public readonly array $guestNames` creates a `guest:` tag for every guest.
 :::
 
+If a tag is not stored as a property, you can put `#[EventTag]` on a method without parameters and compute it.
+This is useful for tags that combine several values, like the hotel and the day of a check-in.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Attribute\EventTag;
+use Patchlevel\EventSourcing\Identifier\Uuid;
+
+#[Event('hotel.guest_checked_in')]
+final class GuestIsCheckedIn
+{
+    public function __construct(
+        #[EventTag(prefix: 'hotel')]
+        public readonly Uuid $hotelId,
+        #[EventTag(prefix: 'guest')]
+        public readonly string $guestName,
+        public readonly DateTimeImmutable $checkedInAt,
+    ) {
+    }
+
+    #[EventTag(prefix: 'hotel-day')]
+    public function hotelDay(): string
+    {
+        return $this->hotelId->toString() . '/' . $this->checkedInAt->format('Y-m-d');
+    }
+}
+```
+The method can return the same types as a property, including arrays and `null`.
+
 :::note
 You can find out more about [events](events.md).
 :::
