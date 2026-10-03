@@ -825,6 +825,76 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         self::assertStreamEquals([$message1, $message3], $stream);
     }
 
+    public function testQueryFrom(): void
+    {
+        $profileId1 = ProfileId::generate();
+        $profileId2 = ProfileId::generate();
+
+        $message1 = Message::create(new ProfileCreated($profileId1, 'test'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new TagsHeader(['profile:' . $profileId1->toString()]));
+        $message2 = Message::create(new ProfileCreated($profileId2, 'test'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()]));
+        $message3 = Message::create(new ExternEvent('test message'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new TagsHeader(['profile:' . $profileId1->toString()]));
+
+        $this->store->append([$message1, $message2, $message3]);
+
+        $stream = $this->store->query(
+            new Query(new SubQuery(['profile:' . $profileId1->toString()])),
+            2,
+        );
+
+        self::assertStreamEquals([$message3], $stream);
+    }
+
+    public function testQueryFromIsInclusive(): void
+    {
+        $profileId1 = ProfileId::generate();
+        $profileId2 = ProfileId::generate();
+
+        $message1 = Message::create(new ProfileCreated($profileId1, 'test'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new TagsHeader(['profile:' . $profileId1->toString()]));
+        $message2 = Message::create(new ProfileCreated($profileId2, 'test'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()]));
+
+        $this->store->append([$message1, $message2]);
+
+        self::assertStreamEquals([$message2], $this->store->query(new Query(), 2));
+    }
+
+    public function testQueryFromWithOnlyLastEventBeforeFrom(): void
+    {
+        $profileId1 = ProfileId::generate();
+        $profileId2 = ProfileId::generate();
+
+        $message1 = Message::create(new ProfileCreated($profileId1, 'test'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new TagsHeader(['profile:' . $profileId1->toString()]));
+        $message2 = Message::create(new ProfileCreated($profileId2, 'test'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+            ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()]));
+
+        $this->store->append([$message1, $message2]);
+
+        $stream = $this->store->query(
+            new Query(new SubQuery(['profile:' . $profileId1->toString()], onlyLastEvent: true)),
+            2,
+        );
+
+        self::assertStreamEquals([], $stream);
+    }
+
     public function testComplexQuery(): void
     {
         $profileId1 = ProfileId::generate();

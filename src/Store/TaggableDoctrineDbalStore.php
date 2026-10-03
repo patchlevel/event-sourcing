@@ -522,7 +522,8 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
         });
     }
 
-    public function query(Query $query): Stream
+    /** @param positive-int|0 $from */
+    public function query(Query $query, int $from = 0): Stream
     {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
@@ -530,6 +531,12 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
             ->orderBy('events.id', 'ASC');
 
         $this->queryCondition($builder, $query);
+
+        if ($from > 0) {
+            $builder
+                ->andWhere('events.id >= :queryFrom')
+                ->setParameter('queryFrom', $from);
+        }
 
         return new Stream(
             $this->buildGenerator(

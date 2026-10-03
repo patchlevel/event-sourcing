@@ -43,6 +43,7 @@ use function str_ends_with;
 use function str_starts_with;
 
 use const ARRAY_FILTER_USE_BOTH;
+use const ARRAY_FILTER_USE_KEY;
 
 final class InMemoryStore implements Store, AppendStore
 {
@@ -111,9 +112,14 @@ final class InMemoryStore implements Store, AppendStore
         });
     }
 
-    public function query(Query $query): Stream
+    /** @param positive-int|0 $from */
+    public function query(Query $query, int $from = 0): Stream
     {
-        return new Stream($this->matchQuery($query));
+        return new Stream(array_filter(
+            $this->matchQuery($query),
+            static fn (int $index): bool => $index >= $from,
+            ARRAY_FILTER_USE_KEY,
+        ));
     }
 
     /** @param iterable<Message> $messages */

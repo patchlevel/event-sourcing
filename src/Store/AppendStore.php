@@ -16,5 +16,10 @@ interface AppendStore
         AppendCondition|null $appendCondition = null,
     ): void;
 
-    public function query(Query $query): Stream;
+    /**
+     * Returns all events matching the query, starting at the given index (inclusive).
+     *
+     * @param positive-int|0 $from
+     */
+    public function query(Query $query, int $from = 0): Stream;
 }

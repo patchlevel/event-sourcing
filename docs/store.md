@@ -401,6 +401,40 @@ The stream cannot rewind, so you can only iterate over it once.
 If you want to iterate over it again, you have to call the `load` method again.
 :::
 
+### Query
+
+Stores that implement `AppendStore`, like the `TaggableDoctrineDbalStore` and the `InMemoryStore`,
+can load events by tags and event types with a `Query`.
+This is what the [dynamic consistency boundary](dynamic-consistency-boundary.md) uses to build a decision model.
+
+```php
+use Patchlevel\EventSourcing\Store\AppendStore;
+use Patchlevel\EventSourcing\Store\Query;
+use Patchlevel\EventSourcing\Store\SubQuery;
+
+/** @var AppendStore $store */
+$stream = $store->query(
+    new Query(
+        new SubQuery(['hotel:1'], [GuestIsCheckedIn::class, GuestIsCheckedOut::class]),
+    ),
+);
+```
+A message matches a sub query if it has all of its tags and one of its event types.
+The query returns all messages that match at least one sub query, ordered by their index.
+
+You can pass an index as second argument to only load events from this index onwards (inclusive).
+
+```php
+use Patchlevel\EventSourcing\Store\AppendStore;
+use Patchlevel\EventSourcing\Store\Query;
+use Patchlevel\EventSourcing\Store\SubQuery;
+
+/** @var AppendStore $store */
+$stream = $store->query(
+    new Query(new SubQuery(['hotel:1'])),
+    1000,
+);
+```
 ### Count
 
 You can count the number of events in the store with the `count` method.
