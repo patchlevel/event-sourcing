@@ -89,6 +89,11 @@ final class GuestIsCheckedOut
     }
 }
 ```
+:::tip
+A tagged property can also be an array. Each element becomes its own tag, with the same prefix and hash.
+For example, `#[EventTag(prefix: 'guest')] public readonly array $guestNames` creates a `guest:` tag for every guest.
+:::
+
 :::note
 You can find out more about [events](events.md).
 :::
