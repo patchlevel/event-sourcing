@@ -236,6 +236,42 @@ final class SubQueryTest extends TestCase
             new SubQuery(onlyLastEvent: true),
             true,
         ];
+
+        yield 'only last event with same filters includes only last event' => [
+            new SubQuery(['tag1', 'tag2'], [ProfileCreated::class, ProfileVisited::class], 'foo', true),
+            new SubQuery(['tag2', 'tag1'], [ProfileVisited::class, ProfileCreated::class], 'foo', true),
+            true,
+        ];
+
+        yield 'only last event with fewer tags does not include only last event' => [
+            new SubQuery(['tag1'], onlyLastEvent: true),
+            new SubQuery(['tag1', 'tag2'], onlyLastEvent: true),
+            false,
+        ];
+
+        yield 'only last event with more events does not include only last event' => [
+            new SubQuery(['tag1'], [ProfileCreated::class, ProfileVisited::class], onlyLastEvent: true),
+            new SubQuery(['tag1'], [ProfileCreated::class], onlyLastEvent: true),
+            false,
+        ];
+
+        yield 'only last event with all events does not include only last event' => [
+            new SubQuery(['tag1'], onlyLastEvent: true),
+            new SubQuery(['tag1'], [ProfileCreated::class], onlyLastEvent: true),
+            false,
+        ];
+
+        yield 'only last event without stream name does not include only last event' => [
+            new SubQuery(['tag1'], onlyLastEvent: true),
+            new SubQuery(['tag1'], streamName: 'foo', onlyLastEvent: true),
+            false,
+        ];
+
+        yield 'empty only last event does not include only last event' => [
+            new SubQuery(onlyLastEvent: true),
+            new SubQuery(['tag1'], onlyLastEvent: true),
+            false,
+        ];
     }
 
     /**

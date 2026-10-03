@@ -10,10 +10,12 @@ use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Store\AppendCondition;
 use Patchlevel\EventSourcing\Store\AppendStore;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
+use Patchlevel\EventSourcing\Store\InMemoryStore;
 use Patchlevel\EventSourcing\Store\Query;
 use Patchlevel\EventSourcing\Store\SubQuery;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\IncrementProjection;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\LastEmailProjection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -65,6 +67,29 @@ final class StoreDecisionModelBuilderTest extends TestCase
         self::assertEquals(['counter' => 1], $state->state);
 
         self::assertEquals(new AppendCondition($expectedQuery, 1), $state->appendCondition);
+    }
+
+    public function testOnlyLastEventProjectionsWithOverlappingTags(): void
+    {
+        $store = new InMemoryStore();
+        $store->save(
+            Message::create(new ProfileCreated(ProfileId::fromString('1'), Email::fromString('first@patchlevel.de')))
+                ->withHeader(new TagsHeader(['a', 'b'])),
+            Message::create(new ProfileCreated(ProfileId::fromString('2'), Email::fromString('second@patchlevel.de')))
+                ->withHeader(new TagsHeader(['a'])),
+        );
+
+        $builder = new StoreDecisionModelBuilder($store);
+
+        $state = $builder->build([
+            'a' => new LastEmailProjection(['a']),
+            'ab' => new LastEmailProjection(['a', 'b']),
+        ]);
+
+        self::assertEquals(
+            ['a' => 'second@patchlevel.de', 'ab' => 'first@patchlevel.de'],
+            $state->state,
+        );
     }
 
     public function testEmptyStream(): void
