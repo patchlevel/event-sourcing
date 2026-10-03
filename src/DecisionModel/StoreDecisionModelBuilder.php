@@ -9,6 +9,8 @@ use Patchlevel\EventSourcing\Projection\Projection;
 use Patchlevel\EventSourcing\Store\AppendCondition;
 use Patchlevel\EventSourcing\Store\AppendStore;
 
+use function max;
+
 /** @experimental */
 final class StoreDecisionModelBuilder implements DecisionModelBuilder
 {
@@ -31,7 +33,7 @@ final class StoreDecisionModelBuilder implements DecisionModelBuilder
         $highestId = 0;
 
         foreach ($stream as $message) {
-            $highestId = $stream->index() ?? 0;
+            $highestId = max($highestId, $stream->index() ?? 0);
             $state = $projection->apply($state, $message);
         }
 

@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Store;
 
 use Patchlevel\EventSourcing\Store\AppendCondition;
 use Patchlevel\EventSourcing\Store\AppendConditionNotMet;
+use Patchlevel\EventSourcing\Store\Query;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -14,7 +15,7 @@ final class AppendConditionNotMetTest extends TestCase
 {
     public function testCreate(): void
     {
-        $exception = new AppendConditionNotMet($condition = new AppendCondition());
+        $exception = new AppendConditionNotMet($condition = new AppendCondition(new Query()));
 
         self::assertSame(
             'Append condition not met',

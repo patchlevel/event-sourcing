@@ -847,6 +847,70 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         );
     }
 
+    public function testAppendConditionWithAfterHigherThanLastMatchingEvent(): void
+    {
+        $profileId1 = ProfileId::generate();
+        $profileId2 = ProfileId::generate();
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId1, 'test'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+                ->withHeader(new TagsHeader(['profile:' . $profileId1->toString()])),
+            Message::create(new ProfileCreated($profileId2, 'test'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+                ->withHeader(new TagsHeader(['profile:' . $profileId2->toString()])),
+        ];
+
+        $this->store->append($messages);
+
+        $message = Message::create(new ExternEvent('test message'))
+            ->withHeader(new StreamNameHeader('foo'))
+            ->withHeader(new TagsHeader(['profile:' . $profileId1->toString()]));
+
+        $this->store->append(
+            [$message],
+            new AppendCondition(
+                new Query(new SubQuery(['profile:' . $profileId1->toString()])),
+                2,
+            ),
+        );
+
+        self::assertStreamEquals([...$messages, $message], $this->store->load());
+    }
+
+    public function testAppendConditionWithMatchingEventAfter(): void
+    {
+        $profileId = ProfileId::generate();
+
+        $messages = [
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new RecordedOnHeader(new DateTimeImmutable('2020-01-01 00:00:00')))
+                ->withHeader(new TagsHeader(['profile:' . $profileId->toString()])),
+            Message::create(new ExternEvent('test message'))
+                ->withHeader(new StreamNameHeader('foo'))
+                ->withHeader(new TagsHeader(['profile:' . $profileId->toString()])),
+        ];
+
+        $this->store->append($messages);
+
+        $this->expectException(AppendConditionNotMet::class);
+
+        $this->store->append(
+            [
+                Message::create(new ExternEvent('test message'))
+                    ->withHeader(new StreamNameHeader('foo'))
+                    ->withHeader(new TagsHeader(['profile:' . $profileId->toString()])),
+            ],
+            new AppendCondition(
+                new Query(new SubQuery(['profile:' . $profileId->toString()])),
+                1,
+            ),
+        );
+    }
+
     public function testAppendConditionRejectsEntireBatch(): void
     {
         $profileId1 = ProfileId::generate();
