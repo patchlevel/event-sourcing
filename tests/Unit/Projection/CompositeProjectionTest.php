@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Projection\CompositeProjection;
 use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\Query;
@@ -75,6 +76,29 @@ final class CompositeProjectionTest extends TestCase
         // both should have been incremented by 1
         self::assertSame(1, $newState['x']);
         self::assertSame(11, $newState['y']);
+    }
+
+    public function testApplySkipsMessagesBeforeFrom(): void
+    {
+        $composite = new CompositeProjection(
+            [
+                'x' => new IncrementProjection(0, ['match']),
+                'y' => new IncrementProjection(0, ['match']),
+            ],
+            ['y' => 2],
+        );
+
+        $message = Message::create(new ProfileCreated(
+            ProfileId::fromString('test'),
+            Email::fromString('foo@example.com'),
+        ))
+            ->withHeader(new TagsHeader(['match']));
+
+        $state = $composite->initialState();
+        $state = $composite->apply($state, $message->withHeader(new IndexHeader(1)));
+        $state = $composite->apply($state, $message->withHeader(new IndexHeader(2)));
+
+        self::assertSame(['x' => 2, 'y' => 1], $state);
     }
 
     public function testApplySkipsNonMatchingProjection(): void

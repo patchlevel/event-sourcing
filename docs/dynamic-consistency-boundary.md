@@ -299,6 +299,67 @@ final class GuestAlreadyCheckedIn extends BasicProjection
     }
 }
 ```
+### Checkpoints
+
+Over time, a projection may have to load a lot of events.
+If an event contains the whole state the projection needs, you can mark its apply method with `#[Checkpoint]`.
+The decision model then only loads events from the last of these events onwards,
+looked up with the tags of the projection.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Checkpoint;
+use Patchlevel\EventSourcing\Identifier\Uuid;
+use Patchlevel\EventSourcing\Projection\BasicProjection;
+
+final class NumberOfGuestsInHotel extends BasicProjection
+{
+    public function __construct(
+        private readonly Uuid $hotelId,
+    ) {
+    }
+
+    public function initialState(): int
+    {
+        return 0;
+    }
+
+    /** @return list<string> */
+    protected function tagFilter(): array
+    {
+        return ["hotel:{$this->hotelId->toString()}"];
+    }
+
+    #[Apply]
+    #[Checkpoint]
+    public function applyGuestsCounted(int $state, GuestsCounted $event): int
+    {
+        return $event->numberOfGuests;
+    }
+
+    #[Apply]
+    public function applyGuestIsCheckedIn(int $state, GuestIsCheckedIn $event): int
+    {
+        return $state + 1;
+    }
+
+    #[Apply]
+    public function applyGuestIsCheckedOut(int $state, GuestIsCheckedOut $event): int
+    {
+        return $state - 1;
+    }
+}
+```
+:::note
+A checkpoint only affects the projection that declares it.
+Other projections in the same decision model and subscriptions still get all events they need.
+Nothing is archived and the append condition is the same as without a checkpoint.
+:::
+
+:::tip
+If a projection only ever needs its last event, you can override `lastEventIsEnough()` to return `true` instead.
+:::
+
 ## Define handlers
 
 We’ll implement three command handlers corresponding to our commands.

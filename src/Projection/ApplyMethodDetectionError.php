@@ -80,4 +80,14 @@ final class ApplyMethodDetectionError extends RuntimeException
             ),
         );
     }
+
+    public static function checkpointWithoutApply(string $methodName): self
+    {
+        return new self(
+            sprintf(
+                'The method "%s" has a #[Checkpoint] attribute, but no #[Apply] attribute.',
+                $methodName,
+            ),
+        );
+    }
 }
