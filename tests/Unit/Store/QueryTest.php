@@ -199,6 +199,48 @@ final class QueryTest extends TestCase
             new Query(),
         ];
 
+        yield 'only last event with fewer tags keeps narrower only last event' => [
+            new Query(
+                new SubQuery(['a'], onlyLastEvent: true),
+                new SubQuery(['a', 'b'], onlyLastEvent: true),
+            ),
+            new Query(
+                new SubQuery(['a'], onlyLastEvent: true),
+                new SubQuery(['a', 'b'], onlyLastEvent: true),
+            ),
+        ];
+
+        yield 'only last event with more events keeps narrower only last event' => [
+            new Query(
+                new SubQuery(['a'], [ProfileCreated::class], onlyLastEvent: true),
+                new SubQuery(['a'], [ProfileCreated::class, ProfileVisited::class], onlyLastEvent: true),
+            ),
+            new Query(
+                new SubQuery(['a'], [ProfileCreated::class], onlyLastEvent: true),
+                new SubQuery(['a'], [ProfileCreated::class, ProfileVisited::class], onlyLastEvent: true),
+            ),
+        ];
+
+        yield 'equal only last event subqueries' => [
+            new Query(
+                new SubQuery(['a'], [ProfileCreated::class], onlyLastEvent: true),
+                new SubQuery(['a'], [ProfileCreated::class], onlyLastEvent: true),
+            ),
+            new Query(
+                new SubQuery(['a'], [ProfileCreated::class], onlyLastEvent: true),
+            ),
+        ];
+
+        yield 'full subquery absorbs narrower only last event' => [
+            new Query(
+                new SubQuery(['a']),
+                new SubQuery(['a', 'b'], onlyLastEvent: true),
+            ),
+            new Query(
+                new SubQuery(['a']),
+            ),
+        ];
+
         yield 'empty sub query with only last event' => [
             new Query(
                 new SubQuery(

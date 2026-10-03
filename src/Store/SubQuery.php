@@ -69,7 +69,17 @@ final class SubQuery
             return false;
         }
 
-        return !$this->onlyLastEvent || $other->onlyLastEvent;
+        if (!$this->onlyLastEvent) {
+            return true;
+        }
+
+        // Only the last matching event is loaded. That event is only the last event
+        // of the other query as well, if both queries match exactly the same events.
+        return $other->onlyLastEvent
+            && $this->streamName === $other->streamName
+            && self::isSubset($other->tags, $this->tags)
+            && ($this->events === []) === ($other->events === [])
+            && self::isSubset($this->events, $other->events);
     }
 
     /**
