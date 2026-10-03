@@ -47,7 +47,7 @@ abstract class BasicProjection implements Projection, SubQueryProvider
 
         if (array_key_exists($event::class, $applyMethods)) {
             /* @phpstan-ignore return.type */
-            return $this->{$applyMethods[$event::class]}($state, $event);
+            return $this->{$applyMethods[$event::class]}($state, $event, $message);
         }
 
         return $state;
@@ -82,7 +82,7 @@ abstract class BasicProjection implements Projection, SubQueryProvider
 
         $reflector = new ReflectionClass($this);
 
-        $this->applyMethods = [];
+        $applyMethods = [];
 
         foreach ($reflector->getMethods() as $method) {
             $attributes = $method->getAttributes(Apply::class);
@@ -122,6 +122,8 @@ abstract class BasicProjection implements Projection, SubQueryProvider
                 );
             }
 
+            self::validateMessageParameter($method);
+
             foreach ($eventClasses as $eventClass) {
                 if (!class_exists($eventClass)) {
                     throw ApplyMethodDetectionError::argumentTypeIsNotAClass(
@@ -130,20 +132,39 @@ abstract class BasicProjection implements Projection, SubQueryProvider
                     );
                 }
 
-                if (array_key_exists($eventClass, $this->applyMethods)) {
+                if (array_key_exists($eventClass, $applyMethods)) {
                     throw ApplyMethodDetectionError::duplicateApplyMethod(
                         static::class,
                         $eventClass,
-                        $this->applyMethods[$eventClass],
+                        $applyMethods[$eventClass],
                         $method->getName(),
                     );
                 }
 
-                $this->applyMethods[$eventClass] = $method->getName();
+                $applyMethods[$eventClass] = $method->getName();
             }
         }
 
+        $this->applyMethods = $applyMethods;
+
         return $this->applyMethods;
+    }
+
+    private static function validateMessageParameter(ReflectionMethod $method): void
+    {
+        $parameters = $method->getParameters();
+
+        if (!array_key_exists(2, $parameters)) {
+            return;
+        }
+
+        $type = $parameters[2]->getType();
+
+        if ($type instanceof ReflectionNamedType && $type->getName() === Message::class) {
+            return;
+        }
+
+        throw ApplyMethodDetectionError::messageParameterHasWrongType($method->getName());
     }
 
     /** @return array<string> */

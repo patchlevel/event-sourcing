@@ -89,4 +89,15 @@ final class ApplyMethodDetectionErrorTest extends TestCase
         );
         self::assertSame(0, $exception->getCode());
     }
+
+    public function testMessageParameterHasWrongType(): void
+    {
+        $exception = ApplyMethodDetectionError::messageParameterHasWrongType('applyEvent');
+
+        self::assertSame(
+            'The method "applyEvent" has an #[Apply] attribute, but its third parameter is not of type "Patchlevel\EventSourcing\Message\Message".',
+            $exception->getMessage(),
+        );
+        self::assertSame(0, $exception->getCode());
+    }
 }

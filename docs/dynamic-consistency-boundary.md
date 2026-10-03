@@ -265,6 +265,46 @@ final class GuestAlreadyCheckedIn extends BasicProjection
     }
 }
 ```
+:::tip
+If a projection needs metadata like the time an event was recorded, the apply method can take the `Message` as a third parameter.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Identifier\Uuid;
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Projection\BasicProjection;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+
+final class LastCheckIn extends BasicProjection
+{
+    public function __construct(
+        private readonly Uuid $hotelId,
+    ) {
+    }
+
+    public function initialState(): DateTimeImmutable|null
+    {
+        return null;
+    }
+
+    /** @return list<string> */
+    protected function tagFilter(): array
+    {
+        return ["hotel:{$this->hotelId->toString()}"];
+    }
+
+    #[Apply]
+    public function applyGuestIsCheckedIn(
+        DateTimeImmutable|null $state,
+        GuestIsCheckedIn $event,
+        Message $message,
+    ): DateTimeImmutable {
+        return $message->header(RecordedOnHeader::class)->recordedOn;
+    }
+}
+```
+:::
+
 ## Define handlers
 
 We’ll implement three command handlers corresponding to our commands.

@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
 use Countable;
+use DateTimeImmutable;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Projection\ApplyMethodDetectionError;
 use Patchlevel\EventSourcing\Projection\BasicProjection;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\SubQuery;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
@@ -51,6 +53,71 @@ final class BasicProjectionTest extends TestCase
             $projection->subQuery(),
         );
         self::assertSame($projection->subQuery(), $projection->subQuery());
+    }
+
+    public function testApplyWithMessage(): void
+    {
+        $projection = new class extends BasicProjection {
+            public function initialState(): DateTimeImmutable|null
+            {
+                return null;
+            }
+
+            /** @return list<string> */
+            protected function tagFilter(): array
+            {
+                return ['match'];
+            }
+
+            #[Apply]
+            public function applyProfileCreated(
+                DateTimeImmutable|null $state,
+                ProfileCreated $event,
+                Message $message,
+            ): DateTimeImmutable {
+                return $message->header(RecordedOnHeader::class)->recordedOn;
+            }
+        };
+
+        $recordedOn = new DateTimeImmutable('2020-01-01 00:00:00');
+
+        $state = $projection->apply(
+            null,
+            $this->message(['match'])->withHeader(new RecordedOnHeader($recordedOn)),
+        );
+
+        self::assertSame($recordedOn, $state);
+        self::assertEquals(
+            new SubQuery(['match'], [ProfileCreated::class]),
+            $projection->subQuery(),
+        );
+    }
+
+    public function testMessageParameterWithWrongType(): void
+    {
+        $projection = new class extends BasicProjection {
+            public function initialState(): int
+            {
+                return 0;
+            }
+
+            /** @return list<string> */
+            protected function tagFilter(): array
+            {
+                return [];
+            }
+
+            #[Apply]
+            public function applyProfileCreated(int $state, ProfileCreated $event, DateTimeImmutable $recordedOn): int
+            {
+                return $state;
+            }
+        };
+
+        $this->expectException(ApplyMethodDetectionError::class);
+        $this->expectExceptionMessage('third parameter is not of type');
+
+        $projection->subQuery();
     }
 
     public function testApplyWithNonMatchingMessage(): void
