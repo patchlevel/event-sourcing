@@ -2825,6 +2825,53 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         self::assertSame(null, $stream->position());
     }
 
+    public function testQueryWithFrom(): void
+    {
+        $connection = $this->createMock(Connection::class);
+        $result = $this->createMock(Result::class);
+        $result
+            ->expects($this->once())
+            ->method('iterateAssociative')
+            ->willReturn(new EmptyIterator());
+
+        $connection
+            ->expects($this->once())
+            ->method('executeQuery')
+            ->with(
+                'SELECT * FROM event_store events INNER JOIN (SELECT id FROM (SELECT id FROM event_store WHERE stream = :param1) j GROUP BY j.id) ej ON ej.id = events.id WHERE events.id >= :queryFrom ORDER BY events.id ASC',
+                ['param1' => 'profile-1', 'queryFrom' => 5],
+                $this->isArray(),
+            )
+            ->willReturn($result);
+
+        $connection
+            ->expects($this->exactly(5))
+            ->method('getDatabasePlatform')
+            ->willReturn(new SQLitePlatform());
+        $connection
+            ->expects($this->exactly(3))
+            ->method('createQueryBuilder')
+            ->willReturnCallback(
+                static fn (): QueryBuilder => new QueryBuilder($connection),
+            );
+
+        $eventSerializer = $this->createMock(EventSerializer::class);
+        $eventRegistry = new EventRegistry([]);
+        $headersSerializer = $this->createMock(HeadersSerializer::class);
+
+        $doctrineDbalStore = new TaggableDoctrineDbalStore(
+            $connection,
+            $eventSerializer,
+            $eventRegistry,
+            $headersSerializer,
+        );
+
+        $stream = $doctrineDbalStore->query(new Query(new SubQuery(streamName: 'profile-1')), 5);
+
+        self::assertSame(null, $stream->index());
+        self::assertSame(null, $stream->position());
+    }
+
     public function testQueryWithMultipleSubQueries(): void
     {
         $connection = $this->createMock(Connection::class);
