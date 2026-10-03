@@ -124,11 +124,10 @@ final class InMemoryStore implements Store, AppendStore
             : array_values($messages);
 
         $this->transactional(function () use ($messages, $appendCondition): void {
-            if ($appendCondition instanceof AppendCondition && $appendCondition->highestSequenceNumber !== null) {
+            if ($appendCondition instanceof AppendCondition) {
                 $matched = $this->matchQuery($appendCondition->query);
-                $highestSequenceNumber = $matched === [] ? 0 : array_key_last($matched);
 
-                if ($highestSequenceNumber !== $appendCondition->highestSequenceNumber) {
+                if ($matched !== [] && array_key_last($matched) > $appendCondition->after) {
                     throw new AppendConditionNotMet($appendCondition);
                 }
             }

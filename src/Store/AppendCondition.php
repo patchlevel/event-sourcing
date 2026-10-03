@@ -4,20 +4,19 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Store;
 
-use InvalidArgumentException;
-
-/** @experimental */
+/**
+ * The append fails if the store contains an event matching the query with an index higher than `after`.
+ * `after` is the highest index the caller was aware of while building the decision model.
+ * With `after` 0, no event may match the query at all.
+ *
+ * @experimental
+ */
 final class AppendCondition
 {
+    /** @param positive-int|0 $after */
     public function __construct(
-        public readonly Query $query = new Query(),
-        public readonly int|null $highestSequenceNumber = null,
+        public readonly Query $query,
+        public readonly int $after = 0,
     ) {
-        if ($query->subQueries !== [] && $highestSequenceNumber === null) {
-            throw new InvalidArgumentException(
-                'An AppendCondition with a non-empty query needs a highestSequenceNumber. '
-                . 'Pass 0 to require that no matching event exists yet.',
-            );
-        }
     }
 }

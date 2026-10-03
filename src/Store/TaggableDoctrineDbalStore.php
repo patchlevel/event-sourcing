@@ -482,21 +482,16 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
                 implode(' UNION ALL ', $selects),
             );
 
-            if ($appendCondition instanceof AppendCondition && $appendCondition->highestSequenceNumber !== null) {
+            if ($appendCondition instanceof AppendCondition) {
                 $queryBuilder = $this->connection->createQueryBuilder()
                     ->select('events.id')
                     ->from($this->config['table_name'], 'events')
-                    ->orderBy('events.id', 'DESC')
-                    ->setMaxResults(1);
+                    ->where('events.id > :appendConditionAfter');
 
                 $this->queryCondition($queryBuilder, $appendCondition->query);
 
-                if ($appendCondition->highestSequenceNumber === 0) {
-                    $query .= ' WHERE NOT EXISTS (' . $queryBuilder->getSQL() . ')';
-                } else {
-                    $query .= ' WHERE (' . $queryBuilder->getSQL() . ') = :highestId';
-                    $parameters['highestId'] = $appendCondition->highestSequenceNumber;
-                }
+                $query .= ' WHERE NOT EXISTS (' . $queryBuilder->getSQL() . ')';
+                $parameters['appendConditionAfter'] = $appendCondition->after;
 
                 $parameters = array_merge(
                     $parameters,
@@ -515,7 +510,7 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
                 throw new UniqueConstraintViolation($e);
             }
 
-            if ($affectedRows === 0 && $appendCondition && $appendCondition->highestSequenceNumber !== null) {
+            if ($affectedRows === 0 && $appendCondition instanceof AppendCondition) {
                 throw new AppendConditionNotMet($appendCondition);
             }
 

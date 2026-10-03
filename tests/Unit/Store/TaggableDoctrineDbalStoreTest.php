@@ -2134,7 +2134,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             ->expects($this->once())
             ->method('executeStatement')
             ->with(
-                'INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers) SELECT stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers FROM (SELECT :stream0 AS stream, :playhead0 AS playhead, :event_id0 AS event_id, :event_name0 AS event_name, :event_payload0 AS event_payload, :tags0 AS tags, :recorded_on0 AS recorded_on, :archived0 AS archived, :custom_headers0 AS custom_headers) AS data WHERE (SELECT events.id FROM event_store events INNER JOIN (SELECT id FROM (SELECT id FROM event_store WHERE stream = :param1) j GROUP BY j.id) ej ON ej.id = events.id ORDER BY events.id DESC LIMIT 1) = :highestId',
+                'INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers) SELECT stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers FROM (SELECT :stream0 AS stream, :playhead0 AS playhead, :event_id0 AS event_id, :event_name0 AS event_name, :event_payload0 AS event_payload, :tags0 AS tags, :recorded_on0 AS recorded_on, :archived0 AS archived, :custom_headers0 AS custom_headers) AS data WHERE NOT EXISTS (SELECT events.id FROM event_store events INNER JOIN (SELECT id FROM (SELECT id FROM event_store WHERE stream = :param1) j GROUP BY j.id) ej ON ej.id = events.id WHERE events.id > :appendConditionAfter)',
                 [
                     'stream0' => 'profile-1',
                     'playhead0' => 1,
@@ -2145,7 +2145,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
                     'recorded_on0' => $recordedOn,
                     'archived0' => false,
                     'custom_headers0' => '[]',
-                    'highestId' => 5,
+                    'appendConditionAfter' => 5,
                     'param1' => 'profile-1',
                 ],
                 [
@@ -2220,7 +2220,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             ->expects($this->once())
             ->method('executeStatement')
             ->with(
-                'INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers) SELECT stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers FROM (SELECT :stream0 AS stream, :playhead0 AS playhead, :event_id0 AS event_id, :event_name0 AS event_name, :event_payload0 AS event_payload, :tags0 AS tags, :recorded_on0 AS recorded_on, :archived0 AS archived, :custom_headers0 AS custom_headers) AS data WHERE NOT EXISTS (SELECT events.id FROM event_store events ORDER BY events.id DESC LIMIT 1)',
+                'INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers) SELECT stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers FROM (SELECT :stream0 AS stream, :playhead0 AS playhead, :event_id0 AS event_id, :event_name0 AS event_name, :event_payload0 AS event_payload, :tags0 AS tags, :recorded_on0 AS recorded_on, :archived0 AS archived, :custom_headers0 AS custom_headers) AS data WHERE NOT EXISTS (SELECT events.id FROM event_store events WHERE events.id > :appendConditionAfter)',
                 [
                     'stream0' => 'profile-1',
                     'playhead0' => 1,
@@ -2231,6 +2231,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
                     'recorded_on0' => $recordedOn,
                     'archived0' => false,
                     'custom_headers0' => '[]',
+                    'appendConditionAfter' => 0,
                 ],
                 [
                     'tags0' => Type::getType(Types::JSON),
@@ -2303,7 +2304,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             ->expects($this->once())
             ->method('executeStatement')
             ->with(
-                'INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers) SELECT stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers FROM (SELECT :stream0 AS stream, :playhead0 AS playhead, :event_id0 AS event_id, :event_name0 AS event_name, :event_payload0 AS event_payload, :tags0 AS tags, :recorded_on0 AS recorded_on, :archived0 AS archived, :custom_headers0 AS custom_headers) AS data WHERE (SELECT events.id FROM event_store events ORDER BY events.id DESC LIMIT 1) = :highestId',
+                'INSERT INTO event_store (stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers) SELECT stream, playhead, event_id, event_name, event_payload, tags, recorded_on, archived, custom_headers FROM (SELECT :stream0 AS stream, :playhead0 AS playhead, :event_id0 AS event_id, :event_name0 AS event_name, :event_payload0 AS event_payload, :tags0 AS tags, :recorded_on0 AS recorded_on, :archived0 AS archived, :custom_headers0 AS custom_headers) AS data WHERE NOT EXISTS (SELECT events.id FROM event_store events WHERE events.id > :appendConditionAfter)',
                 [
                     'stream0' => 'profile-1',
                     'playhead0' => 1,
@@ -2314,7 +2315,7 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
                     'recorded_on0' => $recordedOn,
                     'archived0' => false,
                     'custom_headers0' => '[]',
-                    'highestId' => 5,
+                    'appendConditionAfter' => 5,
                 ],
                 [
                     'tags0' => Type::getType(Types::JSON),

@@ -809,6 +809,42 @@ final class InMemoryStoreTest extends TestCase
         self::assertCount(1, iterator_to_array($store->load()));
     }
 
+    public function testAppendWithAfterHigherThanLastMatchingEvent(): void
+    {
+        $message1 = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+        $message2 = $this->message(new ProfileVisited(ProfileId::fromString('2')), 2, ['profile-2']);
+
+        $store = new InMemoryStore([$message1, $message2]);
+
+        $store->append(
+            [
+                (new Message(new ProfileVisited(ProfileId::fromString('3'))))
+                    ->withHeader(new TagsHeader(['profile-1'])),
+            ],
+            new AppendCondition(new Query(new SubQuery(['profile-1'])), 2),
+        );
+
+        self::assertCount(3, iterator_to_array($store->load()));
+    }
+
+    public function testAppendWithMatchingEventAfter(): void
+    {
+        $message1 = $this->message(new ProfileVisited(ProfileId::fromString('1')), 1, ['profile-1']);
+        $message2 = $this->message(new ProfileVisited(ProfileId::fromString('2')), 2, ['profile-1']);
+
+        $store = new InMemoryStore([$message1, $message2]);
+
+        $this->expectException(AppendConditionNotMet::class);
+
+        $store->append(
+            [
+                (new Message(new ProfileVisited(ProfileId::fromString('3'))))
+                    ->withHeader(new TagsHeader(['profile-1'])),
+            ],
+            new AppendCondition(new Query(new SubQuery(['profile-1'])), 1),
+        );
+    }
+
     public function testAppendWithZeroSequenceConditionMet(): void
     {
         $store = new InMemoryStore();

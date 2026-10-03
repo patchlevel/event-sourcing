@@ -304,6 +304,8 @@ final class CreateHotelHandler
 :::note
 Handlers build a Decision Model from the projections and then append events with an optimistic AppendCondition.
 If any relevant event arrives between read and write, the append fails and you can retry.
+The AppendCondition contains the query of the Decision Model and the index of the last event it has seen as `after`.
+The append fails if an event matching the query exists with a higher index than `after`.
 :::
 
 :::tip
