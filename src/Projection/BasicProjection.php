@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\SplitStream;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\SubQuery;
 use ReflectionClass;
@@ -13,10 +14,12 @@ use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionUnionType;
 
+use function array_filter;
 use function array_key_exists;
 use function array_keys;
 use function array_map;
 use function array_merge;
+use function array_values;
 use function class_exists;
 
 /**
@@ -24,7 +27,7 @@ use function class_exists;
  * @template S = mixed
  * @implements Projection<S>
  */
-abstract class BasicProjection implements Projection, SubQueryProvider
+abstract class BasicProjection implements Projection, SubQueryProvider, SplitStreamProvider
 {
     /** @var array<class-string, string>|null $applyMethods */
     private array|null $applyMethods = null;
@@ -65,6 +68,15 @@ abstract class BasicProjection implements Projection, SubQueryProvider
         }
 
         return $this->subQuery;
+    }
+
+    /** @return list<class-string> */
+    public function splitEvents(): array
+    {
+        return array_values(array_filter(
+            $this->eventTypeFilter(),
+            static fn (string $eventClass): bool => (new ReflectionClass($eventClass))->getAttributes(SplitStream::class) !== [],
+        ));
     }
 
     /** @return list<class-string> */

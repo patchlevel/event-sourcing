@@ -12,9 +12,12 @@ use Patchlevel\EventSourcing\Projection\BasicProjection;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\SubQuery;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\IncrementProjection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\VisitsProjection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Stringable;
@@ -51,6 +54,20 @@ final class BasicProjectionTest extends TestCase
             $projection->subQuery(),
         );
         self::assertSame($projection->subQuery(), $projection->subQuery());
+    }
+
+    public function testSplitEvents(): void
+    {
+        $projection = new VisitsProjection([]);
+
+        self::assertSame([SplittingEvent::class], $projection->splitEvents());
+    }
+
+    public function testNoSplitEvents(): void
+    {
+        $projection = new IncrementProjection(0);
+
+        self::assertSame([], $projection->splitEvents());
     }
 
     public function testApplyWithNonMatchingMessage(): void

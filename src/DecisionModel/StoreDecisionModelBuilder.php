@@ -6,10 +6,12 @@ namespace Patchlevel\EventSourcing\DecisionModel;
 
 use Patchlevel\EventSourcing\Projection\CompositeProjection;
 use Patchlevel\EventSourcing\Projection\Projection;
+use Patchlevel\EventSourcing\Projection\SplitStreamPositions;
 use Patchlevel\EventSourcing\Store\AppendCondition;
 use Patchlevel\EventSourcing\Store\AppendStore;
 
 use function max;
+use function min;
 
 /** @experimental */
 final class StoreDecisionModelBuilder implements DecisionModelBuilder
@@ -23,10 +25,11 @@ final class StoreDecisionModelBuilder implements DecisionModelBuilder
     public function build(
         array $projections,
     ): DecisionModel {
-        $projection = new CompositeProjection($projections);
+        $from = SplitStreamPositions::resolve($this->store, $projections);
+        $projection = new CompositeProjection($projections, $from);
 
         $query = $projection->query();
-        $stream = $this->store->query($query);
+        $stream = $this->store->query($query, $from === [] ? 0 : min($from));
 
         $state = $projection->initialState();
 
