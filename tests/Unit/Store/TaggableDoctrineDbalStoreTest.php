@@ -1238,9 +1238,8 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             ->willReturn(0);
 
         $connection
-            ->expects($this->once())
-            ->method('transactional')
-            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+            ->expects($this->never())
+            ->method('transactional');
 
         $eventSerializer = $this->createMock(EventSerializer::class);
         $eventRegistry = new EventRegistry([]);
@@ -1284,9 +1283,8 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             ->willReturn(null);
 
         $connection
-            ->expects($this->once())
-            ->method('transactional')
-            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+            ->expects($this->never())
+            ->method('transactional');
 
         $eventSerializer = $this->createMock(EventSerializer::class);
         $eventRegistry = new EventRegistry([]);
@@ -4780,7 +4778,16 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
             $headersSerializer,
         );
 
+        $connection
+            ->expects($this->once())
+            ->method('getParams')
+            ->willReturn(['dbname' => 'db']);
+
         $differentConnection = $this->createMock(Connection::class);
+        $differentConnection
+            ->expects($this->once())
+            ->method('getParams')
+            ->willReturn(['dbname' => 'db2']);
 
         $schema = new Schema();
         $doctrineDbalStore->configureSchema($schema, $differentConnection);
