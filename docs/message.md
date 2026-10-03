@@ -76,7 +76,7 @@ $message->header(EventIdHeader::class)->eventId; // 'a4a4a4a4-4a4a-...'
 ```
 :::warning
 The `PlayheadHeader` is only added if the stream is playhead based.
-Streams that are written without a playhead, for example custom streams,
+Streams that are written without a playhead, for example [custom streams](store.md#custom-streams),
 do not have this header. Use `hasHeader` before you access it.
 :::
 
@@ -122,6 +122,30 @@ use Patchlevel\EventSourcing\Message\Message;
 /** @var Message $message */
 $message->header(ApplicationHeader::class);
 ```
+### Alias
+
+You can also define aliases for headers.
+This can be useful when you want to rename a header but still need to read the messages with the old name.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Header;
+
+#[Header('app', aliases: ['application'])]
+class ApplicationHeader
+{
+    public function __construct(
+        private readonly string $id,
+    ) {
+    }
+}
+```
+When saving, the name will always be used. However, when loading, aliases will also be taken into account.
+
+:::note
+An alias must not be used as a header name or as an alias of another header.
+Otherwise a `HeaderAlreadyInRegistry` exception is thrown.
+:::
+
 ## Missing headers
 
 When a message is deserialized, every header name is resolved to its registered header class.

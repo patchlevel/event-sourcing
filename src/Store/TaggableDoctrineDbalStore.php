@@ -28,6 +28,7 @@ use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
+use Patchlevel\EventSourcing\Schema\DoctrineHelper;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
 use Patchlevel\EventSourcing\Serializer\SerializedEvent;
@@ -250,7 +251,7 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
                     break;
                 case EventIdCriterion::class:
                     $builder->andWhere('event_id = :event_id');
-                    $builder->setParameter('event_id', $criterion->eventId, ArrayParameterType::STRING);
+                    $builder->setParameter('event_id', $criterion->eventId);
                     break;
                 case TagCriterion::class:
                     if ($this->isSQLite) {
@@ -551,16 +552,32 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
     {
         if ($this->hasLock || !$this->config['locking']) {
             $this->connection->transactional($function);
-        } else {
-            $this->connection->transactional(function () use ($function): void {
-                $this->lock();
-                try {
-                    $function();
-                } finally {
-                    $this->unlock();
-                }
-            });
+
+            return;
         }
+
+        if ($this->isMariaDb || $this->isMysql) {
+            // GET_LOCK is bound to the session, not the transaction. It must be released after the commit,
+            // otherwise other writers can commit before this transaction is visible.
+            $this->lock();
+
+            try {
+                $this->connection->transactional($function);
+            } finally {
+                $this->unlock();
+            }
+
+            return;
+        }
+
+        $this->connection->transactional(function () use ($function): void {
+            $this->lock();
+            try {
+                $function();
+            } finally {
+                $this->unlock();
+            }
+        });
     }
 
     /** @return list<string> */
@@ -605,7 +622,7 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
 
     public function configureSchema(Schema $schema, Connection $connection): void
     {
-        if ($this->connection !== $connection) {
+        if (!DoctrineHelper::sameDatabase($this->connection, $connection)) {
             return;
         }
 
@@ -764,8 +781,6 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
 
     private function lock(): void
     {
-        $this->hasLock = true;
-
         if ($this->isPostgres) {
             $this->connection->executeStatement(
                 sprintf(
@@ -773,6 +788,8 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
                     $this->config['lock_id'],
                 ),
             );
+
+            $this->hasLock = true;
 
             return;
         }
@@ -800,10 +817,14 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
                 throw LockCouldNotBeAcquired::byError($this->config['lock_id']);
             }
 
+            $this->hasLock = true;
+
             return;
         }
 
         if ($this->isSQLite) {
+            $this->hasLock = true;
+
             return; // sql locking is not needed because of file locking
         }
 

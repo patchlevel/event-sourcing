@@ -7,6 +7,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Cryptography;
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
+use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
@@ -75,8 +77,14 @@ final class DoctrineCipherKeyStoreTest extends TestCase
         $connection = $this->createMock(Connection::class);
         $connection
             ->expects($this->once())
+            ->method('createQueryBuilder')
+            ->willReturnCallback(
+                static fn (): QueryBuilder => new QueryBuilder($connection),
+            );
+        $result = $this->createMock(Result::class);
+        $result
+            ->expects($this->once())
             ->method('fetchAssociative')
-            ->with('SELECT * FROM cryptography_keys WHERE subject_id = :subject_id', ['subject_id' => 'profile-1'])
             ->willReturn([
                 'id' => 'foo',
                 'subject_id' => 'profile-1',
@@ -86,6 +94,15 @@ final class DoctrineCipherKeyStoreTest extends TestCase
             ]);
         $connection
             ->expects($this->once())
+            ->method('executeQuery')
+            ->with(
+                'SELECT * FROM cryptography_keys WHERE subject_id = :subject_id ORDER BY created_at DESC, id DESC LIMIT 1',
+                ['subject_id' => 'profile-1'],
+                $this->isArray(),
+            )
+            ->willReturn($result);
+        $connection
+            ->expects($this->exactly(2))
             ->method('getDatabasePlatform')
             ->willReturn(new SQLitePlatform());
 
@@ -108,9 +125,27 @@ final class DoctrineCipherKeyStoreTest extends TestCase
         $connection = $this->createMock(Connection::class);
         $connection
             ->expects($this->once())
+            ->method('createQueryBuilder')
+            ->willReturnCallback(
+                static fn (): QueryBuilder => new QueryBuilder($connection),
+            );
+        $result = $this->createMock(Result::class);
+        $result
+            ->expects($this->once())
             ->method('fetchAssociative')
-            ->with('SELECT * FROM cryptography_keys WHERE subject_id = :subject_id', ['subject_id' => 'profile-1'])
             ->willReturn(false);
+        $connection
+            ->expects($this->once())
+            ->method('executeQuery')
+            ->with(
+                'SELECT * FROM cryptography_keys WHERE subject_id = :subject_id ORDER BY created_at DESC, id DESC LIMIT 1',
+                ['subject_id' => 'profile-1'],
+                $this->isArray(),
+            )
+            ->willReturn($result);
+        $connection
+            ->method('getDatabasePlatform')
+            ->willReturn(new SQLitePlatform());
 
         $store = new DoctrineCipherKeyStore($connection);
 

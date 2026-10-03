@@ -71,11 +71,7 @@ final class GapResolverStoreMessageLoader implements MessageLoader
                 }
             }
 
-            if ($expectedNextIndex === null) {
-                $expectedNextIndex = $currentIndex + 1;
-            } else {
-                $expectedNextIndex++;
-            }
+            $expectedNextIndex = $currentIndex + 1;
 
             $retry = 0;
 

@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Store\ArchivedHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\Header\FooHeader;
 use Patchlevel\Hydrator\CoreExtension;
 use Patchlevel\Hydrator\Extension\Upcast\CallbackUpcaster;
 use Patchlevel\Hydrator\Extension\Upcast\UpcastExtension;
@@ -229,5 +230,21 @@ final class DefaultHeadersSerializerTest extends TestCase
             [new PlayheadHeader(42)],
             $serializer->deserialize('{"playhead":{"playhead":1}}'),
         );
+    }
+
+    public function testDeserializeAliasAndSerializeWithHeaderName(): void
+    {
+        $serializer = new DefaultHeadersSerializer(
+            (new AttributeMessageHeaderRegistryFactory())->create([
+                __DIR__ . '/../../Fixture',
+            ]),
+            new StackHydrator(),
+            new JsonEncoder(),
+        );
+
+        $headers = $serializer->deserialize('{"legacyFoo":{"data":"bar"}}');
+
+        self::assertEquals([new FooHeader('bar')], $headers);
+        self::assertSame('{"foo":{"data":"bar"}}', $serializer->serialize($headers));
     }
 }

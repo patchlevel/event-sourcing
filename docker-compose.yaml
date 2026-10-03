@@ -19,7 +19,7 @@ services:
       - 5432:5432
 
   mysql:
-    image: mysql:8
+    image: mysql:26
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD="yes"
       - MYSQL_DATABASE=eventstore
@@ -27,7 +27,7 @@ services:
       - 3306:3306
 
   mariadb:
-    image: mariadb:12
+    image: mariadb:13
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD="yes"
       - MYSQL_DATABASE=eventstore

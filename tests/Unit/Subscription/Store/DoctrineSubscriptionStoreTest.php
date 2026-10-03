@@ -450,6 +450,20 @@ final class DoctrineSubscriptionStoreTest extends TestCase
             ->expects($this->once())
             ->method('update')
             ->willReturn(0);
+        $connection
+            ->method('getDatabasePlatform')
+            ->willReturn(new SQLitePlatform());
+        $connection
+            ->expects($this->once())
+            ->method('createQueryBuilder')
+            ->willReturnCallback(
+                static fn (): QueryBuilder => new QueryBuilder($connection),
+            );
+        $connection
+            ->expects($this->once())
+            ->method('fetchOne')
+            ->with('SELECT 1 FROM subscriptions WHERE id = :id', ['id' => 'foo'])
+            ->willReturn(false);
 
         $store = new DoctrineSubscriptionStore($connection, $clock);
 

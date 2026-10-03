@@ -16,6 +16,26 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(MessageHeaderRegistry::class)]
 final class MessageHeaderRegistryTest extends TestCase
 {
+    public function testMappingWithAliases(): void
+    {
+        $registry = new MessageHeaderRegistry([
+            'foo' => FooHeader::class,
+            'legacyFoo' => FooHeader::class,
+        ]);
+
+        self::assertTrue($registry->hasHeaderClass(FooHeader::class));
+        self::assertTrue($registry->hasHeaderName('foo'));
+        self::assertTrue($registry->hasHeaderName('legacyFoo'));
+        self::assertSame('foo', $registry->headerName(FooHeader::class));
+        self::assertSame(FooHeader::class, $registry->headerClass('foo'));
+        self::assertSame(FooHeader::class, $registry->headerClass('legacyFoo'));
+        self::assertSame([
+            'foo' => FooHeader::class,
+            'legacyFoo' => FooHeader::class,
+        ], $registry->headerClasses());
+        self::assertSame([FooHeader::class => 'foo'], $registry->headerNames());
+    }
+
     public function testHeaderName(): void
     {
         $registry = new MessageHeaderRegistry(['foo' => FooHeader::class]);

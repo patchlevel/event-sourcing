@@ -222,7 +222,7 @@ final class StreamDoctrineDbalStore implements Store, ListenableStore, DoctrineS
                     break;
                 case EventIdCriterion::class:
                     $builder->andWhere('event_id = :event_id');
-                    $builder->setParameter('event_id', $criterion->eventId, ArrayParameterType::STRING);
+                    $builder->setParameter('event_id', $criterion->eventId);
                     break;
                 default:
                     throw new UnsupportedCriterion($criterion::class);
@@ -361,16 +361,34 @@ final class StreamDoctrineDbalStore implements Store, ListenableStore, DoctrineS
     {
         if ($this->hasLock || !$this->config['locking']) {
             $this->connection->transactional($function);
-        } else {
-            $this->connection->transactional(function () use ($function): void {
-                $this->lock();
-                try {
-                    $function();
-                } finally {
-                    $this->unlock();
-                }
-            });
+
+            return;
         }
+
+        $platform = $this->connection->getDatabasePlatform();
+
+        if ($platform instanceof MariaDBPlatform || $platform instanceof MySQLPlatform) {
+            // GET_LOCK is bound to the session, not the transaction. It must be released after the commit,
+            // otherwise other writers can commit before this transaction is visible.
+            $this->lock();
+
+            try {
+                $this->connection->transactional($function);
+            } finally {
+                $this->unlock();
+            }
+
+            return;
+        }
+
+        $this->connection->transactional(function () use ($function): void {
+            $this->lock();
+            try {
+                $function();
+            } finally {
+                $this->unlock();
+            }
+        });
     }
 
     /** @return list<string> */
@@ -564,8 +582,6 @@ final class StreamDoctrineDbalStore implements Store, ListenableStore, DoctrineS
 
     private function lock(): void
     {
-        $this->hasLock = true;
-
         $platform = $this->connection->getDatabasePlatform();
 
         if ($platform instanceof PostgreSQLPlatform) {
@@ -575,6 +591,8 @@ final class StreamDoctrineDbalStore implements Store, ListenableStore, DoctrineS
                     $this->config['lock_id'],
                 ),
             );
+
+            $this->hasLock = true;
 
             return;
         }
@@ -602,10 +620,14 @@ final class StreamDoctrineDbalStore implements Store, ListenableStore, DoctrineS
                 throw LockCouldNotBeAcquired::byError($this->config['lock_id']);
             }
 
+            $this->hasLock = true;
+
             return;
         }
 
         if ($platform instanceof SQLitePlatform) {
+            $this->hasLock = true;
+
             return; // sql locking is not needed because of file locking
         }
 

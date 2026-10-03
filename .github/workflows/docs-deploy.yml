@@ -4,15 +4,64 @@ on:
   push:
     branches:
       - "[0-9]+.[0-9]+.x"
+    paths:
+      - "docs/**"
   release:
     types:
       - published
+
+permissions:
+  contents: read
 
 jobs:
   trigger:
     runs-on: ubuntu-latest
     steps:
+      - name: Check whether this ref belongs to the latest release of its major version
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          if [ "$EVENT_NAME" = "release" ]; then
+            current="$RELEASE_TAG"
+          else
+            current="$REF_NAME"
+          fi
+
+          major="${current%%.*}"
+
+          latest_tag=$(gh release list \
+              --repo "$GITHUB_REPOSITORY" \
+              --exclude-drafts \
+              --exclude-pre-releases \
+              --limit 1000 \
+              --json tagName \
+              --jq '.[].tagName' \
+            | grep -E "^${major}\.[0-9]+\.[0-9]+$" \
+            | sort -V \
+            | tail -n1)
+          latest_branch="${latest_tag%.*}.x"
+
+          if [ "$EVENT_NAME" = "release" ]; then
+            expected="$latest_tag"
+          else
+            expected="$latest_branch"
+          fi
+
+          echo "latest release of ${major}.x: ${latest_tag:-none} (branch ${latest_branch}), current: ${current}"
+
+          if [ -n "$latest_tag" ] && [ "$current" = "$expected" ]; then
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping docs deployment: ${current} is not the latest release of ${major}.x."
+          fi
+
       - name: Trigger workflow in other repo
+        if: steps.check.outputs.deploy == 'true'
         run: |
           curl -L -X POST \
             -H "Accept: application/vnd.github+json" \

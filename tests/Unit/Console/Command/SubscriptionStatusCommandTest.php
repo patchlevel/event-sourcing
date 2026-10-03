@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Console\Command;
 
 use Patchlevel\EventSourcing\Console\Command\SubscriptionStatusCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
@@ -25,6 +26,7 @@ final class SubscriptionStatusCommandTest extends TestCase
         $engine
             ->expects($this->once())
             ->method('subscriptions')
+            ->with(new SubscriptionEngineCriteria())
             ->willReturn([
                 new Subscription('foo'),
                 new Subscription('bar', 'other', RunMode::Once, Status::Active, 42),
@@ -42,12 +44,37 @@ final class SubscriptionStatusCommandTest extends TestCase
         self::assertStringContainsString('42', $display);
     }
 
+    public function testStatusListFiltered(): void
+    {
+        $engine = $this->createMock(SubscriptionEngine::class);
+        $engine
+            ->expects($this->once())
+            ->method('subscriptions')
+            ->with(new SubscriptionEngineCriteria(['foo', 'bar'], ['projector']))
+            ->willReturn([
+                new Subscription('foo', 'projector', RunMode::FromBeginning, Status::Active, 42),
+            ]);
+
+        $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
+        $commandTester->execute([
+            '--id' => ['foo', 'bar'],
+            '--group' => ['projector'],
+        ]);
+
+        $display = $commandTester->getDisplay();
+
+        self::assertSame(0, $commandTester->getStatusCode());
+        self::assertStringContainsString('foo', $display);
+        self::assertStringContainsString('projector', $display);
+    }
+
     public function testStatusDetail(): void
     {
         $engine = $this->createMock(SubscriptionEngine::class);
         $engine
             ->expects($this->once())
             ->method('subscriptions')
+            ->with(new SubscriptionEngineCriteria(['foo']))
             ->willReturn([
                 new Subscription('foo', 'default', RunMode::FromBeginning, Status::Active, 42),
             ]);
@@ -69,6 +96,7 @@ final class SubscriptionStatusCommandTest extends TestCase
         $engine
             ->expects($this->once())
             ->method('subscriptions')
+            ->with(new SubscriptionEngineCriteria(['foo']))
             ->willReturn([
                 new Subscription(
                     'foo',
@@ -100,7 +128,8 @@ final class SubscriptionStatusCommandTest extends TestCase
         $engine
             ->expects($this->once())
             ->method('subscriptions')
-            ->willReturn([new Subscription('foo')]);
+            ->with(new SubscriptionEngineCriteria(['bar']))
+            ->willReturn([]);
 
         $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
 
