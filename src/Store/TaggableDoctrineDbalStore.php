@@ -468,6 +468,10 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
                 $position++;
             }
 
+            if ($selects === []) {
+                return;
+            }
+
             // The rows are wrapped in a derived table so that the append condition
             // below applies to the whole batch. Appending it straight after a
             // `UNION ALL` chain would bind it to the last SELECT only, letting every
@@ -877,15 +881,17 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
             return;
         }
 
+        foreach ($query->subQueries as $subQuery) {
+            if ($subQuery->empty() && !$subQuery->onlyLastEvent) {
+                return; // an empty sub query matches all events, same as SubQuery::match()
+            }
+        }
+
         $subqueries = [];
 
         $uniqueParameterGenerator = $this->uniqueParameterGenerator();
 
         foreach ($query->subQueries as $subQuery) {
-            if ($subQuery->empty()) {
-                continue;
-            }
-
             $subQueryBuilder = $this->connection->createQueryBuilder()
                 ->select('id')
                 ->from($this->config['table_name']);
@@ -933,10 +939,6 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
             }
 
             $subqueries[] = $subQueryBuilder->getSQL();
-        }
-
-        if ($subqueries === []) {
-            return;
         }
 
         $joinQueryBuilder = $this->connection->createQueryBuilder()
