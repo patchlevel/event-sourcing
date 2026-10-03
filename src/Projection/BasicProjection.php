@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Checkpoint;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\SubQuery;
 use ReflectionClass;
@@ -24,7 +25,7 @@ use function class_exists;
  * @template S = mixed
  * @implements Projection<S>
  */
-abstract class BasicProjection implements Projection, SubQueryProvider
+abstract class BasicProjection implements Projection, SubQueryProvider, CheckpointProvider
 {
     /** @var array<class-string, string>|null $applyMethods */
     private array|null $applyMethods = null;
@@ -68,6 +69,22 @@ abstract class BasicProjection implements Projection, SubQueryProvider
     }
 
     /** @return list<class-string> */
+    public function checkpointEvents(): array
+    {
+        $checkpointEvents = [];
+
+        foreach ($this->applyMethods() as $eventClass => $methodName) {
+            if ((new ReflectionMethod($this, $methodName))->getAttributes(Checkpoint::class) === []) {
+                continue;
+            }
+
+            $checkpointEvents[] = $eventClass;
+        }
+
+        return $checkpointEvents;
+    }
+
+    /** @return list<class-string> */
     protected function eventTypeFilter(): array
     {
         return array_keys($this->applyMethods());
@@ -88,6 +105,10 @@ abstract class BasicProjection implements Projection, SubQueryProvider
             $attributes = $method->getAttributes(Apply::class);
 
             if ($attributes === []) {
+                if ($method->getAttributes(Checkpoint::class) !== []) {
+                    throw ApplyMethodDetectionError::checkpointWithoutApply($method->getName());
+                }
+
                 continue;
             }
 

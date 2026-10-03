@@ -89,4 +89,15 @@ final class ApplyMethodDetectionErrorTest extends TestCase
         );
         self::assertSame(0, $exception->getCode());
     }
+
+    public function testCheckpointWithoutApply(): void
+    {
+        $exception = ApplyMethodDetectionError::checkpointWithoutApply('applyEvent');
+
+        self::assertSame(
+            'The method "applyEvent" has a #[Checkpoint] attribute, but no #[Apply] attribute.',
+            $exception->getMessage(),
+        );
+        self::assertSame(0, $exception->getCode());
+    }
 }
