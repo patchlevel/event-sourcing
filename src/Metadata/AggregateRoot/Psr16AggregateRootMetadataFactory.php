@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Metadata\AggregateRoot;
 
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
+use Patchlevel\EventSourcing\Metadata\CacheKey;
 use Psr\SimpleCache\CacheInterface;
 
 final class Psr16AggregateRootMetadataFactory implements AggregateRootMetadataFactory
@@ -24,16 +25,15 @@ final class Psr16AggregateRootMetadataFactory implements AggregateRootMetadataFa
      */
     public function metadata(string $aggregate): AggregateRootMetadata
     {
-        /** @var ?AggregateRootMetadata<T> $metadata */
-        $metadata = $this->cache->get($aggregate);
+        $metadata = $this->cache->get(CacheKey::forAggregateRoot($aggregate));
 
-        if ($metadata !== null) {
+        if ($metadata instanceof AggregateRootMetadata && $metadata->className === $aggregate) {
             return $metadata;
         }
 
         $metadata = $this->aggregateRootMetadataFactory->metadata($aggregate);
 
-        $this->cache->set($aggregate, $metadata);
+        $this->cache->set(CacheKey::forAggregateRoot($aggregate), $metadata);
 
         return $metadata;
     }
