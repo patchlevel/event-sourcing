@@ -62,22 +62,26 @@ final class ConfigurationNormalizer
         return ['kind' => 'toggle', 'enabled' => $enabled, 'children' => $children];
     }
 
-    /** @return Node */
-    public static function bool(bool|null $default): array
+    /**
+     * Without a default, the value is optional and null is allowed, unless nullable is set to false.
+     *
+     * @return Node
+     */
+    public static function bool(bool|null $default, bool|null $nullable = null): array
     {
-        return ['kind' => 'bool', 'default' => $default];
+        return ['kind' => 'bool', 'default' => $default, 'nullable' => $nullable ?? $default === null];
     }
 
     /** @return Node */
-    public static function int(int|null $default, int|null $min = null): array
+    public static function int(int|null $default, int|null $min = null, bool|null $nullable = null): array
     {
-        return ['kind' => 'int', 'default' => $default, 'min' => $min];
+        return ['kind' => 'int', 'default' => $default, 'min' => $min, 'nullable' => $nullable ?? $default === null];
     }
 
     /** @return Node */
-    public static function float(float|null $default): array
+    public static function float(float|null $default, bool|null $nullable = null): array
     {
-        return ['kind' => 'float', 'default' => $default];
+        return ['kind' => 'float', 'default' => $default, 'nullable' => $nullable ?? $default === null];
     }
 
     /** @return Node */
@@ -178,6 +182,30 @@ final class ConfigurationNormalizer
         return ['kind' => 'variable', 'default' => null];
     }
 
+    /**
+     * Gives the node its own type alias in the generated configuration shape.
+     *
+     * @param Node $node
+     *
+     * @return Node
+     */
+    public static function named(string $name, array $node): array
+    {
+        return [...$node, 'name' => $name];
+    }
+
+    /**
+     * Overrides the type of the node in the generated configuration shape, for types the node can not express.
+     *
+     * @param Node $node
+     *
+     * @return Node
+     */
+    public static function typed(string $type, array $node): array
+    {
+        return [...$node, 'type' => $type];
+    }
+
     /** @param Node $node */
     private static function normalizeNode(array $node, mixed $value, bool $present, string $path): mixed
     {
@@ -188,9 +216,9 @@ final class ConfigurationNormalizer
         return match ($node['kind']) {
             'struct' => self::normalizeStruct($node, $present ? $value : [], $path),
             'toggle' => self::normalizeToggle($node, $value, $present, $path),
-            'bool' => $present ? self::assertType($value, 'bool', is_bool($value) || ($value === null && $node['default'] === null), $path) : $node['default'],
+            'bool' => $present ? self::assertType($value, 'bool', is_bool($value) || ($value === null && $node['nullable'] === true), $path) : $node['default'],
             'int' => $present ? self::normalizeInt($node, $value, $path) : $node['default'],
-            'float' => $present ? self::normalizeFloat($value, $path) : $node['default'],
+            'float' => $present ? self::normalizeFloat($node, $value, $path) : $node['default'],
             'string' => $present ? self::normalizeString($node, $value, $path) : $node['default'],
             'enum' => $present ? self::normalizeEnum($node, $value, $path) : $node['default'],
             'list' => $present ? self::normalizeList($node, $value, $path) : $node['default'],
@@ -287,7 +315,7 @@ final class ConfigurationNormalizer
     /** @param Node $node */
     private static function normalizeInt(array $node, mixed $value, string $path): int|null
     {
-        if ($value === null && $node['default'] === null) {
+        if ($value === null && $node['nullable'] === true) {
             return null;
         }
 
@@ -307,9 +335,14 @@ final class ConfigurationNormalizer
         return $value;
     }
 
-    private static function normalizeFloat(mixed $value, string $path): float|null
+    /** @param Node $node */
+    private static function normalizeFloat(array $node, mixed $value, string $path): float|null
     {
-        if ($value === null || is_float($value)) {
+        if ($value === null && $node['nullable'] === true) {
+            return null;
+        }
+
+        if (is_float($value)) {
             return $value;
         }
 

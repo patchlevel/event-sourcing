@@ -79,6 +79,10 @@ benchmark-diff-test: benchmark-base benchmark-diff                              
 .PHONY: dev
 dev: static test                                                                ## run dev tools
 
+.PHONY: config-shape
+config-shape: vendor                                                           ## generate the array shapes of the container configuration
+	bin/generate-config-shape
+
 .PHONY: docs-extract-php
 docs-extract-php:
 	bin/docs-extract-php-code

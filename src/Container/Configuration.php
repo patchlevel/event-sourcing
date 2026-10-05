@@ -29,6 +29,8 @@ use function sprintf;
  * accept objects as well as service ids, which are resolved from the container or the external container.
  * Sections with an "enabled" key can also be configured with a bool as shorthand.
  *
+ * The array shapes are generated from the tree, run "make config-shape" after changing it.
+ *
  * @phpstan-type StoreType 'dbal_stream'|'dbal_taggable'|'in_memory'|'custom'
  * @phpstan-type StoreOptions array{
  *     table_name?: string,
@@ -38,10 +40,19 @@ use function sprintf;
  *     keep_index?: bool,
  *     default_stream_name?: string,
  * }
- * @phpstan-type RetryStrategyOptions array{base_delay?: int, delay_factor?: float, max_attempts?: positive-int}
  * @phpstan-type SnapshotStoreDefinition array{type?: 'psr6'|'psr16'|'custom', service: string}
+ * @phpstan-type NormalizedSnapshotStoreDefinition array{type: 'psr6'|'psr16'|'custom', service: string}
+ * @phpstan-type RetryStrategyOptions array{
+ *     base_delay?: int<0, max>,
+ *     delay_factor?: float,
+ *     max_attempts?: positive-int,
+ * }
  * @phpstan-type Config array{
- *     connection?: array{url?: string|null, service?: string|null, provide_dedicated_connection?: bool},
+ *     connection?: array{
+ *         url?: string|null,
+ *         service?: string|null,
+ *         provide_dedicated_connection?: bool,
+ *     },
  *     store?: array{
  *         type?: StoreType,
  *         service?: string|null,
@@ -113,18 +124,29 @@ use function sprintf;
  *     dcb?: bool|array{enabled?: bool},
  *     hydrator?: array{
  *         default_lazy?: bool,
- *         cryptography?: bool|array{enabled?: bool, algorithm?: non-empty-string, cipher_key_store?: string|null},
+ *         cryptography?: bool|array{
+ *             enabled?: bool,
+ *             algorithm?: non-empty-string,
+ *             cipher_key_store?: string|null,
+ *         },
  *         lifecycle?: bool|array{enabled?: bool},
  *         extensions?: list<Extension|string>,
  *         guessers?: list<Guesser|string>,
- *         upcasters?: array{before_encoding?: list<Upcaster|string>, before_transform?: list<Upcaster|string>},
+ *         upcasters?: array{
+ *             before_encoding?: list<Upcaster|string>,
+ *             before_transform?: list<Upcaster|string>,
+ *         },
  *     },
  *     message_decorators?: list<MessageDecorator|string>,
  *     services?: array<string, object|Closure(Container): object>,
  *     parameters?: array<string, mixed>,
  * }
  * @phpstan-type NormalizedConfig array{
- *     connection: array{url: string|null, service: string|null, provide_dedicated_connection: bool},
+ *     connection: array{
+ *         url: string|null,
+ *         service: string|null,
+ *         provide_dedicated_connection: bool,
+ *     },
  *     store: array{
  *         type: StoreType,
  *         service: string|null,
@@ -166,7 +188,7 @@ use function sprintf;
  *     clock: array{freeze: string|null, service: string|null},
  *     logger: array{service: string|null},
  *     migration: array{enabled: bool, namespace: string, path: string},
- *     snapshot_stores: array<string, SnapshotAdapter|array{type: 'psr6'|'psr16'|'custom', service: string}>,
+ *     snapshot_stores: array<string, SnapshotAdapter|NormalizedSnapshotStoreDefinition>,
  *     subscription: array{
  *         subscribers: list<object|string>,
  *         store: array{
@@ -200,10 +222,13 @@ use function sprintf;
  *         lifecycle: array{enabled: bool},
  *         extensions: list<Extension|string>,
  *         guessers: list<Guesser|string>,
- *         upcasters: array{before_encoding: list<Upcaster|string>, before_transform: list<Upcaster|string>},
+ *         upcasters: array{
+ *             before_encoding: list<Upcaster|string>,
+ *             before_transform: list<Upcaster|string>,
+ *         },
  *     },
  *     message_decorators: list<MessageDecorator|string>,
- *     services: array<string, object>,
+ *     services: array<string, object|Closure(Container): object>,
  *     parameters: array<string, mixed>,
  * }
  * @phpstan-import-type Node from ConfigurationNormalizer
@@ -249,31 +274,40 @@ final class Configuration
         return $normalized;
     }
 
-    /** @return Node */
-    private static function tree(): array
+    /**
+     * @internal
+     *
+     * @return Node
+     */
+    public static function tree(): array
     {
-        $storeOptions = ConfigurationNormalizer::struct([
-            'table_name' => ConfigurationNormalizer::string(null, false),
-            'locking' => ConfigurationNormalizer::bool(null),
-            'lock_id' => ConfigurationNormalizer::int(null),
-            'lock_timeout' => ConfigurationNormalizer::int(null),
-            'keep_index' => ConfigurationNormalizer::bool(null),
-            'default_stream_name' => ConfigurationNormalizer::string(null, false),
-        ], omitMissing: true);
+        $storeType = ConfigurationNormalizer::named(
+            'StoreType',
+            ConfigurationNormalizer::enum(self::STORE_TYPES, self::STORE_DBAL_STREAM),
+        );
 
-        return ConfigurationNormalizer::struct([
+        $storeOptions = ConfigurationNormalizer::named('StoreOptions', ConfigurationNormalizer::struct([
+            'table_name' => ConfigurationNormalizer::string(null, false),
+            'locking' => ConfigurationNormalizer::bool(null, false),
+            'lock_id' => ConfigurationNormalizer::int(null, nullable: false),
+            'lock_timeout' => ConfigurationNormalizer::int(null, nullable: false),
+            'keep_index' => ConfigurationNormalizer::bool(null, false),
+            'default_stream_name' => ConfigurationNormalizer::string(null, false),
+        ], omitMissing: true));
+
+        return ConfigurationNormalizer::named('Config', ConfigurationNormalizer::struct([
             'connection' => ConfigurationNormalizer::struct([
                 'url' => ConfigurationNormalizer::string(null),
                 'service' => ConfigurationNormalizer::string(null),
                 'provide_dedicated_connection' => ConfigurationNormalizer::bool(false),
             ]),
             'store' => ConfigurationNormalizer::struct([
-                'type' => ConfigurationNormalizer::enum(self::STORE_TYPES, self::STORE_DBAL_STREAM),
+                'type' => $storeType,
                 'service' => ConfigurationNormalizer::string(null),
                 'options' => $storeOptions,
                 'read_only' => ConfigurationNormalizer::bool(false),
                 'migrate_to_new_store' => ConfigurationNormalizer::toggle(false, [
-                    'type' => ConfigurationNormalizer::enum(self::STORE_TYPES, self::STORE_DBAL_STREAM),
+                    'type' => $storeType,
                     'service' => ConfigurationNormalizer::string(null),
                     'options' => $storeOptions,
                     'translators' => ConfigurationNormalizer::services(Translator::class),
@@ -296,7 +330,10 @@ final class Configuration
                 'handler_providers' => ConfigurationNormalizer::services(CommandBusHandlerProvider::class),
                 'instant_retry' => ConfigurationNormalizer::toggle(true, [
                     'default_max_retries' => ConfigurationNormalizer::int(3, 1),
-                    'default_exceptions' => ConfigurationNormalizer::stringList([AggregateOutdated::class]),
+                    'default_exceptions' => ConfigurationNormalizer::typed(
+                        'list<class-string<\\Throwable>>',
+                        ConfigurationNormalizer::stringList([AggregateOutdated::class]),
+                    ),
                 ]),
             ]),
             'query_bus' => ConfigurationNormalizer::toggle(true, [
@@ -315,10 +352,13 @@ final class Configuration
                 'path' => ConfigurationNormalizer::string('migrations', false),
             ]),
             'snapshot_stores' => ConfigurationNormalizer::map(
-                ConfigurationNormalizer::objectOr(SnapshotAdapter::class, ConfigurationNormalizer::struct([
-                    'type' => ConfigurationNormalizer::enum(['psr6', 'psr16', 'custom'], 'psr6'),
-                    'service' => ConfigurationNormalizer::requiredString(),
-                ])),
+                ConfigurationNormalizer::objectOr(
+                    SnapshotAdapter::class,
+                    ConfigurationNormalizer::named('SnapshotStoreDefinition', ConfigurationNormalizer::struct([
+                        'type' => ConfigurationNormalizer::enum(['psr6', 'psr16', 'custom'], 'psr6'),
+                        'service' => ConfigurationNormalizer::requiredString(),
+                    ])),
+                ),
             ),
             'subscription' => ConfigurationNormalizer::struct([
                 'subscribers' => ConfigurationNormalizer::services(),
@@ -345,11 +385,11 @@ final class Configuration
                             self::SUBSCRIPTION_RETRY_CUSTOM,
                         ]),
                         'service' => ConfigurationNormalizer::string(null),
-                        'options' => ConfigurationNormalizer::struct([
-                            'base_delay' => ConfigurationNormalizer::int(null, 0),
-                            'delay_factor' => ConfigurationNormalizer::float(null),
-                            'max_attempts' => ConfigurationNormalizer::int(null, 1),
-                        ], omitMissing: true),
+                        'options' => ConfigurationNormalizer::named('RetryStrategyOptions', ConfigurationNormalizer::struct([
+                            'base_delay' => ConfigurationNormalizer::int(null, 0, false),
+                            'delay_factor' => ConfigurationNormalizer::float(null, false),
+                            'max_attempts' => ConfigurationNormalizer::int(null, 1, false),
+                        ], omitMissing: true)),
                     ]),
                     [
                         'default' => [
@@ -384,7 +424,10 @@ final class Configuration
             'hydrator' => ConfigurationNormalizer::struct([
                 'default_lazy' => ConfigurationNormalizer::bool(false),
                 'cryptography' => ConfigurationNormalizer::toggle(false, [
-                    'algorithm' => ConfigurationNormalizer::string(OpensslCipherKeyFactory::DEFAULT_METHOD, false),
+                    'algorithm' => ConfigurationNormalizer::typed(
+                        'non-empty-string',
+                        ConfigurationNormalizer::string(OpensslCipherKeyFactory::DEFAULT_METHOD, false),
+                    ),
                     'cipher_key_store' => ConfigurationNormalizer::string(null),
                 ]),
                 'lifecycle' => ConfigurationNormalizer::toggle(false, []),
@@ -396,9 +439,12 @@ final class Configuration
                 ]),
             ]),
             'message_decorators' => ConfigurationNormalizer::services(MessageDecorator::class),
-            'services' => ConfigurationNormalizer::map(ConfigurationNormalizer::object()),
+            'services' => ConfigurationNormalizer::map(ConfigurationNormalizer::typed(
+                'object|\\Closure(\\Patchlevel\\EventSourcing\\Container\\Container): object',
+                ConfigurationNormalizer::object(),
+            )),
             'parameters' => ConfigurationNormalizer::map(ConfigurationNormalizer::variable()),
-        ]);
+        ]));
     }
 
     /** @param NormalizedConfig $config */
