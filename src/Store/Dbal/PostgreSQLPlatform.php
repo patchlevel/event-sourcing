@@ -20,6 +20,8 @@ use function str_ends_with;
  * {@see self::GIN_INDEX_SUFFIX} is created as `USING gin (column jsonb_path_ops)`.
  * The schema comparator does not compare the index method, so these indexes
  * stay stable in schema diffs.
+ *
+ * @internal
  */
 final class PostgreSQLPlatform extends BasePostgreSQLPlatform
 {
