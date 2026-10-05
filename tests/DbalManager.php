@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests;
 
+use Doctrine\DBAL\Configuration;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Driver\AbstractSQLiteDriver;
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Tools\DsnParser;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
+use Patchlevel\EventSourcing\Store\Dbal\PostgreSQLPlatformMiddleware;
 use RuntimeException;
 
 use function getenv;
@@ -34,9 +35,12 @@ final class DbalManager
             $connectionParams['dbname'] = $dbName;
         }
 
-        $connection = DriverManager::getConnection($connectionParams);
+        $connection = DriverManager::getConnection(
+            $connectionParams,
+            (new Configuration())->setMiddlewares([new PostgreSQLPlatformMiddleware()]),
+        );
 
-        if ($connection->getDriver() instanceof AbstractSQLiteDriver) {
+        if (in_array($connectionParams['driver'] ?? null, ['pdo_sqlite', 'sqlite3'], true)) {
             return $connection;
         }
 
