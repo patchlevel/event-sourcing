@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "937390d066d947789911d3e870eba9a5",
+    "content-hash": "c703d9a37598197f2f8bceee5da066c0",
     "packages": [
         {
             "name": "brick/math",
@@ -484,31 +484,37 @@
         },
         {
             "name": "patchlevel/worker",
-            "version": "1.5.0",
+            "version": "1.7.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/patchlevel/worker.git",
-                "reference": "0288d740de7d9806d8dc9dd4c2545be31a043823"
+                "reference": "100b0b2b960c8cd32a6e5a717777d56d81791425"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/patchlevel/worker/zipball/0288d740de7d9806d8dc9dd4c2545be31a043823",
-                "reference": "0288d740de7d9806d8dc9dd4c2545be31a043823",
+                "url": "https://api.github.com/repos/patchlevel/worker/zipball/100b0b2b960c8cd32a6e5a717777d56d81791425",
+                "reference": "100b0b2b960c8cd32a6e5a717777d56d81791425",
                 "shasum": ""
             },
             "require": {
                 "php": "~8.2.0 || ~8.3.0 || ~8.4.0  || ~8.5.0",
+                "psr/clock": "^1.0",
+                "psr/log": "^1.1 || ^2.0 || ^3.0",
                 "symfony/event-dispatcher": "^5.4.26 || ^6.4.0 || ^7.0.0 || ^8.0.0"
             },
             "require-dev": {
-                "infection/infection": "^0.31.9",
+                "infection/infection": "^0.32.0",
                 "patchlevel/coding-standard": "^1.3.0",
                 "phpat/phpat": "^0.12.0",
                 "phpbench/phpbench": "^1.2.15",
                 "phpstan/phpstan": "^2.1.32",
                 "phpstan/phpstan-phpunit": "^2.0.8",
                 "phpunit/phpunit": "^11.5.3",
-                "symfony/var-dumper": "^5.4.29 || ^6.4.0 || ^7.0.0 || ^8.0.0"
+                "symfony/var-dumper": "^5.4.29 || ^6.4.0 || ^7.0.0 || ^8.0.0",
+                "wnx/commonmark-markdown-renderer": "^1.6"
+            },
+            "suggest": {
+                "ext-pcntl": "Required to stop the worker gracefully on SIGTERM"
             },
             "type": "library",
             "autoload": {
@@ -538,9 +544,9 @@
             ],
             "support": {
                 "issues": "https://github.com/patchlevel/worker/issues",
-                "source": "https://github.com/patchlevel/worker/tree/1.5.0"
+                "source": "https://github.com/patchlevel/worker/tree/1.7.0"
             },
-            "time": "2025-11-27T15:33:31+00:00"
+            "time": "2026-10-05T07:23:26+00:00"
         },
         {
             "name": "psr/cache",
@@ -1170,16 +1176,16 @@
         },
         {
             "name": "symfony/event-dispatcher",
-            "version": "v8.1.0",
+            "version": "v8.1.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/event-dispatcher.git",
-                "reference": "f249ae3f680958b6f1f9dd76e5747cf0695b4102"
+                "reference": "7458da64220376b2e0dc2d8451bf43382c1ad297"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/event-dispatcher/zipball/f249ae3f680958b6f1f9dd76e5747cf0695b4102",
-                "reference": "f249ae3f680958b6f1f9dd76e5747cf0695b4102",
+                "url": "https://api.github.com/repos/symfony/event-dispatcher/zipball/7458da64220376b2e0dc2d8451bf43382c1ad297",
+                "reference": "7458da64220376b2e0dc2d8451bf43382c1ad297",
                 "shasum": ""
             },
             "require": {
@@ -1232,7 +1238,7 @@
             "description": "Provides tools that allow your application components to communicate with each other by dispatching events and listening to them",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/event-dispatcher/tree/v8.1.0"
+                "source": "https://github.com/symfony/event-dispatcher/tree/v8.1.5"
             },
             "funding": [
                 {
@@ -1252,20 +1258,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-29T05:06:50+00:00"
+            "time": "2026-08-21T17:47:34+00:00"
         },
         {
             "name": "symfony/event-dispatcher-contracts",
-            "version": "v3.7.0",
+            "version": "v3.7.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/event-dispatcher-contracts.git",
-                "reference": "ccba7060602b7fed0b03c85bf025257f76d9ef32"
+                "reference": "c7de7a00ffb67842132da02ea92988a39ccd9f4e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/event-dispatcher-contracts/zipball/ccba7060602b7fed0b03c85bf025257f76d9ef32",
-                "reference": "ccba7060602b7fed0b03c85bf025257f76d9ef32",
+                "url": "https://api.github.com/repos/symfony/event-dispatcher-contracts/zipball/c7de7a00ffb67842132da02ea92988a39ccd9f4e",
+                "reference": "c7de7a00ffb67842132da02ea92988a39ccd9f4e",
                 "shasum": ""
             },
             "require": {
@@ -1312,7 +1318,7 @@
                 "standards"
             ],
             "support": {
-                "source": "https://github.com/symfony/event-dispatcher-contracts/tree/v3.7.0"
+                "source": "https://github.com/symfony/event-dispatcher-contracts/tree/v3.7.1"
             },
             "funding": [
                 {
@@ -1332,7 +1338,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-01-05T13:30:16+00:00"
+            "time": "2026-06-05T06:23:12+00:00"
         },
         {
             "name": "symfony/finder",
@@ -7490,16 +7496,16 @@
         },
         {
             "name": "symfony/polyfill-php80",
-            "version": "v1.37.0",
+            "version": "v1.43.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php80.git",
-                "reference": "dfb55726c3a76ea3b6459fcfda1ec2d80a682411"
+                "reference": "9c6a5d6b01ca51d486c813e9a9c0ed55f208bb74"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/dfb55726c3a76ea3b6459fcfda1ec2d80a682411",
-                "reference": "dfb55726c3a76ea3b6459fcfda1ec2d80a682411",
+                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/9c6a5d6b01ca51d486c813e9a9c0ed55f208bb74",
+                "reference": "9c6a5d6b01ca51d486c813e9a9c0ed55f208bb74",
                 "shasum": ""
             },
             "require": {
@@ -7550,7 +7556,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-php80/tree/v1.37.0"
+                "source": "https://github.com/symfony/polyfill-php80/tree/v1.43.0"
             },
             "funding": [
                 {
@@ -7570,7 +7576,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-04-10T16:19:22+00:00"
+            "time": "2026-09-25T15:50:05+00:00"
         },
         {
             "name": "symfony/polyfill-php84",

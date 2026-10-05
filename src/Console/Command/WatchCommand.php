@@ -64,6 +64,18 @@ final class WatchCommand extends Command
                 1000,
             )
             ->addOption(
+                'restart-signal-file',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Stop the worker when this file is touched after it has started (e.g. on deployment)',
+            )
+            ->addOption(
+                'heartbeat-file',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Touch this file after every run, e.g. for liveness probes',
+            )
+            ->addOption(
                 'stream',
                 null,
                 InputOption::VALUE_REQUIRED,
@@ -80,6 +92,8 @@ final class WatchCommand extends Command
         $timeLimit = InputHelper::nullablePositiveInt($input->getOption('time-limit'));
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
         $stream = InputHelper::nullableString($input->getOption('stream'));
+        $restartSignalFile = InputHelper::nullableString($input->getOption('restart-signal-file'));
+        $heartbeatFile = InputHelper::nullableString($input->getOption('heartbeat-file'));
 
         $index = $this->currentIndex();
 
@@ -115,6 +129,8 @@ final class WatchCommand extends Command
                 'runLimit' => $runLimit,
                 'memoryLimit' => $memoryLimit,
                 'timeLimit' => $timeLimit,
+                'restartSignalFile' => $restartSignalFile,
+                'heartbeatFile' => $heartbeatFile,
             ],
             $logger,
         );
