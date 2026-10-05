@@ -265,10 +265,13 @@ final class GuestAlreadyCheckedIn extends BasicProjection
     }
 }
 ```
-:::tip
-If a projection needs metadata like the time an event was recorded, the apply method can take the `Message` as a third parameter.
+### Access the message
+
+If a projection needs metadata like the time an event was recorded,
+the apply method can take the `Message` as a third parameter.
 
 ```php
+use DateTimeImmutable;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Message\Message;
@@ -303,8 +306,6 @@ final class LastCheckIn extends BasicProjection
     }
 }
 ```
-:::
-
 ## Define handlers
 
 We’ll implement three command handlers corresponding to our commands.
