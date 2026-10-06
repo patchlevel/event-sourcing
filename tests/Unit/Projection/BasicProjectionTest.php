@@ -6,15 +6,19 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Projection;
 
 use Countable;
 use Patchlevel\EventSourcing\Attribute\Apply;
+use Patchlevel\EventSourcing\Attribute\Checkpoint;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Projection\ApplyMethodDetectionError;
 use Patchlevel\EventSourcing\Projection\BasicProjection;
 use Patchlevel\EventSourcing\Store\Header\TagsHeader;
 use Patchlevel\EventSourcing\Store\SubQuery;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\Email;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\IncrementProjection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\SplittingEvent;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\VisitsProjection;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Stringable;
@@ -51,6 +55,47 @@ final class BasicProjectionTest extends TestCase
             $projection->subQuery(),
         );
         self::assertSame($projection->subQuery(), $projection->subQuery());
+    }
+
+    public function testCheckpointEvents(): void
+    {
+        $projection = new VisitsProjection([]);
+
+        self::assertSame([SplittingEvent::class], $projection->checkpointEvents());
+    }
+
+    public function testNoCheckpointEvents(): void
+    {
+        $projection = new IncrementProjection(0);
+
+        self::assertSame([], $projection->checkpointEvents());
+    }
+
+    public function testCheckpointWithoutApply(): void
+    {
+        $projection = new class extends BasicProjection {
+            public function initialState(): int
+            {
+                return 0;
+            }
+
+            /** @return list<string> */
+            protected function tagFilter(): array
+            {
+                return [];
+            }
+
+            #[Checkpoint]
+            public function applyProfileCreated(int $state, ProfileCreated $event): int
+            {
+                return $state;
+            }
+        };
+
+        $this->expectException(ApplyMethodDetectionError::class);
+        $this->expectExceptionMessage('has a #[Checkpoint] attribute, but no #[Apply] attribute');
+
+        $projection->subQuery();
     }
 
     public function testApplyWithNonMatchingMessage(): void

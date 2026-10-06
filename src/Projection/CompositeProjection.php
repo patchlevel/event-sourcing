@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Projection;
 
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Query;
 
 use function array_map;
@@ -12,9 +13,13 @@ use function array_map;
 /** @experimental */
 final class CompositeProjection
 {
-    /** @param array<string, Projection> $projections */
+    /**
+     * @param array<string, Projection>     $projections
+     * @param array<string, positive-int|0> $from        messages before this index are not applied to the projection
+     */
     public function __construct(
         private readonly array $projections,
+        private readonly array $from = [],
     ) {
     }
 
@@ -51,6 +56,13 @@ final class CompositeProjection
     public function apply(mixed $state, Message $message): mixed
     {
         foreach ($this->projections as $name => $projection) {
+            if (
+                ($this->from[$name] ?? 0) > 0
+                && $message->header(IndexHeader::class)->index < $this->from[$name]
+            ) {
+                continue;
+            }
+
             $state[$name] = $projection->apply($state[$name], $message);
         }
 
