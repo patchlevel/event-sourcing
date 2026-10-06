@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Projection;
 
+use Patchlevel\EventSourcing\Message\Message;
 use RuntimeException;
 
 use function get_debug_type;
@@ -77,6 +78,17 @@ final class ApplyMethodDetectionError extends RuntimeException
             sprintf(
                 'The method "%s" has an #[Apply] attribute with an empty "event" argument. This is not allowed.',
                 $methodName,
+            ),
+        );
+    }
+
+    public static function messageParameterHasWrongType(string $methodName): self
+    {
+        return new self(
+            sprintf(
+                'The method "%s" has an #[Apply] attribute, but its third parameter is not of type "%s".',
+                $methodName,
+                Message::class,
             ),
         );
     }
