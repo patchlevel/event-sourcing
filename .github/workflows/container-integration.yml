@@ -1,0 +1,61 @@
+# https://help.github.com/en/categories/automating-your-workflow-with-github-actions
+
+name: "Container integration tests"
+
+on:
+    pull_request:
+    push:
+        branches:
+            - "[0-9]+.[0-9]+.x"
+            - "renovate/*"
+
+jobs:
+    container:
+        name: "${{ matrix.container }}"
+
+        runs-on: ${{ matrix.operating-system }}
+
+        strategy:
+            fail-fast: false
+            matrix:
+                dependencies:
+                  - "locked"
+                php-version:
+                  - "8.5"
+                operating-system:
+                  - "ubuntu-latest"
+                container:
+                  - "PHP-DI"
+                  - "Laminas ServiceManager"
+                  - "League Container"
+                include:
+                  - container: "PHP-DI"
+                    package: "php-di/php-di:^7.0"
+                    test: "PhpDiContainerTest"
+                  - container: "Laminas ServiceManager"
+                    package: "laminas/laminas-servicemanager:^4.0"
+                    test: "LaminasServiceManagerTest"
+                  - container: "League Container"
+                    package: "league/container:^5.0"
+                    test: "LeagueContainerTest"
+
+        steps:
+            - name: "Checkout"
+              uses: actions/checkout@v7
+
+            - name: "Install PHP"
+              uses: "shivammathur/setup-php@2.37.2"
+              with:
+                  php-version: "${{ matrix.php-version }}"
+                  ini-values: memory_limit=-1
+                  extensions: pdo_sqlite
+
+            - uses: ramsey/composer-install@4.0.0
+              with:
+                dependency-versions: ${{ matrix.dependencies }}
+
+            - name: "Install ${{ matrix.container }}"
+              run: "composer require --dev --no-interaction --no-progress '${{ matrix.package }}'"
+
+            - name: "Tests"
+              run: "vendor/bin/phpunit tests/Integration/Container/${{ matrix.test }}.php"

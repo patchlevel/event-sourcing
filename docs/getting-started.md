@@ -271,18 +271,8 @@ If you use symfony, you can use our [symfony bundle](https://patchlevel.dev/docs
 ```php
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
-use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
-use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
-use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
-use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
-
-$connection = DriverManager::getConnection(
-    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
-);
+use Patchlevel\EventSourcing\Container\Factory;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
 
 $projectionConnection = DriverManager::getConnection(
     (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/projection'),
@@ -291,40 +281,24 @@ $projectionConnection = DriverManager::getConnection(
 /* your own mailer */
 $mailer;
 
-$serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
-$aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create(['src/Domain/Hotel']);
-
-$eventStore = new StreamDoctrineDbalStore(
-    $connection,
-    $serializer,
-);
-
-$hotelProjector = new HotelProjector($projectionConnection);
-
-$subscriberRepository = new MetadataSubscriberAccessorRepository([
-    $hotelProjector,
-    new SendCheckInEmailProcessor($mailer),
+$container = Factory::create([
+    'connection' => ['url' => 'pdo-pgsql://user:secret@localhost/app'],
+    'aggregates' => ['src/Domain/Hotel'],
+    'events' => ['src/Domain/Hotel/Event'],
+    'subscription' => [
+        'subscribers' => [
+            new HotelProjector($projectionConnection),
+            new SendCheckInEmailProcessor($mailer),
+        ],
+        // run the subscriptions directly after an aggregate was saved
+        'sync' => true,
+    ],
 ]);
 
-$subscriptionStore = new DoctrineSubscriptionStore($connection);
-
-$engine = new DefaultSubscriptionEngine(
-    $eventStore,
-    $subscriptionStore,
-    $subscriberRepository,
-);
-
-$repositoryManager = new RunSubscriptionEngineRepositoryManager(
-    new DefaultRepositoryManager(
-        $aggregateRegistry,
-        $eventStore,
-    ),
-    $engine,
-);
-
-$hotelRepository = $repositoryManager->get(Hotel::class);
+$hotelRepository = $container->get(RepositoryManager::class)->get(Hotel::class);
 ```
 :::note
+All options of the configuration are described on the [container](container.md) page.
 You can find out more about the [store](store.md).
 :::
 
@@ -334,31 +308,14 @@ So that we can actually write the data to a database,
 we need the associated schema and databases.
 
 ```php
-use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
-use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Container\Container;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 
-/**
- * @var Connection $connection
- * @var Store $eventStore
- * @var SubscriptionStore $subscriptionStore
- */
-$schemaDirector = new DoctrineSchemaDirector(
-    $connection,
-    new ChainDoctrineSchemaConfigurator([
-        $eventStore,
-        $subscriptionStore,
-    ]),
-);
-
-$schemaDirector->create();
-
-/** @var SubscriptionEngine $engine */
-$engine->execute(new Setup(skipBooting: true));
+/** @var Container $container */
+$container->get(SchemaDirector::class)->create();
+$container->get(SubscriptionEngine::class)->execute(new Setup(skipBooting: true));
 ```
 :::note
 You can use the predefined [cli commands](cli.md) for this.
@@ -407,3 +364,4 @@ If there are still open questions, create a ticket on Github and we will try to 
 * [How to store aggregates](repository.md)
 * [How to create a projection and processors](subscription.md)
 * [How to setup the database](store.md)
+* [How to configure the container](container.md)

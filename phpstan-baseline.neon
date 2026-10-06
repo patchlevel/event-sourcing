@@ -67,12 +67,6 @@ parameters:
 			path: src/Message/Message.php
 
 		-
-			message: '#^Parameter \#2 \$data of method Patchlevel\\Hydrator\\Hydrator\:\:hydrate\(\) expects array\<string, mixed\>, array\<mixed, mixed\> given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Message/Serializer/DefaultHeadersSerializer.php
-
-		-
 			message: '#^Property Patchlevel\\EventSourcing\\Message\\Stream\:\:\$iterator \(Iterator\<int, Patchlevel\\EventSourcing\\Message\\Message\>\|null\) does not accept IteratorIterator\<mixed, mixed, Traversable\<TKey, TValue\>\>\.$#'
 			identifier: assign.propertyType
 			count: 1
@@ -167,12 +161,6 @@ parameters:
 			identifier: assign.propertyType
 			count: 1
 			path: src/Serializer/Normalizer/IdNormalizer.php
-
-		-
-			message: '#^Parameter \#2 \$data of method Patchlevel\\Hydrator\\Hydrator\:\:hydrate\(\) expects array\<string, mixed\>, mixed given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Snapshot/DefaultSnapshotStore.php
 
 		-
 			message: '#^Patchlevel\\EventSourcing\\Snapshot\\DefaultSnapshotStore should not depend on Patchlevel\\EventSourcing\\Identifier\\Identifier$#'
@@ -375,19 +363,19 @@ parameters:
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertArrayHasKey\(\) with 0 and array\{array\<string, mixed\>\} will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
-			count: 4
+			count: 1
 			path: tests/Integration/PersonalData/PersonalDataTest.php
 
 		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Tests\\\\Integration\\\\PersonalData\\\\Profile'' and Patchlevel\\EventSourcing\\Tests\\Integration\\PersonalData\\Profile will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
-			count: 8
+			count: 6
 			path: tests/Integration/PersonalData/PersonalDataTest.php
 
 		-
 			message: '#^Parameter \#2 \$haystack of static method PHPUnit\\Framework\\Assert\:\:assertStringNotContainsString\(\) expects string, mixed given\.$#'
 			identifier: argument.type
-			count: 3
+			count: 1
 			path: tests/Integration/PersonalData/PersonalDataTest.php
 
 		-
@@ -445,6 +433,126 @@ parameters:
 			path: tests/Unit/CommandBus/InstantRetryCommandBusTest.php
 
 		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\DebugCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\DebugCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\ShowAggregateCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\ShowAggregateCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\ShowCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\ShowCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\SubscriptionBootCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\SubscriptionBootCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\SubscriptionPauseCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\SubscriptionPauseCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\SubscriptionReactivateCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\SubscriptionReactivateCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\SubscriptionRemoveCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\SubscriptionRemoveCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\SubscriptionRunCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\SubscriptionRunCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\SubscriptionSetupCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\SubscriptionSetupCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\SubscriptionStatusCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\SubscriptionStatusCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\SubscriptionTeardownCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\SubscriptionTeardownCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\WatchCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\WatchCommand will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Metadata\\\\AggregateRoot\\\\AggregateRootRegistry'' and Patchlevel\\EventSourcing\\Metadata\\AggregateRoot\\AggregateRootRegistry will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Metadata\\\\Event\\\\EventRegistry'' and Patchlevel\\EventSourcing\\Metadata\\Event\\EventRegistry will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Metadata\\\\Message\\\\MessageHeaderRegistry'' and Patchlevel\\EventSourcing\\Metadata\\Message\\MessageHeaderRegistry will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Repository\\\\MessageDecorator\\\\SplitStreamDecorator'' and Patchlevel\\EventSourcing\\Repository\\MessageDecorator\\SplitStreamDecorator will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Serializer\\\\DefaultEventSerializer'' and Patchlevel\\EventSourcing\\Serializer\\DefaultEventSerializer will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Store\\\\StreamDoctrineDbalStore'' and Patchlevel\\EventSourcing\\Store\\StreamDoctrineDbalStore will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Subscription\\\\RetryStrategy\\\\RetryStrategyRepository'' and Patchlevel\\EventSourcing\\Subscription\\RetryStrategy\\RetryStrategyRepository will always evaluate to true\.$#'
+			identifier: staticMethod.alreadyNarrowedType
+			count: 8
+			path: tests/Unit/Container/FactoryTest.php
+
+		-
+			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\BrokenAutoInitializableProfile\:\:\$id is unused\.$#'
+			identifier: property.unused
+			count: 1
+			path: tests/Unit/Fixture/BrokenAutoInitializableProfile.php
+
+		-
 			message: '#^Parameter \#1 \$data of static method Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\Message\:\:fromArray\(\) expects array\{id\: string, text\: string, createdAt\: string\}, array\<mixed, mixed\> given\.$#'
 			identifier: argument.type
 			count: 1
@@ -461,12 +569,6 @@ parameters:
 			identifier: property.onlyWritten
 			count: 1
 			path: tests/Unit/Fixture/ProfileInvalid.php
-
-		-
-			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\BrokenAutoInitializableProfile\:\:\$id is unused\.$#'
-			identifier: property.unused
-			count: 1
-			path: tests/Unit/Fixture/BrokenAutoInitializableProfile.php
 
 		-
 			message: '#^Property Patchlevel\\EventSourcing\\Tests\\Unit\\Fixture\\ProfileWithAggregateStream\:\:\$id is unused\.$#'

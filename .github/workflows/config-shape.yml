@@ -1,0 +1,50 @@
+# https://help.github.com/en/categories/automating-your-workflow-with-github-actions
+
+name: "Check Configuration Shape"
+
+on:
+    pull_request:
+    push:
+        branches:
+            - "[0-9]+.[0-9]+.x"
+            - "renovate/*"
+
+jobs:
+    config-shape:
+        name: "Configuration shape is up to date"
+
+        runs-on: ${{ matrix.operating-system }}
+
+        strategy:
+            matrix:
+                dependencies:
+                    - "locked"
+                php-version:
+                    - "8.5"
+                operating-system:
+                    - "ubuntu-latest"
+
+        steps:
+            - name: "Checkout"
+              uses: actions/checkout@v7
+
+            - name: "Install PHP"
+              uses: "shivammathur/setup-php@2.37.2"
+              with:
+                  coverage: none
+                  php-version: "${{ matrix.php-version }}"
+                  ini-values: memory_limit=-1, opcache.enable_cli=1
+
+            - uses: ramsey/composer-install@4.0.0
+              with:
+                dependency-versions: ${{ matrix.dependencies }}
+
+            - name: "Generate configuration shape"
+              run: "bin/generate-config-shape"
+
+            - name: "Check for changes"
+              run: |
+                  if ! git diff --exit-code -- src/Container/Configuration.php; then
+                      echo "::error file=src/Container/Configuration.php::The configuration shape is outdated, run \"make config-shape\" and commit the changes."
+                      exit 1
+                  fi

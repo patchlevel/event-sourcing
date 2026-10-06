@@ -477,6 +477,10 @@ same tag query and conditional append, so the decision model and the append cond
 way without a database.
 :::
 
+:::note
+With the [container](container.md) you enable all of this with `'store' => ['type' => 'dbal_taggable']` and `'dcb' => true`.
+:::
+
 ## Database setup
 
 The last step is to create the database schema.

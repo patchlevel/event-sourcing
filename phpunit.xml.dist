@@ -19,6 +19,8 @@
     </testsuite>
     <testsuite name="integration">
       <directory>./tests/Integration</directory>
+      <!-- needs third party containers, see .github/workflows/container-integration.yml -->
+      <exclude>./tests/Integration/Container</exclude>
     </testsuite>
   </testsuites>
   <coverage>

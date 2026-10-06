@@ -15,6 +15,7 @@ powered by the reliable Doctrine ecosystem and focused on developer experience.
 * Smooth [upcasting](upcasting.md) of old events
 * Simple setup with [schema management](store.md) and [doctrine migration](store.md)
 * Built in [cli commands](cli.md) with [symfony](https://symfony.com/)
+* Ready to use [PSR-11 container](container.md) for plain PHP and any framework
 * and much more...
 
 ## Installation
