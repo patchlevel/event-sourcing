@@ -170,13 +170,15 @@ After adding a new subscriber, run the setup and boot step and restart the run c
 
 The boot and run commands are workers and support the following options:
 
-| Option            | Description                                                                 |
-|-------------------|-----------------------------------------------------------------------------|
-| `--run-limit`     | Stop the worker after this number of runs.                                  |
-| `--message-limit` | How many events are processed per run.                                      |
-| `--memory-limit`  | Stop the worker if it uses more memory than this, e.g. `250MB`.             |
-| `--time-limit`    | Stop the worker after this number of seconds.                               |
-| `--sleep`         | How many milliseconds the worker waits between two runs.                    |
+| Option                  | Description                                                                        |
+|-------------------------|------------------------------------------------------------------------------------|
+| `--run-limit`           | Stop the worker after this number of runs.                                         |
+| `--message-limit`       | How many events are processed per run.                                             |
+| `--memory-limit`        | Stop the worker if it uses more memory than this, e.g. `256M` or `250MB`.          |
+| `--time-limit`          | Stop the worker after this number of seconds.                                      |
+| `--sleep`               | How many milliseconds the worker waits between two runs.                           |
+| `--restart-signal-file` | Stop the worker when this file is touched after it has started.                    |
+| `--heartbeat-file`      | Touch this file on start and after every run, and remove it when the worker stops. |
 
 ```bash
 bin/console event-sourcing:subscription:run --memory-limit=250MB --time-limit=3600
@@ -185,6 +187,39 @@ bin/console event-sourcing:subscription:run --memory-limit=250MB --time-limit=36
 Use the memory and time limits together with a process manager like supervisor or systemd,
 which restarts the worker after it stopped. This prevents memory leaks from piling up
 and makes sure that a deployment is picked up.
+:::
+
+The worker stops gracefully on `SIGTERM` and `SIGINT`, so it finishes the current run before it exits.
+If a run hits the `--message-limit`, the next run starts immediately without waiting for the sleep timer,
+so a lagging subscription catches up as fast as possible.
+
+#### Restart after a deployment
+
+Long-running workers keep the code they were started with.
+Pass a `--restart-signal-file` and touch the file during the deployment.
+All workers that were started before stop after their current run and are restarted by your process manager.
+
+```bash
+bin/console event-sourcing:subscription:run --restart-signal-file=var/worker-restart
+
+# during deployment
+touch var/worker-restart
+```
+:::note
+All workers that should restart have to see the same file, e.g. on a shared volume.
+:::
+
+#### Heartbeat
+
+With `--heartbeat-file` you can detect a worker that is stuck,
+e.g. with a liveness probe that checks how old the file is.
+
+```bash
+bin/console event-sourcing:subscription:run --heartbeat-file=/tmp/worker-heartbeat
+```
+:::warning
+The heartbeat file is only updated between runs.
+Choose the threshold of your probe larger than your longest run plus the sleep timer.
 :::
 
 ### Status

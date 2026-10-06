@@ -18,6 +18,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 
+use function file_exists;
+use function sys_get_temp_dir;
+use function tempnam;
+use function time;
+use function touch;
+use function unlink;
+
 #[CoversClass(SubscriptionBootCommand::class)]
 final class SubscriptionBootCommandTest extends TestCase
 {
@@ -103,5 +110,53 @@ final class SubscriptionBootCommandTest extends TestCase
         $this->expectExceptionMessage('Expected ProcessedResult');
 
         $commandTester->execute([]);
+    }
+
+    public function testBootStopsOnRestartSignal(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'restart');
+        touch($file, time() + 60);
+
+        $engine = $this->createMock(SubscriptionEngine::class);
+        $engine
+            ->expects($this->once())
+            ->method('subscriptions')
+            ->with(new SubscriptionEngineCriteria(null, null))
+            ->willReturn([new Subscription('foo')]);
+        $engine
+            ->expects($this->once())
+            ->method('execute')
+            ->with(new Boot(['foo'], null, 1000))
+            ->willReturn(new ProcessedResult(1000, false));
+
+        $commandTester = new CommandTester(new SubscriptionBootCommand($engine));
+        $commandTester->execute(['--restart-signal-file' => $file]);
+
+        unlink($file);
+
+        self::assertSame(1, $commandTester->getStatusCode());
+    }
+
+    public function testBootWithHeartbeat(): void
+    {
+        $file = tempnam(sys_get_temp_dir(), 'heartbeat');
+
+        $engine = $this->createMock(SubscriptionEngine::class);
+        $engine
+            ->expects($this->once())
+            ->method('subscriptions')
+            ->with(new SubscriptionEngineCriteria(null, null))
+            ->willReturn([new Subscription('foo')]);
+        $engine
+            ->expects($this->once())
+            ->method('execute')
+            ->with(new Boot(['foo'], null, 1000))
+            ->willReturn(new ProcessedResult(0, true));
+
+        $commandTester = new CommandTester(new SubscriptionBootCommand($engine));
+        $commandTester->execute(['--heartbeat-file' => $file]);
+
+        self::assertSame(0, $commandTester->getStatusCode());
+        self::assertFalse(file_exists($file));
     }
 }
