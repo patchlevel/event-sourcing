@@ -84,7 +84,7 @@ final class ProcessActionRunner implements ActionRunner
         return match ($action) {
             SubscriptionAction::Setup => [['event-sourcing:subscription:setup']],
             SubscriptionAction::Boot => [['event-sourcing:subscription:boot', ...$limit]],
-            SubscriptionAction::Run => [['event-sourcing:subscription:run', '--run-limit=1', '--sleep=0', ...$limit]],
+            SubscriptionAction::Run => [['event-sourcing:subscription:run', '--stop-when-finished', '--sleep=0', ...$limit]],
             SubscriptionAction::Pause => [['event-sourcing:subscription:pause']],
             SubscriptionAction::Reactivate => [['event-sourcing:subscription:reactivate']],
             SubscriptionAction::Refresh => [['event-sourcing:subscription:refresh']],

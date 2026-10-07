@@ -180,6 +180,7 @@ The boot and run commands are workers and support the following options:
 | `--sleep`               | How many milliseconds the worker waits between two runs.                           |
 | `--restart-signal-file` | Stop the worker when this file is touched after it has started.                    |
 | `--heartbeat-file`      | Touch this file on start and after every run, and remove it when the worker stops. |
+| `--stop-when-finished`  | Stop the run worker as soon as all events are processed (run command only).        |
 
 ```bash
 bin/console event-sourcing:subscription:run --memory-limit=250MB --time-limit=3600
@@ -383,7 +384,7 @@ This requires the subscription commands to be registered in the same console app
 Otherwise, or with the `--in-process` option, the actions run in the dashboard process and block it until they are done.
 
 :::note
-A run processes up to `--message-limit` messages once, it does not replace the [run worker](#run).
+A run started from the dashboard stops as soon as all events are processed, it does not replace the [run worker](#run).
 :::
 
 ### Keyboard shortcuts

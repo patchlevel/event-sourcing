@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use Closure;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Store\ListenableStore;
 use Patchlevel\EventSourcing\Store\Store;
@@ -88,6 +89,12 @@ final class SubscriptionRunCommand extends SubscriptionCommand
                 null,
                 InputOption::VALUE_NONE,
                 'rebuild (remove & boot) subscriptions before run',
+            )
+            ->addOption(
+                'stop-when-finished',
+                null,
+                InputOption::VALUE_NONE,
+                'Stop the worker as soon as all messages are processed',
             );
     }
 
@@ -99,6 +106,7 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         $timeLimit = InputHelper::nullablePositiveInt($input->getOption('time-limit'));
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
         $rebuild = InputHelper::bool($input->getOption('rebuild'));
+        $stopWhenFinished = InputHelper::bool($input->getOption('stop-when-finished'));
         $restartSignalFile = InputHelper::nullableString($input->getOption('restart-signal-file'));
         $heartbeatFile = InputHelper::nullableString($input->getOption('heartbeat-file'));
 
@@ -108,11 +116,17 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         $logger = new ConsoleLogger($output);
 
         $worker = DefaultWorker::create(
-            function () use ($criteria, $messageLimit, $sleep): bool {
+            function (Closure $stop) use ($criteria, $messageLimit, $sleep, $stopWhenFinished): bool {
                 $result = $this->engine->execute(new Run($criteria->ids, $criteria->groups, $messageLimit));
 
                 if ($result instanceof ProcessedResult && !$result->finished) {
                     return true;
+                }
+
+                if ($stopWhenFinished) {
+                    $stop();
+
+                    return false;
                 }
 
                 if ($this->store instanceof ListenableStore) {
