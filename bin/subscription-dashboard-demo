@@ -1,0 +1,229 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Demo for the subscription dashboard with an in-memory store and a few example subscribers.
+ *
+ * A producer appends new events continuously and a worker runs the subscriptions in the background,
+ * so the positions and lags change live. Use --no-worker to run the subscriptions by hand with <r>.
+ *
+ *   bin/subscription-dashboard-demo [--no-worker] [--refresh=1]
+ */
+
+declare(strict_types=1);
+
+namespace Patchlevel\EventSourcing\Demo;
+
+use Patchlevel\EventSourcing\Attribute\Processor;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Clock\SystemClock;
+use Patchlevel\EventSourcing\Console\Command\SubscriptionDashboardCommand;
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\IndexHeader;
+use Patchlevel\EventSourcing\Store\InMemoryStore;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Pause;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
+use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
+use Patchlevel\EventSourcing\Subscription\RunMode;
+use Patchlevel\EventSourcing\Subscription\Status;
+use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Subscription\Subscription;
+use Revolt\EventLoop;
+use RuntimeException;
+use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Input\ArgvInput;
+use Throwable;
+
+use function array_filter;
+use function array_values;
+use function in_array;
+use function random_int;
+use function sprintf;
+use function usleep;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+final class ProfileCreated
+{
+    public function __construct(public readonly string $name)
+    {
+    }
+}
+
+final class ProfileVisited
+{
+    public function __construct(public readonly string $profile)
+    {
+    }
+}
+
+final class OrderPlaced
+{
+    public function __construct(public readonly int $amount)
+    {
+    }
+}
+
+#[Projector('profile')]
+final class ProfileProjector
+{
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(ProfileCreated $event): void
+    {
+    }
+}
+
+#[Projector('guest_list')]
+final class GuestListProjector
+{
+    #[Subscribe(ProfileCreated::class)]
+    #[Subscribe(ProfileVisited::class)]
+    public function handle(Message $message): void
+    {
+    }
+}
+
+/** A slow projector that needs a while to boot. */
+#[Projector('hotel_overview')]
+final class HotelOverviewProjector
+{
+    #[Subscribe(Subscribe::ALL)]
+    public function handle(Message $message): void
+    {
+        usleep(2_000);
+    }
+}
+
+/** Fails from time to time, so it switches between error, retries and failed. */
+#[Projector('profile_stats')]
+final class ProfileStatsProjector
+{
+    #[Subscribe(ProfileVisited::class)]
+    public function onProfileVisited(Message $message): void
+    {
+        $index = $message->header(IndexHeader::class)->index;
+
+        if ($index % 150 === 0 && random_int(1, 10) <= 7) {
+            throw new RuntimeException(sprintf(
+                'SQLSTATE[40001]: Serialization failure: 1213 Deadlock found when trying to get lock (index %d)',
+                $index,
+            ));
+        }
+    }
+}
+
+#[Projector('invoice_search')]
+final class InvoiceSearchProjector
+{
+    #[Subscribe(OrderPlaced::class)]
+    public function onOrderPlaced(OrderPlaced $event): void
+    {
+    }
+}
+
+#[Projector('legacy_report', runMode: RunMode::Once)]
+final class LegacyReportProjector
+{
+    #[Subscribe(OrderPlaced::class)]
+    public function onOrderPlaced(OrderPlaced $event): void
+    {
+    }
+}
+
+#[Projector('room_availability')]
+final class RoomAvailabilityProjector
+{
+    #[Subscribe(OrderPlaced::class)]
+    public function onOrderPlaced(OrderPlaced $event): void
+    {
+    }
+}
+
+#[Processor('send_welcome_mail')]
+final class SendWelcomeMailProcessor
+{
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(ProfileCreated $event): void
+    {
+    }
+}
+
+$input = new ArgvInput();
+$worker = !$input->hasParameterOption('--no-worker');
+
+$store = new InMemoryStore();
+
+$produce = static function (int $count) use ($store): void {
+    $messages = [];
+
+    for ($i = 0; $i < $count; $i++) {
+        $messages[] = Message::create(match (random_int(1, 3)) {
+            1 => new ProfileCreated('guest' . random_int(1, 10_000)),
+            2 => new ProfileVisited('guest' . random_int(1, 10_000)),
+            default => new OrderPlaced(random_int(10, 500)),
+        });
+    }
+
+    $store->save(...$messages);
+};
+
+$produce(2_500);
+
+$engine = new DefaultSubscriptionEngine(
+    new StoreMessageLoader($store),
+    new InMemorySubscriptionStore([
+        // a subscription without subscriber, it will be detached
+        new Subscription('old_newsletter', 'processor', RunMode::FromNow, Status::Active, 1_200),
+    ]),
+    new MetadataSubscriberAccessorRepository([
+        new ProfileProjector(),
+        new GuestListProjector(),
+        new HotelOverviewProjector(),
+        new ProfileStatsProjector(),
+        new InvoiceSearchProjector(),
+        new LegacyReportProjector(),
+        new RoomAvailabilityProjector(),
+        new SendWelcomeMailProcessor(),
+    ]),
+    new RetryStrategyRepository([
+        RetryStrategyRepository::DEFAULT_STRATEGY_NAME => new ClockBasedRetryStrategy(new SystemClock(), 3, 1.5, 3),
+    ]),
+);
+
+$all = ['profile', 'guest_list', 'hotel_overview', 'profile_stats', 'invoice_search', 'legacy_report', 'send_welcome_mail', 'old_newsletter'];
+
+// room_availability stays "new", so it can be set up from the dashboard
+$engine->execute(new Setup($all, skipBooting: true));
+$engine->execute(new Boot(['profile', 'guest_list', 'profile_stats', 'invoice_search', 'legacy_report', 'send_welcome_mail']));
+$engine->execute(new Pause(['invoice_search']));
+
+EventLoop::repeat(0.5, static function () use ($produce): void {
+    $produce(random_int(0, 8));
+});
+
+if ($worker) {
+    EventLoop::repeat(1.0, static function () use ($engine): void {
+        try {
+            $engine->execute(new Boot(null, null, 100));
+            $engine->execute(new Run(null, null, 200));
+        } catch (Throwable) {
+            // the dashboard shows the errors
+        }
+    });
+}
+
+$application = new Application('subscription dashboard demo');
+$application->addCommand(new SubscriptionDashboardCommand($engine, $store));
+$application->setDefaultCommand('event-sourcing:subscription:dashboard', true);
+
+$application->run(new ArgvInput(array_values(array_filter(
+    $_SERVER['argv'],
+    static fn (string $arg) => !in_array($arg, ['--no-worker'], true),
+))));
