@@ -335,7 +335,7 @@ You can find out more about the [subscription lifecycle](subscription.md#subscri
 ## Subscription dashboard
 
 The subscription dashboard is an interactive, full screen terminal UI inspired by k9s.
-It shows all subscriptions in a live updating table with their status, position and lag,
+It shows all subscriptions in a live updating table with their status, position, lag and messages per second,
 and lets you run the subscription commands directly on the selected subscriptions.
 
 * SubscriptionDashboardCommand: `event-sourcing:subscription:dashboard`

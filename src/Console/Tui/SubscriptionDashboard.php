@@ -77,6 +77,7 @@ final class SubscriptionDashboard
     private array $pendingTargets = [];
 
     private int|null $head = null;
+    private readonly Throughput $headThroughput;
     private DateTimeImmutable|null $lastReload = null;
     private int $flashUntil = 0;
 
@@ -97,6 +98,7 @@ final class SubscriptionDashboard
         $this->keybindings = self::keybindings();
         $this->tui = new Tui(self::styleSheet(), $terminal ?? new Terminal(), $this->keybindings);
 
+        $this->headThroughput = new Throughput();
         $this->table = new SubscriptionTableView();
         $this->describe = new TextView('Describe');
         $this->help = new TextView('Help', $this->helpLines());
@@ -146,6 +148,7 @@ final class SubscriptionDashboard
         }
 
         $this->lastReload = $this->now();
+        $this->headThroughput->record('head', $this->head, $this->lastReload);
         $this->table->update($subscriptions, $this->head, $this->lastReload);
 
         if ($this->flashUntil > 0 && $this->flashUntil < $this->lastReload->getTimestamp()) {
@@ -475,7 +478,12 @@ final class SubscriptionDashboard
 
         $this->describe->update(
             sprintf('Describe(%s)', $subscription->id()),
-            SubscriptionFormatter::describe($subscription, $this->head, $this->lastReload ?? $this->now()),
+            SubscriptionFormatter::describe(
+                $subscription,
+                $this->head,
+                $this->lastReload ?? $this->now(),
+                $this->table->rate($subscription->id()),
+            ),
         );
     }
 
@@ -504,7 +512,9 @@ final class SubscriptionDashboard
             $meta[] = Theme::color(Theme::HIGHLIGHT, (string)$this->scope());
         }
 
-        $meta[] = Theme::color(Theme::MUTED, 'head ') . Theme::color(Theme::TEXT, $this->head === null ? '–' : Theme::number($this->head));
+        $headRate = $this->headThroughput->rate('head');
+        $meta[] = Theme::color(Theme::MUTED, 'head ') . Theme::color(Theme::TEXT, $this->head === null ? '–' : Theme::number($this->head))
+            . ($headRate === null || $headRate < 0.05 ? '' : Theme::color(Theme::MUTED, sprintf(' +%s/s', Theme::rate($headRate))));
         $meta[] = Theme::color(Theme::MUTED, sprintf('⟳ %ss', $this->refreshInterval));
         $meta[] = Theme::color(Theme::MUTED, $this->lastReload?->format('H:i:s') ?? '–');
 

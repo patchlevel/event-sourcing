@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Console\Tui\View;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Console\Tui\SubscriptionFormatter;
 use Patchlevel\EventSourcing\Console\Tui\Theme;
+use Patchlevel\EventSourcing\Console\Tui\Throughput;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Symfony\Component\Tui\Ansi\AnsiUtils;
 
@@ -34,9 +35,9 @@ use function usort;
  */
 final class SubscriptionTableView implements View
 {
-    private const COLUMNS = ['ID', 'GROUP', 'MODE', 'PROGRESS', 'POSITION', 'LAG', 'STATUS', 'RETRY', 'AGE', 'ERROR'];
-    private const RIGHT_ALIGNED = ['POSITION', 'LAG', 'RETRY', 'AGE'];
-    private const OPTIONAL = ['RETRY', 'MODE', 'GROUP', 'PROGRESS'];
+    private const COLUMNS = ['ID', 'GROUP', 'MODE', 'PROGRESS', 'POSITION', 'LAG', 'MSG/S', 'STATUS', 'RETRY', 'AGE', 'ERROR'];
+    private const RIGHT_ALIGNED = ['POSITION', 'LAG', 'MSG/S', 'RETRY', 'AGE'];
+    private const OPTIONAL = ['RETRY', 'MODE', 'GROUP', 'MSG/S', 'PROGRESS'];
     private const PROGRESS_BAR_WIDTH = 10;
     private const MIN_ERROR_WIDTH = 16;
     private const GAP = '  ';
@@ -49,6 +50,7 @@ final class SubscriptionTableView implements View
 
     private int|null $head = null;
     private DateTimeImmutable $now;
+    private readonly Throughput $throughput;
     private string $filter = '';
     private string|null $selectedId = null;
     private int $offset = 0;
@@ -60,6 +62,7 @@ final class SubscriptionTableView implements View
     public function __construct()
     {
         $this->now = new DateTimeImmutable();
+        $this->throughput = new Throughput();
     }
 
     /** @param list<Subscription> $subscriptions */
@@ -72,6 +75,12 @@ final class SubscriptionTableView implements View
         $this->now = $now;
 
         $ids = array_map(static fn (Subscription $subscription) => $subscription->id(), $subscriptions);
+
+        foreach ($subscriptions as $subscription) {
+            $this->throughput->record($subscription->id(), $subscription->position(), $now);
+        }
+
+        $this->throughput->retain($ids);
 
         foreach (array_keys($this->marked) as $id) {
             if (in_array($id, $ids, true)) {
@@ -99,6 +108,12 @@ final class SubscriptionTableView implements View
     public function subscriptions(): array
     {
         return $this->subscriptions;
+    }
+
+    /** Processed messages per second, null as long as there is not enough data. */
+    public function rate(string $id): float|null
+    {
+        return $this->throughput->rate($id);
     }
 
     public function selected(): Subscription|null
@@ -305,6 +320,7 @@ final class SubscriptionTableView implements View
         $position = $subscription->position();
         $lag = SubscriptionFormatter::lag($subscription, $this->head);
         $error = $subscription->subscriptionError()?->errorMessage;
+        $rate = $this->throughput->rate($subscription->id());
 
         return [
             Theme::color(Theme::TEXT, $subscription->id()),
@@ -319,6 +335,11 @@ final class SubscriptionTableView implements View
                 $lag === null => Theme::color(Theme::SUBTLE, '–'),
                 $lag === 0 => Theme::color(Theme::SUBTLE, '0'),
                 default => Theme::color(Theme::WARNING, Theme::number($lag)),
+            },
+            match (true) {
+                $rate === null => Theme::color(Theme::SUBTLE, '–'),
+                $rate < 0.05 => Theme::color(Theme::SUBTLE, '0'),
+                default => Theme::color(Theme::SUCCESS, Theme::rate($rate)),
             },
             Theme::status($subscription->status()),
             $subscription->retryAttempt() === 0

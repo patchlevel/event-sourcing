@@ -8,6 +8,7 @@ use DateTimeImmutable;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 
+use function ceil;
 use function count;
 use function implode;
 use function intdiv;
@@ -44,8 +45,11 @@ final class SubscriptionFormatter
             return '-';
         }
 
-        $seconds = max(0, $now->getTimestamp() - $time->getTimestamp());
+        return self::duration(max(0, $now->getTimestamp() - $time->getTimestamp()));
+    }
 
+    public static function duration(int $seconds): string
+    {
         return match (true) {
             $seconds < 60 => $seconds . 's',
             $seconds < 3600 => intdiv($seconds, 60) . 'm',
@@ -60,7 +64,7 @@ final class SubscriptionFormatter
     }
 
     /** @return list<string> */
-    public static function describe(Subscription $subscription, int|null $head, DateTimeImmutable $now): array
+    public static function describe(Subscription $subscription, int|null $head, DateTimeImmutable $now, float|null $rate = null): array
     {
         $error = $subscription->subscriptionError();
         $status = Theme::status($subscription->status());
@@ -79,6 +83,7 @@ final class SubscriptionFormatter
             self::field('Run mode', self::runMode($subscription)),
             self::field('Status', $status),
             self::field('Progress', self::progress($subscription, $head)),
+            self::field('Throughput', self::throughput($subscription, $head, $rate)),
             self::field('Retries', $subscription->retryAttempt() === 0
                 ? Theme::color(Theme::SUBTLE, 'none')
                 : Theme::color(Theme::WARNING, (string)$subscription->retryAttempt())),
@@ -128,6 +133,20 @@ final class SubscriptionFormatter
             . '  ' . Theme::color(Theme::TEXT, Theme::percent($position, $head))
             . Theme::color(Theme::MUTED, sprintf('  %s / %s', Theme::number($position), Theme::number($head)))
             . ($lag > 0 ? Theme::color(Theme::WARNING, sprintf('  lag %s', Theme::number($lag))) : '');
+    }
+
+    private static function throughput(Subscription $subscription, int|null $head, float|null $rate): string
+    {
+        if ($rate === null) {
+            return Theme::color(Theme::SUBTLE, '–');
+        }
+
+        $lag = self::lag($subscription, $head) ?? 0;
+
+        return Theme::color(Theme::TEXT, Theme::rate($rate)) . Theme::color(Theme::MUTED, ' msg/s')
+            . ($lag > 0 && $rate >= 0.05
+                ? Theme::color(Theme::MUTED, sprintf('  ~%s left', self::duration((int)ceil($lag / $rate))))
+                : '');
     }
 
     /** @return list<string> */

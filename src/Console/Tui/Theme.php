@@ -94,6 +94,12 @@ final class Theme
         return number_format($number, 0, '.', ',');
     }
 
+    /** Messages per second, with one decimal for small rates. */
+    public static function rate(float $rate): string
+    {
+        return $rate < 10 ? sprintf('%.1f', $rate) : self::number((int)round($rate));
+    }
+
     public static function progressBar(int $position, int $head, int $width): string
     {
         $ratio = $head <= 0 ? 1.0 : min(1.0, max(0.0, $position / $head));
