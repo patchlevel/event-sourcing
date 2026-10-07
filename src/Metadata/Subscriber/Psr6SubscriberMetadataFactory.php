@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
+use Patchlevel\EventSourcing\Metadata\CacheKey;
 use Psr\Cache\CacheItemPoolInterface;
-
-use function assert;
 
 final class Psr6SubscriberMetadataFactory implements SubscriberMetadataFactory
 {
@@ -19,13 +18,14 @@ final class Psr6SubscriberMetadataFactory implements SubscriberMetadataFactory
     /** @param class-string $subscriber */
     public function metadata(string $subscriber): SubscriberMetadata
     {
-        $item = $this->cache->getItem($subscriber);
+        $item = $this->cache->getItem(CacheKey::forSubscriber($subscriber));
 
         if ($item->isHit()) {
             $data = $item->get();
-            assert($data instanceof SubscriberMetadata);
 
-            return $data;
+            if ($data instanceof SubscriberMetadata) {
+                return $data;
+            }
         }
 
         $metadata = $this->subscriberMetadataFactory->metadata($subscriber);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Subscriber;
 
+use Patchlevel\EventSourcing\Metadata\CacheKey;
 use Psr\SimpleCache\CacheInterface;
 
 final class Psr16SubscriberMetadataFactory implements SubscriberMetadataFactory
@@ -17,16 +18,15 @@ final class Psr16SubscriberMetadataFactory implements SubscriberMetadataFactory
     /** @param class-string $subscriber */
     public function metadata(string $subscriber): SubscriberMetadata
     {
-        /** @var ?SubscriberMetadata $metadata */
-        $metadata = $this->cache->get($subscriber);
+        $metadata = $this->cache->get(CacheKey::forSubscriber($subscriber));
 
-        if ($metadata !== null) {
+        if ($metadata instanceof SubscriberMetadata) {
             return $metadata;
         }
 
         $metadata = $this->subscriberMetadataFactory->metadata($subscriber);
 
-        $this->cache->set($subscriber, $metadata);
+        $this->cache->set(CacheKey::forSubscriber($subscriber), $metadata);
 
         return $metadata;
     }
