@@ -56,10 +56,10 @@ final class FooterWidget extends AbstractWidget
                 Theme::SUCCESS => '✓',
                 Theme::WARNING => '!',
                 Theme::DANGER => '✗',
-                default => '•',
+                default => '',
             };
 
-            $right = Theme::color($this->messageColor, $icon . ' ' . $this->message) . ' ';
+            $right = Theme::color($this->messageColor, ($icon === '' ? '' : $icon . ' ') . $this->message) . ' ';
         }
 
         if ($this->prompt !== null) {

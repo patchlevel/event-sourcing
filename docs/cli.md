@@ -377,6 +377,15 @@ and `--message-limit` sets how many messages a run, boot or rebuild processes at
 ```bash
 bin/console event-sourcing:subscription:dashboard --group=projector --refresh=1
 ```
+The actions are executed with the [subscription commands](#subscription-commands) in a separate process,
+so the dashboard keeps updating while a long boot or rebuild is running.
+This requires the subscription commands to be registered in the same console application.
+Otherwise, or with the `--in-process` option, the actions run in the dashboard process and block it until they are done.
+
+:::note
+A run processes up to `--message-limit` messages once, it does not replace the [run worker](#run).
+:::
+
 ### Keyboard shortcuts
 
 Actions apply to the marked subscriptions, or to the selected one if nothing is marked.
@@ -400,11 +409,6 @@ for example `pause` only for active, booting or failing subscriptions.
 | `esc` | Go back, clear the marks or clear the filter |
 | `?` | Show all shortcuts |
 | `q` | Quit |
-
-:::warning
-Run, boot and rebuild are executed in the dashboard process and block the UI until they are done.
-Use the `--message-limit` option to keep them short and the [run command](#subscription-commands) as worker.
-:::
 
 :::danger
 Remove, teardown and rebuild delete the data of the subscribers.

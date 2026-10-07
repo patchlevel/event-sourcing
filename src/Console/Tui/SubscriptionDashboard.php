@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Tui;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Console\Tui\ActionRunner\ActionRunner;
+use Patchlevel\EventSourcing\Console\Tui\ActionRunner\InProcessActionRunner;
 use Patchlevel\EventSourcing\Console\Tui\View\SubscriptionTableView;
 use Patchlevel\EventSourcing\Console\Tui\View\TextView;
 use Patchlevel\EventSourcing\Console\Tui\Widget\FooterWidget;
@@ -53,7 +55,10 @@ final class SubscriptionDashboard
 {
     private const FLASH_SECONDS = 5;
 
+    private const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+
     private readonly Tui $tui;
+    private readonly ActionRunner $runner;
     private readonly Keybindings $keybindings;
 
     private readonly HeaderWidget $header;
@@ -75,16 +80,20 @@ final class SubscriptionDashboard
     private DateTimeImmutable|null $lastReload = null;
     private int $flashUntil = 0;
 
-    /** @param positive-int|null $messageLimit */
+    private string|null $running = null;
+    private string|null $spinnerTimer = null;
+    private int $spinnerFrame = 0;
+
     public function __construct(
         private readonly SubscriptionEngine $engine,
         private readonly Store|null $store = null,
         private readonly SubscriptionEngineCriteria|null $criteria = null,
         private readonly float $refreshInterval = 2.0,
-        private readonly int|null $messageLimit = null,
+        ActionRunner|null $runner = null,
         TerminalInterface|null $terminal = null,
         private readonly ClockInterface|null $clock = null,
     ) {
+        $this->runner = $runner ?? new InProcessActionRunner($engine);
         $this->keybindings = self::keybindings();
         $this->tui = new Tui(self::styleSheet(), $terminal ?? new Terminal(), $this->keybindings);
 
@@ -119,6 +128,7 @@ final class SubscriptionDashboard
             $this->tui->run();
         } finally {
             EventLoop::cancel($timer);
+            $this->stopSpinner();
             $terminal->write("\x1b[?1049l");
         }
     }
@@ -314,6 +324,12 @@ final class SubscriptionDashboard
 
     private function trigger(SubscriptionAction $action): void
     {
+        if ($this->running !== null) {
+            $this->flash(sprintf('Wait until "%s" is done', $this->running), Theme::WARNING);
+
+            return;
+        }
+
         $targets = $this->targets();
 
         if ($targets === []) {
@@ -361,37 +377,65 @@ final class SubscriptionDashboard
     private function execute(SubscriptionAction $action, array $targets): void
     {
         $ids = array_map(static fn (Subscription $subscription) => $subscription->id(), $targets);
+        $label = sprintf('%s %s', $action->label(), $this->describeTargets($targets));
 
-        // show the progress before the (blocking) command is executed
-        $this->flash(sprintf('%s %s...', $action->label(), $this->describeTargets($targets)), Theme::WARNING);
+        $this->running = $label;
+        $this->showRunning();
+
+        // render before the runner starts, an in process runner blocks until it is done
         $this->tui->requestRender();
         $this->tui->processRender();
 
-        $errors = [];
+        $this->runner->run($action, $ids, function (array $errors) use ($action, $label): void {
+            $this->running = null;
+            $this->stopSpinner();
+            $this->table->clearMarks();
+            $this->reload();
 
-        try {
-            foreach ($action->commands($ids, $this->messageLimit) as $command) {
-                foreach ($this->engine->execute($command)->errors as $error) {
-                    $errors[] = sprintf('%s: %s', $error->subscriptionId, $error->message);
-                }
+            if ($errors === []) {
+                $this->flash(sprintf('%s done', $label), Theme::SUCCESS);
+            } else {
+                $this->flash(
+                    sprintf('%s failed: %s', $action->label(), $errors[0]) . (count($errors) > 1 ? sprintf(' (+%d more)', count($errors) - 1) : ''),
+                    Theme::DANGER,
+                );
             }
-        } catch (Throwable $e) {
-            $errors[] = $e->getMessage();
-        }
 
-        $this->table->clearMarks();
-        $this->reload();
+            $this->updateChrome();
+        });
 
-        if ($errors === []) {
-            $this->flash(sprintf('%s %s done', $action->label(), $this->describeTargets($targets)), Theme::SUCCESS);
-
+        if ($this->running === null) {
             return;
         }
 
-        $this->flash(
-            sprintf('%s failed: %s', $action->label(), $errors[0]) . (count($errors) > 1 ? sprintf(' (+%d more)', count($errors) - 1) : ''),
-            Theme::DANGER,
+        $this->spinnerTimer = EventLoop::repeat(0.08, function (): void {
+            $this->spinnerFrame++;
+            $this->showRunning();
+            $this->tui->requestRender();
+        });
+    }
+
+    private function showRunning(): void
+    {
+        if ($this->running === null) {
+            return;
+        }
+
+        $this->flashUntil = 0;
+        $this->footer->setMessage(
+            sprintf('%s %s...', self::SPINNER[$this->spinnerFrame % count(self::SPINNER)], $this->running),
+            Theme::ACCENT,
         );
+    }
+
+    private function stopSpinner(): void
+    {
+        if ($this->spinnerTimer === null) {
+            return;
+        }
+
+        EventLoop::cancel($this->spinnerTimer);
+        $this->spinnerTimer = null;
     }
 
     /** @return list<Subscription> */
