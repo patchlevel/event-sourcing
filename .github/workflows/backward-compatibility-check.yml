@@ -27,7 +27,7 @@ jobs:
           fetch-depth: 0
 
       - name: "Install PHP"
-        uses: "shivammathur/setup-php@2.37.2"
+        uses: "shivammathur/setup-php@2.40.0"
         with:
           php-version: "${{ matrix.php-version }}"
           ini-values: memory_limit=-1
