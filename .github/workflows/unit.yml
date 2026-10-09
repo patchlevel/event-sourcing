@@ -48,6 +48,11 @@ jobs:
                   ini-values: memory_limit=-1
                   extensions: pdo_sqlite, pdo_pgsql
 
+            # symfony/tui needs PHP 8.4 and would raise the lowest symfony versions
+            - name: "Remove symfony/tui"
+              if: matrix.php-version == '8.2' || matrix.php-version == '8.3' || matrix.dependencies == 'lowest'
+              run: composer remove --dev symfony/tui --no-update
+
             - uses: ramsey/composer-install@4.0.0
               with:
                 dependency-versions: ${{ matrix.dependencies }}

@@ -52,6 +52,29 @@ final class SubscriptionRunCommandTest extends TestCase
         self::assertSame(0, $commandTester->getStatusCode());
     }
 
+    public function testRunStopsWhenFinished(): void
+    {
+        $store = $this->createMock(Store::class);
+
+        $engine = $this->createMock(SubscriptionEngine::class);
+        $engine
+            ->expects($this->once())
+            ->method('subscriptions')
+            ->willReturn([new Subscription('foo')]);
+        $engine
+            ->expects($this->exactly(2))
+            ->method('execute')
+            ->willReturnOnConsecutiveCalls(
+                new ProcessedResult(100, false),
+                new ProcessedResult(20, true),
+            );
+
+        $commandTester = new CommandTester(new SubscriptionRunCommand($engine, $store));
+        $commandTester->execute(['--stop-when-finished' => true, '--sleep' => 0]);
+
+        self::assertSame(0, $commandTester->getStatusCode());
+    }
+
     public function testRunWithRebuild(): void
     {
         $store = $this->createMock(Store::class);

@@ -9,6 +9,7 @@ You can:
 * Create and delete `databases`
 * Create, update and delete `schemas`
 * Manage `subscriptions`
+* Monitor and manage `subscriptions` in an interactive dashboard
 * Inspect your `aggregates`, `events` and `subscribers`
 * Migrate events from one `store` to another
 
@@ -179,6 +180,7 @@ The boot and run commands are workers and support the following options:
 | `--sleep`               | How many milliseconds the worker waits between two runs.                           |
 | `--restart-signal-file` | Stop the worker when this file is touched after it has started.                    |
 | `--heartbeat-file`      | Touch this file on start and after every run, and remove it when the worker stops. |
+| `--stop-when-finished`  | Stop the run worker as soon as all events are processed (run command only).        |
 
 ```bash
 bin/console event-sourcing:subscription:run --memory-limit=250MB --time-limit=3600
@@ -328,6 +330,90 @@ bin/console event-sourcing:subscription:reactivate --id=welcome_email
 ```
 :::note
 You can find out more about the [subscription lifecycle](subscription.md#subscription-status).
+:::
+
+## Subscription dashboard
+
+The subscription dashboard is an interactive, full screen terminal UI inspired by k9s.
+It shows all subscriptions in a live updating table with their status, position, lag and messages per second,
+and lets you run the subscription commands directly on the selected subscriptions.
+
+* SubscriptionDashboardCommand: `event-sourcing:subscription:dashboard`
+
+:::experimental
+The dashboard is experimental and may change in a minor release.
+:::
+
+The dashboard is built on the [Symfony TUI component](https://symfony.com/doc/current/tui.html),
+which is an optional dependency and requires PHP 8.4 or newer.
+
+```bash
+composer require symfony/tui
+```
+Register the command with the subscription engine and the store.
+The store is optional, it is used to show how far each subscription is behind.
+
+```php
+use Patchlevel\EventSourcing\Console\Command\SubscriptionDashboardCommand;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Symfony\Component\Console\Application;
+
+/**
+ * @var Application $cli
+ * @var SubscriptionEngine $subscriptionEngine
+ * @var Store $store
+ */
+$cli->add(
+    new SubscriptionDashboardCommand(
+        $subscriptionEngine,
+        $store,
+    ),
+);
+```
+Like the other subscription commands, you can limit the dashboard to some subscriptions with `--id` and `--group`.
+With `--refresh` you set how often the data is reloaded in seconds,
+and `--message-limit` sets how many messages a run, boot or rebuild processes at once.
+
+```bash
+bin/console event-sourcing:subscription:dashboard --group=projector --refresh=1
+```
+The actions are executed with the [subscription commands](#subscription-commands) in a separate process,
+so the dashboard keeps updating while a long boot or rebuild is running.
+This requires the subscription commands to be registered in the same console application.
+Otherwise, or with the `--in-process` option, the actions run in the dashboard process and block it until they are done.
+
+:::note
+A run started from the dashboard stops as soon as all events are processed, it does not replace the [run worker](#run).
+:::
+
+### Keyboard shortcuts
+
+Actions apply to the marked subscriptions, or to the selected one if nothing is marked.
+The dashboard only offers actions that fit the status of the subscription,
+for example `pause` only for active, booting or failing subscriptions.
+
+| Key | Action |
+|---|---|
+| `s` | Setup new subscriptions |
+| `b` | Boot subscriptions in booting state |
+| `r` | Run active subscriptions |
+| `p` | Pause subscriptions |
+| `a` | Reactivate subscriptions |
+| `f` | Refresh group, run mode and cleanup tasks |
+| `t` | Teardown detached subscriptions |
+| `ctrl-d` | Remove subscriptions |
+| `shift-r` | Rebuild (remove and boot) subscriptions |
+| `enter` | Show the details and the error of a subscription |
+| `/` | Filter by id, group, status or run mode |
+| `space` | Mark or unmark a subscription |
+| `esc` | Go back, clear the marks or clear the filter |
+| `?` | Show all shortcuts |
+| `q` | Quit |
+
+:::danger
+Remove, teardown and rebuild delete the data of the subscribers.
+The dashboard asks for a confirmation before it executes them.
 :::
 
 ## Inspector commands

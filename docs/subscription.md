@@ -1647,5 +1647,6 @@ foreach ($subscriptions as $subscription) {
 ## Learn more
 
 * [How to use CLI commands](cli.md)
+* [How to monitor subscriptions with the dashboard](cli.md#subscription-dashboard)
 * [How to create Messages](message.md)
 * [How to Test](testing.md)
