@@ -4,66 +4,52 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Event;
 
+use Patchlevel\EventSourcing\Metadata\CacheKey;
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadata;
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\Psr16EventMetadataFactory;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Unit\Metadata\Event\Fixture\EmailChanged;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\CacheInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Psr16Cache;
 
 #[CoversClass(Psr16EventMetadataFactory::class)]
 final class Psr16EventMetadataFactoryTest extends TestCase
 {
-    public function testCacheHit(): void
+    public function testMetadataIsCached(): void
     {
-        $value = new EventMetadata('profile.created');
-
-        $cache = $this->createMock(CacheInterface::class);
-        $cache
-            ->expects($this->once())
-            ->method('get')
-            ->with(ProfileCreated::class)
-            ->willReturn($value);
-        $cache
-            ->expects($this->never())
-            ->method('set');
+        $metadata = new EventMetadata('email_changed');
 
         $innerFactory = $this->createMock(EventMetadataFactory::class);
-        $innerFactory
-            ->expects($this->never())
-            ->method('metadata');
+        $innerFactory->expects(self::once())
+            ->method('metadata')
+            ->with(EmailChanged::class)
+            ->willReturn($metadata);
 
+        $cache = new Psr16Cache(new ArrayAdapter());
         $factory = new Psr16EventMetadataFactory($innerFactory, $cache);
 
-        self::assertSame($value, $factory->metadata(ProfileCreated::class));
+        self::assertSame($metadata, $factory->metadata(EmailChanged::class));
+        self::assertTrue($cache->has(CacheKey::forEvent(EmailChanged::class)));
+        self::assertEquals($metadata, $factory->metadata(EmailChanged::class));
     }
 
-    public function testCacheMiss(): void
+    public function testMetadataIgnoresInvalidEntry(): void
     {
-        $value = new EventMetadata('profile.created');
-
-        $cache = $this->createMock(CacheInterface::class);
-        $cache
-            ->expects($this->once())
-            ->method('get')
-            ->with(ProfileCreated::class)
-            ->willReturn(null);
-        $cache
-            ->expects($this->once())
-            ->method('set')
-            ->with(ProfileCreated::class, $value)
-            ->willReturn(true);
+        $metadata = new EventMetadata('email_changed');
 
         $innerFactory = $this->createMock(EventMetadataFactory::class);
-        $innerFactory
-            ->expects($this->once())
+        $innerFactory->expects(self::once())
             ->method('metadata')
-            ->with(ProfileCreated::class)
-            ->willReturn($value);
+            ->with(EmailChanged::class)
+            ->willReturn($metadata);
+
+        $cache = new Psr16Cache(new ArrayAdapter());
+        $cache->set(CacheKey::forEvent(EmailChanged::class), 'invalid');
 
         $factory = new Psr16EventMetadataFactory($innerFactory, $cache);
 
-        self::assertSame($value, $factory->metadata(ProfileCreated::class));
+        self::assertSame($metadata, $factory->metadata(EmailChanged::class));
     }
 }

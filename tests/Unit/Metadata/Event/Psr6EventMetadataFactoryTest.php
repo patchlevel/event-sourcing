@@ -4,88 +4,53 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Event;
 
+use Patchlevel\EventSourcing\Metadata\CacheKey;
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadata;
 use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Event\Psr6EventMetadataFactory;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Unit\Metadata\Event\Fixture\EmailChanged;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Psr\Cache\CacheItemInterface;
-use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 #[CoversClass(Psr6EventMetadataFactory::class)]
 final class Psr6EventMetadataFactoryTest extends TestCase
 {
-    public function testCacheHit(): void
+    public function testMetadataIsCached(): void
     {
-        $value = new EventMetadata('profile.created');
-
-        $item = $this->createMock(CacheItemInterface::class);
-        $item
-            ->expects($this->once())
-            ->method('isHit')
-            ->willReturn(true);
-        $item
-            ->expects($this->once())
-            ->method('get')
-            ->willReturn($value);
-
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $cache
-            ->expects($this->once())
-            ->method('getItem')
-            ->with(ProfileCreated::class)
-            ->willReturn($item);
-        $cache
-            ->expects($this->never())
-            ->method('save');
+        $metadata = new EventMetadata('email_changed');
 
         $innerFactory = $this->createMock(EventMetadataFactory::class);
-        $innerFactory
-            ->expects($this->never())
-            ->method('metadata');
+        $innerFactory->expects(self::once())
+            ->method('metadata')
+            ->with(EmailChanged::class)
+            ->willReturn($metadata);
 
+        $cache = new ArrayAdapter();
         $factory = new Psr6EventMetadataFactory($innerFactory, $cache);
 
-        self::assertSame($value, $factory->metadata(ProfileCreated::class));
+        self::assertSame($metadata, $factory->metadata(EmailChanged::class));
+        self::assertTrue($cache->hasItem(CacheKey::forEvent(EmailChanged::class)));
+        self::assertEquals($metadata, $factory->metadata(EmailChanged::class));
     }
 
-    public function testCacheMiss(): void
+    public function testMetadataIgnoresInvalidEntry(): void
     {
-        $value = new EventMetadata('profile.created');
-
-        $item = $this->createMock(CacheItemInterface::class);
-        $item
-            ->expects($this->once())
-            ->method('isHit')
-            ->willReturn(false);
-        $item
-            ->expects($this->once())
-            ->method('set')
-            ->with($value)
-            ->willReturnSelf();
-
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $cache
-            ->expects($this->once())
-            ->method('getItem')
-            ->with(ProfileCreated::class)
-            ->willReturn($item);
-        $cache
-            ->expects($this->once())
-            ->method('save')
-            ->with($item)
-            ->willReturn(true);
+        $metadata = new EventMetadata('email_changed');
 
         $innerFactory = $this->createMock(EventMetadataFactory::class);
-        $innerFactory
-            ->expects($this->once())
+        $innerFactory->expects(self::once())
             ->method('metadata')
-            ->with(ProfileCreated::class)
-            ->willReturn($value);
+            ->with(EmailChanged::class)
+            ->willReturn($metadata);
+
+        $cache = new ArrayAdapter();
+        $item = $cache->getItem(CacheKey::forEvent(EmailChanged::class));
+        $item->set('invalid');
+        $cache->save($item);
 
         $factory = new Psr6EventMetadataFactory($innerFactory, $cache);
 
-        self::assertSame($value, $factory->metadata(ProfileCreated::class));
+        self::assertSame($metadata, $factory->metadata(EmailChanged::class));
     }
 }

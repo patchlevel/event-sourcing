@@ -7,85 +7,76 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Aggregate;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadata;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\Psr6AggregateRootMetadataFactory;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use Patchlevel\EventSourcing\Metadata\CacheKey;
+use Patchlevel\EventSourcing\Tests\Unit\Metadata\Aggregate\Fixture\Profile;
+use Patchlevel\EventSourcing\Tests\Unit\Metadata\Aggregate\Fixture\Profile2;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Psr\Cache\CacheItemInterface;
-use Psr\Cache\CacheItemPoolInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 #[CoversClass(Psr6AggregateRootMetadataFactory::class)]
 final class Psr6AggregateRootMetadataFactoryTest extends TestCase
 {
-    public function testCacheHit(): void
+    public function testMetadataIsCached(): void
     {
-        $value = new AggregateRootMetadata(Profile::class, 'profile', 'id', [], [], false, null);
-
-        $item = $this->createMock(CacheItemInterface::class);
-        $item
-            ->expects($this->once())
-            ->method('isHit')
-            ->willReturn(true);
-        $item
-            ->expects($this->once())
-            ->method('get')
-            ->willReturn($value);
-
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $cache
-            ->expects($this->once())
-            ->method('getItem')
-            ->with(Profile::class)
-            ->willReturn($item);
-        $cache
-            ->expects($this->never())
-            ->method('save');
+        $metadata = new AggregateRootMetadata(
+            Profile::class,
+            'profile',
+            'id',
+            [],
+            [],
+            false,
+            null,
+        );
 
         $innerFactory = $this->createMock(AggregateRootMetadataFactory::class);
-        $innerFactory
-            ->expects($this->never())
-            ->method('metadata');
-
-        $factory = new Psr6AggregateRootMetadataFactory($innerFactory, $cache);
-
-        self::assertSame($value, $factory->metadata(Profile::class));
-    }
-
-    public function testCacheMiss(): void
-    {
-        $value = new AggregateRootMetadata(Profile::class, 'profile', 'id', [], [], false, null);
-
-        $item = $this->createMock(CacheItemInterface::class);
-        $item
-            ->expects($this->once())
-            ->method('isHit')
-            ->willReturn(false);
-        $item
-            ->expects($this->once())
-            ->method('set')
-            ->with($value)
-            ->willReturnSelf();
-
-        $cache = $this->createMock(CacheItemPoolInterface::class);
-        $cache
-            ->expects($this->once())
-            ->method('getItem')
-            ->with(Profile::class)
-            ->willReturn($item);
-        $cache
-            ->expects($this->once())
-            ->method('save')
-            ->with($item)
-            ->willReturn(true);
-
-        $innerFactory = $this->createMock(AggregateRootMetadataFactory::class);
-        $innerFactory
-            ->expects($this->once())
+        $innerFactory->expects(self::once())
             ->method('metadata')
             ->with(Profile::class)
-            ->willReturn($value);
+            ->willReturn($metadata);
+
+        $cache = new ArrayAdapter();
+        $factory = new Psr6AggregateRootMetadataFactory($innerFactory, $cache);
+
+        self::assertSame($metadata, $factory->metadata(Profile::class));
+        self::assertTrue($cache->hasItem(CacheKey::forAggregateRoot(Profile::class)));
+        self::assertEquals($metadata, $factory->metadata(Profile::class));
+    }
+
+    public function testMetadataIgnoresEntryOfOtherAggregate(): void
+    {
+        $metadata = new AggregateRootMetadata(
+            Profile::class,
+            'profile',
+            'id',
+            [],
+            [],
+            false,
+            null,
+        );
+        $otherMetadata = new AggregateRootMetadata(
+            Profile2::class,
+            'profile2',
+            'id',
+            [],
+            [],
+            false,
+            null,
+        );
+
+        $innerFactory = $this->createMock(AggregateRootMetadataFactory::class);
+        $innerFactory->expects(self::once())
+            ->method('metadata')
+            ->with(Profile::class)
+            ->willReturn($metadata);
+
+        $cache = new ArrayAdapter();
+        $item = $cache->getItem(CacheKey::forAggregateRoot(Profile::class));
+        $item->set($otherMetadata);
+        $cache->save($item);
 
         $factory = new Psr6AggregateRootMetadataFactory($innerFactory, $cache);
 
-        self::assertSame($value, $factory->metadata(Profile::class));
+        self::assertSame($metadata, $factory->metadata(Profile::class));
     }
 }

@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Event;
 
+use Patchlevel\EventSourcing\Metadata\CacheKey;
 use Psr\Cache\CacheItemPoolInterface;
-
-use function assert;
 
 final class Psr6EventMetadataFactory implements EventMetadataFactory
 {
@@ -19,13 +18,14 @@ final class Psr6EventMetadataFactory implements EventMetadataFactory
     /** @param class-string $event */
     public function metadata(string $event): EventMetadata
     {
-        $item = $this->cache->getItem($event);
+        $item = $this->cache->getItem(CacheKey::forEvent($event));
 
         if ($item->isHit()) {
             $data = $item->get();
-            assert($data instanceof EventMetadata);
 
-            return $data;
+            if ($data instanceof EventMetadata) {
+                return $data;
+            }
         }
 
         $metadata = $this->eventMetadataFactory->metadata($event);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Metadata\Event;
 
+use Patchlevel\EventSourcing\Metadata\CacheKey;
 use Psr\SimpleCache\CacheInterface;
 
 final class Psr16EventMetadataFactory implements EventMetadataFactory
@@ -17,16 +18,15 @@ final class Psr16EventMetadataFactory implements EventMetadataFactory
     /** @param class-string $event */
     public function metadata(string $event): EventMetadata
     {
-        /** @var ?EventMetadata $metadata */
-        $metadata = $this->cache->get($event);
+        $metadata = $this->cache->get(CacheKey::forEvent($event));
 
-        if ($metadata !== null) {
+        if ($metadata instanceof EventMetadata) {
             return $metadata;
         }
 
         $metadata = $this->eventMetadataFactory->metadata($event);
 
-        $this->cache->set($event, $metadata);
+        $this->cache->set(CacheKey::forEvent($event), $metadata);
 
         return $metadata;
     }

@@ -4,66 +4,52 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Metadata\Subscriber;
 
+use Patchlevel\EventSourcing\Metadata\CacheKey;
 use Patchlevel\EventSourcing\Metadata\Subscriber\Psr16SubscriberMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadataFactory;
-use Patchlevel\EventSourcing\Tests\Unit\Fixture\Profile;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\BatchingSubscriber;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Psr\SimpleCache\CacheInterface;
+use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Cache\Psr16Cache;
 
 #[CoversClass(Psr16SubscriberMetadataFactory::class)]
 final class Psr16SubscriberMetadataFactoryTest extends TestCase
 {
-    public function testCacheHit(): void
+    public function testMetadataIsCached(): void
     {
-        $value = new SubscriberMetadata('foo');
-
-        $cache = $this->createMock(CacheInterface::class);
-        $cache
-            ->expects($this->once())
-            ->method('get')
-            ->with(Profile::class)
-            ->willReturn($value);
-        $cache
-            ->expects($this->never())
-            ->method('set');
+        $metadata = new SubscriberMetadata('batching');
 
         $innerFactory = $this->createMock(SubscriberMetadataFactory::class);
-        $innerFactory
-            ->expects($this->never())
-            ->method('metadata');
+        $innerFactory->expects(self::once())
+            ->method('metadata')
+            ->with(BatchingSubscriber::class)
+            ->willReturn($metadata);
 
+        $cache = new Psr16Cache(new ArrayAdapter());
         $factory = new Psr16SubscriberMetadataFactory($innerFactory, $cache);
 
-        self::assertSame($value, $factory->metadata(Profile::class));
+        self::assertSame($metadata, $factory->metadata(BatchingSubscriber::class));
+        self::assertTrue($cache->has(CacheKey::forSubscriber(BatchingSubscriber::class)));
+        self::assertEquals($metadata, $factory->metadata(BatchingSubscriber::class));
     }
 
-    public function testCacheMiss(): void
+    public function testMetadataIgnoresInvalidEntry(): void
     {
-        $value = new SubscriberMetadata('foo');
-
-        $cache = $this->createMock(CacheInterface::class);
-        $cache
-            ->expects($this->once())
-            ->method('get')
-            ->with(Profile::class)
-            ->willReturn(null);
-        $cache
-            ->expects($this->once())
-            ->method('set')
-            ->with(Profile::class, $value)
-            ->willReturn(true);
+        $metadata = new SubscriberMetadata('batching');
 
         $innerFactory = $this->createMock(SubscriberMetadataFactory::class);
-        $innerFactory
-            ->expects($this->once())
+        $innerFactory->expects(self::once())
             ->method('metadata')
-            ->with(Profile::class)
-            ->willReturn($value);
+            ->with(BatchingSubscriber::class)
+            ->willReturn($metadata);
+
+        $cache = new Psr16Cache(new ArrayAdapter());
+        $cache->set(CacheKey::forSubscriber(BatchingSubscriber::class), 'invalid');
 
         $factory = new Psr16SubscriberMetadataFactory($innerFactory, $cache);
 
-        self::assertSame($value, $factory->metadata(Profile::class));
+        self::assertSame($metadata, $factory->metadata(BatchingSubscriber::class));
     }
 }
