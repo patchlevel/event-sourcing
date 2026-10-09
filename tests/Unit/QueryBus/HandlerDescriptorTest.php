@@ -9,10 +9,11 @@ use Patchlevel\EventSourcing\QueryBus\HandlerDescriptor;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\QueryAnsweringProjection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\QueryAnsweringStaticProjection;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\QueryProfile;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\RequiresPhp;
 use PHPUnit\Framework\TestCase;
 
-/** @covers \Patchlevel\EventSourcing\QueryBus\HandlerDescriptor */
+#[CoversClass(HandlerDescriptor::class)]
 final class HandlerDescriptorTest extends TestCase
 {
     public function testObjectMethod(): void

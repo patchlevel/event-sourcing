@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Store\ListenableStore;
 use Patchlevel\EventSourcing\Store\Store;
-use Patchlevel\EventSourcing\Store\SubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -68,6 +72,18 @@ final class SubscriptionRunCommand extends SubscriptionCommand
                 1000,
             )
             ->addOption(
+                'restart-signal-file',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Stop the worker when this file is touched after it has started (e.g. on deployment)',
+            )
+            ->addOption(
+                'heartbeat-file',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Touch this file after every run, e.g. for liveness probes',
+            )
+            ->addOption(
                 'rebuild',
                 null,
                 InputOption::VALUE_NONE,
@@ -83,42 +99,45 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         $timeLimit = InputHelper::nullablePositiveInt($input->getOption('time-limit'));
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
         $rebuild = InputHelper::bool($input->getOption('rebuild'));
+        $restartSignalFile = InputHelper::nullableString($input->getOption('restart-signal-file'));
+        $heartbeatFile = InputHelper::nullableString($input->getOption('heartbeat-file'));
 
         $criteria = $this->subscriptionEngineCriteria($input);
         $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
-        if ($this->store instanceof SubscriptionStore) {
-            $this->store->setupSubscription();
-        }
-
         $logger = new ConsoleLogger($output);
 
         $worker = DefaultWorker::create(
-            function () use ($criteria, $messageLimit, $sleep): void {
-                $this->engine->run($criteria, $messageLimit);
+            function () use ($criteria, $messageLimit, $sleep): bool {
+                $result = $this->engine->execute(new Run($criteria->ids, $criteria->groups, $messageLimit));
 
-                if (!$this->store instanceof SubscriptionStore) {
-                    return;
+                if ($result instanceof ProcessedResult && !$result->finished) {
+                    return true;
                 }
 
-                $this->store->wait($sleep);
+                if ($this->store instanceof ListenableStore) {
+                    $this->store->wait($sleep);
+                }
+
+                return false;
             },
             [
                 'runLimit' => $runLimit,
                 'memoryLimit' => $memoryLimit,
                 'timeLimit' => $timeLimit,
+                'restartSignalFile' => $restartSignalFile,
+                'heartbeatFile' => $heartbeatFile,
             ],
             $logger,
             $this->workerEventDispatcher,
         );
 
         if ($rebuild) {
-            $this->engine->remove($criteria);
-            $this->engine->boot($criteria);
+            $this->engine->execute(new Remove($criteria->ids, $criteria->groups));
+            $this->engine->execute(new Boot($criteria->ids, $criteria->groups));
         }
 
-        $supportSubscription = $this->store instanceof SubscriptionStore && $this->store->supportSubscription();
-        $worker->run($supportSubscription ? 0 : $sleep);
+        $worker->run($this->store instanceof ListenableStore ? 0 : $sleep);
 
         return 0;
     }

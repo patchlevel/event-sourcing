@@ -19,18 +19,17 @@ the [repository](repository.md).
 You can add a header using `withHeader`:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
+use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 
 $clock = new SystemClock();
 $message = Message::create(new NameChanged('foo'))
-    ->withHeader(new AggregateHeader(
-        aggregateName: 'profile',
-        aggregateId: 'bca7576c-536f-4428-b694-7b1f00c714b7',
-        playhead: 2,
-        recordedOn: $clock->now(),
-    ));
+    ->withHeader(new StreamNameHeader('profile-bca7576c-536f-4428-b694-7b1f00c714b7'))
+    ->withHeader(new PlayheadHeader(2))
+    ->withHeader(new RecordedOnHeader($clock->now()));
 ```
 :::note
 The message object is immutable. It creates a new instance with the new data.
@@ -39,35 +38,26 @@ The message object is immutable. It creates a new instance with the new data.
 You can also access the headers:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 
 /** @var Message $message */
-$message->header(AggregateHeader::class); // AggregateHeader object
-$message->hasHeader(AggregateHeader::class); // true
-$message->headers(); // [AggregateHeader object]
+$message->header(PlayheadHeader::class); // PlayheadHeader object
+$message->hasHeader(PlayheadHeader::class); // true
+$message->headers(); // [StreamNameHeader object, PlayheadHeader object, ...]
 ```
 ## Built-in headers
 
 The message object has some built-in headers which are used internally.
-Which of them you get depends on the [store](store.md) you use.
 
-These headers are set by every store:
-
-* `IndexHeader` - The global position of the message in the store.
-* `ArchivedHeader` - Flag if the message is archived.
-
-The `DoctrineDbalStore` is aggregate based and adds:
-
-* `AggregateHeader` - Contains the aggregate name, aggregate id, playhead and recorded on.
-* `StreamStartHeader` - Flag if the message is the first message in a new stream.
-
-The `StreamDoctrineDbalStore` is stream based and splits the same information into single headers:
-
-* `StreamNameHeader` - The name of the stream, for example `profile-e3e3e3e3-3e3e-3e3e-3e3e-3e3e3e3e3e3e`.
-* `PlayheadHeader` - The position of the message inside its stream.
-* `RecordedOnHeader` - The point in time when the message was saved.
+* `StreamNameHeader` - The name of the stream the message belongs to, in the format `[aggregateName]-[aggregateId]`.
+* `PlayheadHeader` - The position of the message within its stream.
+* `RecordedOnHeader` - The date and time when the message was recorded.
 * `EventIdHeader` - The unique id of the event.
+* `IndexHeader` - The global position of the message in the store.
+* `TagsHeader` - The tags attached to the message (experimental).
+* `ArchivedHeader` - Flag if the message is archived.
+* `StreamStartHeader` - Flag if the message is the first message in a new stream.
 
 ```php
 use Patchlevel\EventSourcing\Message\Message;
@@ -88,13 +78,6 @@ $message->header(EventIdHeader::class)->eventId; // 'a4a4a4a4-4a4a-...'
 The `PlayheadHeader` is only added if the stream is playhead based.
 Streams that are written without a playhead, for example [custom streams](store.md#custom-streams),
 do not have this header. Use `hasHeader` before you access it.
-:::
-
-:::note
-The `AggregateHeader` and the stream based headers never appear on the same message.
-If you migrate from the `DoctrineDbalStore` to the `StreamDoctrineDbalStore`, you can convert
-them with the `AggregateToStreamHeaderTranslator`, see the
-[store migration command](cli.md#store-migration-command).
 :::
 
 ## Custom headers
@@ -206,27 +189,32 @@ $serializer = DefaultHeadersSerializer::createFromPaths(
     ['*'],
 );
 ```
-## Pipe
+## Stream
 
-The `Pipe` is a construct that allows you to chain multiple translators.
+A `Stream` wraps an iterable of messages and allows you to chain multiple translators with `transform`.
 This can be used to manipulate, filter or expand messages or events.
 This can be used for anti-corruption layers, data migration, or to fix errors in the event stream.
 
 ```php
-use Patchlevel\EventSourcing\Message\Pipe;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Message\Translator\ExcludeEventTranslator;
 use Patchlevel\EventSourcing\Message\Translator\RecalculatePlayheadTranslator;
 
-$messages = new Pipe(
-    $messages,
+$stream = (new Stream($messages))->transform(
     new ExcludeEventTranslator([ProfileCreated::class]),
     new RecalculatePlayheadTranslator(),
 );
 
-foreach ($messages as $message) {
+foreach ($stream as $message) {
     // do something with the message
 }
 ```
+:::tip
+A `Stream` is also what every store returns from its `load` method, so you can apply the same
+transformations to the messages you read from the store. Besides iterating, a `Stream` offers
+`toList()`, `toArray()` and `chunk()` to consume the messages.
+:::
+
 ## Translator
 
 Translator can be used to manipulate, filter or expand messages or events.

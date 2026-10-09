@@ -16,7 +16,6 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventIdCriterion;
@@ -24,6 +23,7 @@ use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\TagCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
@@ -875,7 +875,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
 
         try {
             $stream = $this->store->load(new Criteria(new EventIdCriterion($eventId)));
-            $messages = iterator_to_array($stream);
+            $messages = iterator_to_array($stream, false);
 
             self::assertCount(1, $messages);
             self::assertSame($eventId, $messages[0]->header(EventIdHeader::class)->eventId);
@@ -931,7 +931,7 @@ final class StreamDoctrineDbalStoreTest extends TestCase
     {
         $this->expectException(UnsupportedCriterion::class);
 
-        $this->store->count(new Criteria(new AggregateIdCriterion('1')));
+        $this->store->count(new Criteria(new TagCriterion(['profile:1'])));
     }
 
     public function testLoadEmptyStore(): void
@@ -1190,34 +1190,13 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         }
     }
 
-    public function testSubscriptionSupport(): void
+    public function testWaitWithoutNotification(): void
     {
-        self::assertSame(
-            $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform,
-            $this->store->supportSubscription(),
-        );
-
-        // without support both are a no-op, with support no notification arrives within the timeout
-        $this->store->setupSubscription();
+        // without postgres it just sleeps, with postgres no notification arrives within the timeout
+        $this->store->wait(10);
         $this->store->wait(10);
 
         self::assertSame(0, $this->store->count());
-    }
-
-    public function testSetupSubscriptionCreatesTheNotifyTrigger(): void
-    {
-        if (!$this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
-            $this->markTestSkipped('only postgres supports the subscription notifications');
-        }
-
-        $this->store->setupSubscription();
-        $this->store->setupSubscription();
-
-        $trigger = $this->connection->fetchOne(
-            "SELECT tgname FROM pg_trigger WHERE tgname = 'notify_trigger' AND tgrelid = 'event_store'::regclass",
-        );
-
-        self::assertSame('notify_trigger', $trigger);
     }
 
     public function testConfigureSchemaSameDatabase(): void

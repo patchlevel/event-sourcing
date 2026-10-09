@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\CommandBus;
 
 use Patchlevel\EventSourcing\Attribute\InstantRetry;
 use Patchlevel\EventSourcing\Repository\AggregateOutdated;
+use Patchlevel\EventSourcing\Store\AppendConditionNotMet;
 use ReflectionClass;
 use Throwable;
 
@@ -20,7 +21,7 @@ final class InstantRetryCommandBus implements CommandBus
     public function __construct(
         private readonly CommandBus $commandBus,
         private readonly int $defaultMaxRetries = 3,
-        private readonly array $defaultExceptions = [AggregateOutdated::class],
+        private readonly array $defaultExceptions = [AggregateOutdated::class, AppendConditionNotMet::class],
     ) {
     }
 

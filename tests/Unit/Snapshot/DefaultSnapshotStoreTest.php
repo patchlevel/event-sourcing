@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Snapshot;
 
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
 use Patchlevel\EventSourcing\Snapshot\AdapterNotFound;
+use Patchlevel\EventSourcing\Snapshot\AdapterRepository;
 use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotConfigured;
 use Patchlevel\EventSourcing\Snapshot\SnapshotNotFound;
@@ -124,6 +125,31 @@ final class DefaultSnapshotStoreTest extends TestCase
     {
         $adapter = $this->createMock(SnapshotAdapter::class);
         $store = new DefaultSnapshotStore(['memory' => $adapter]);
+
+        self::assertSame($adapter, $store->adapter(ProfileWithSnapshot::class));
+    }
+
+    public function testAdapterRepositoryInstance(): void
+    {
+        $adapter = $this->createMock(SnapshotAdapter::class);
+
+        $adapterRepository = $this->createMock(AdapterRepository::class);
+        $adapterRepository
+            ->expects($this->once())
+            ->method('get')
+            ->with('memory')
+            ->willReturn($adapter);
+
+        $store = new DefaultSnapshotStore($adapterRepository);
+
+        self::assertSame($adapter, $store->adapter(ProfileWithSnapshot::class));
+    }
+
+    public function testCreateDefault(): void
+    {
+        $adapter = $this->createMock(SnapshotAdapter::class);
+
+        $store = DefaultSnapshotStore::createDefault(['memory' => $adapter]);
 
         self::assertSame($adapter, $store->adapter(ProfileWithSnapshot::class));
     }

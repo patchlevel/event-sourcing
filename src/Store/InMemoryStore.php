@@ -5,13 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Store;
 
 use Closure;
-use Patchlevel\EventSourcing\Aggregate\AggregateHeader;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\Event\EventRegistry;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
@@ -27,8 +25,10 @@ use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Psr\Clock\ClockInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
+use Traversable;
 
 use function array_filter;
+use function array_key_last;
 use function array_map;
 use function array_reverse;
 use function array_slice;
@@ -36,13 +36,16 @@ use function array_unique;
 use function array_values;
 use function count;
 use function in_array;
+use function iterator_to_array;
+use function ksort;
 use function mb_substr;
 use function str_ends_with;
 use function str_starts_with;
 
 use const ARRAY_FILTER_USE_BOTH;
+use const ARRAY_FILTER_USE_KEY;
 
-final class InMemoryStore implements StreamStore
+final class InMemoryStore implements Store, AppendStore
 {
     /** @var array<positive-int, Message> */
     private array $messages = [];
@@ -61,7 +64,7 @@ final class InMemoryStore implements StreamStore
         int|null $limit = null,
         int|null $offset = null,
         bool $backwards = false,
-    ): ArrayStream {
+    ): Stream {
         $messages = $this->filter($criteria);
 
         if ($backwards) {
@@ -76,7 +79,7 @@ final class InMemoryStore implements StreamStore
             $messages = array_slice($messages, 0, $limit);
         }
 
-        return new ArrayStream($messages);
+        return new Stream($messages);
     }
 
     public function count(Criteria|null $criteria = null): int
@@ -109,6 +112,40 @@ final class InMemoryStore implements StreamStore
         });
     }
 
+    /** @param positive-int|0 $from */
+    public function query(Query $query, int $from = 0): Stream
+    {
+        return new Stream(array_filter(
+            $this->matchQuery($query),
+            static fn (int $index): bool => $index >= $from,
+            ARRAY_FILTER_USE_KEY,
+        ));
+    }
+
+    /** @param iterable<Message> $messages */
+    public function append(iterable $messages, AppendCondition|null $appendCondition = null): void
+    {
+        $messages = $messages instanceof Traversable
+            ? iterator_to_array($messages, false)
+            : array_values($messages);
+
+        if ($messages === []) {
+            return;
+        }
+
+        $this->transactional(function () use ($messages, $appendCondition): void {
+            if ($appendCondition instanceof AppendCondition) {
+                $matched = $this->matchQuery($appendCondition->query);
+
+                if ($matched !== [] && array_key_last($matched) > $appendCondition->after) {
+                    throw new AppendConditionNotMet($appendCondition);
+                }
+            }
+
+            $this->save(...$messages);
+        });
+    }
+
     /**
      * @param Closure():ClosureReturn $function
      *
@@ -135,13 +172,9 @@ final class InMemoryStore implements StreamStore
                     array_map(
                         static function (Message $message): string|null {
                             try {
-                                return $message->header(AggregateHeader::class)->streamName();
+                                return $message->header(StreamNameHeader::class)->streamName;
                             } catch (HeaderNotFound) {
-                                try {
-                                    return $message->header(StreamNameHeader::class)->streamName;
-                                } catch (HeaderNotFound) {
-                                    return null;
-                                }
+                                return null;
                             }
                         },
                         $this->messages,
@@ -183,39 +216,15 @@ final class InMemoryStore implements StreamStore
             static function (Message $message) use ($criteria, $eventRegistry): bool {
                 foreach ($criteria->all() as $criterion) {
                     switch ($criterion::class) {
-                        case AggregateIdCriterion::class:
-                            try {
-                                if ($message->header(AggregateHeader::class)->aggregateId !== $criterion->aggregateId) {
-                                    return false;
-                                }
-                            } catch (HeaderNotFound) {
-                                return false;
-                            }
-
-                            break;
-                        case AggregateNameCriterion::class:
-                            try {
-                                if ($message->header(AggregateHeader::class)->aggregateName !== $criterion->aggregateName) {
-                                    return false;
-                                }
-                            } catch (HeaderNotFound) {
-                                return false;
-                            }
-
-                            break;
                         case StreamCriterion::class:
                             if ($criterion->all()) {
                                 break;
                             }
 
                             try {
-                                $messageStreamName = $message->header(AggregateHeader::class)->streamName();
+                                $messageStreamName = $message->header(StreamNameHeader::class)->streamName;
                             } catch (HeaderNotFound) {
-                                try {
-                                    $messageStreamName = $message->header(StreamNameHeader::class)->streamName;
-                                } catch (HeaderNotFound) {
-                                    return false;
-                                }
+                                return false;
                             }
 
                             $match = false;
@@ -245,13 +254,9 @@ final class InMemoryStore implements StreamStore
                             $playhead = null;
 
                             try {
-                                $playhead = $message->header(AggregateHeader::class)->playhead;
+                                $playhead = $message->header(PlayheadHeader::class)->playhead;
                             } catch (HeaderNotFound) {
-                                try {
-                                    $playhead = $message->header(PlayheadHeader::class)->playhead;
-                                } catch (HeaderNotFound) {
-                                    return false;
-                                }
+                                return false;
                             }
 
                             if ($playhead < $criterion->fromPlayhead) {
@@ -308,6 +313,39 @@ final class InMemoryStore implements StreamStore
             },
             ARRAY_FILTER_USE_BOTH,
         );
+    }
+
+    /**
+     * Resolves a {@see Query} against the stored messages using {@see SubQuery::match()},
+     * so it mirrors what {@see TaggableDoctrineDbalStore::query()} produces on a real database.
+     *
+     * @return array<positive-int, Message>
+     */
+    private function matchQuery(Query $query): array
+    {
+        if ($query->subQueries === []) {
+            return $this->messages;
+        }
+
+        $matched = [];
+
+        foreach ($query->subQueries as $subQuery) {
+            $subMatched = array_filter(
+                $this->messages,
+                static fn (Message $message): bool => $subQuery->match($message),
+            );
+
+            if ($subQuery->onlyLastEvent && $subMatched !== []) {
+                $lastKey = array_key_last($subMatched);
+                $subMatched = [$lastKey => $subMatched[$lastKey]];
+            }
+
+            $matched += $subMatched;
+        }
+
+        ksort($matched);
+
+        return $matched;
     }
 
     public function clear(): void

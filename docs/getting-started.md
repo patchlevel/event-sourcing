@@ -10,8 +10,8 @@ First we define the events that happen in our system.
 A hotel can be created with a `name` and an `id`:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Event('hotel.created')]
 final class HotelCreated
@@ -26,8 +26,8 @@ final class HotelCreated
 A guest can check in by `name`:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Event('hotel.guest_checked_in')]
 final class GuestIsCheckedIn
@@ -42,8 +42,8 @@ final class GuestIsCheckedIn
 And also check out again:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Event;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Event('hotel.guest_checked_out')]
 final class GuestIsCheckedOut
@@ -69,10 +69,10 @@ Last but not least, we need the associated apply methods to change the state.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('hotel')]
 final class Hotel extends BasicAggregateRoot
@@ -265,25 +265,14 @@ You can find out more about [processors](subscription.md).
 After we have defined everything, we still have to plug the whole thing together:
 
 :::tip
-If you use symfony, you can use our [symfony bundle](/docs/event-sourcing-bundle/latest/installation) to skip this step.
+If you use symfony, you can use our [symfony bundle](https://patchlevel.dev/docs/event-sourcing-bundle/latest) to skip this step.
 :::
 
 ```php
 use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AttributeAggregateRootRegistryFactory;
-use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
-use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
-use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Engine\StoreMessageLoader;
-use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
-use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
-use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
-
-$connection = DriverManager::getConnection(
-    (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/app'),
-);
+use Patchlevel\EventSourcing\Container\Factory;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
 
 $projectionConnection = DriverManager::getConnection(
     (new DsnParser())->parse('pdo-pgsql://user:secret@localhost/projection'),
@@ -292,49 +281,25 @@ $projectionConnection = DriverManager::getConnection(
 /* your own mailer */
 $mailer;
 
-$serializer = DefaultEventSerializer::createFromPaths(['src/Domain/Hotel/Event']);
-$aggregateRegistry = (new AttributeAggregateRootRegistryFactory())->create(['src/Domain/Hotel']);
-
-$eventStore = new DoctrineDbalStore(
-    $connection,
-    $serializer,
-);
-
-$hotelProjector = new HotelProjector($projectionConnection);
-
-$subscriberRepository = new MetadataSubscriberAccessorRepository([
-    $hotelProjector,
-    new SendCheckInEmailProcessor($mailer),
+$container = Factory::create([
+    'connection' => ['url' => 'pdo-pgsql://user:secret@localhost/app'],
+    'aggregates' => ['src/Domain/Hotel'],
+    'events' => ['src/Domain/Hotel/Event'],
+    'subscription' => [
+        'subscribers' => [
+            new HotelProjector($projectionConnection),
+            new SendCheckInEmailProcessor($mailer),
+        ],
+        // run the subscriptions directly after an aggregate was saved
+        'sync' => true,
+    ],
 ]);
 
-$subscriptionStore = new DoctrineSubscriptionStore($connection);
-
-$engine = new DefaultSubscriptionEngine(
-    new StoreMessageLoader($eventStore),
-    $subscriptionStore,
-    $subscriberRepository,
-);
-
-$repositoryManager = new RunSubscriptionEngineRepositoryManager(
-    new DefaultRepositoryManager(
-        $aggregateRegistry,
-        $eventStore,
-    ),
-    $engine,
-);
-
-$hotelRepository = $repositoryManager->get(Hotel::class);
+$hotelRepository = $container->get(RepositoryManager::class)->get(Hotel::class);
 ```
 :::note
-You can find out more about [stores](store.md).
-:::
-
-:::note
-The `RunSubscriptionEngineRepositoryManager` is a decorator that triggers the
-Subscription Engine when an Aggregate is saved. Normally, you'd use the
-`DefaultRepositoryManager` and a worker to run the Subscription Engine.
-
-Learn more about the [subscription engine](subscription.md).
+All options of the configuration are described on the [container](container.md) page.
+You can find out more about the [store](store.md).
 :::
 
 ## Database setup
@@ -343,30 +308,14 @@ So that we can actually write the data to a database,
 we need the associated schema and databases.
 
 ```php
-use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
-use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Container\Container;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 
-/**
- * @var Connection $connection
- * @var Store $eventStore
- * @var SubscriptionStore $subscriptionStore
- */
-$schemaDirector = new DoctrineSchemaDirector(
-    $connection,
-    new ChainDoctrineSchemaConfigurator([
-        $eventStore,
-        $subscriptionStore,
-    ]),
-);
-
-$schemaDirector->create();
-
-/** @var SubscriptionEngine $engine */
-$engine->setup(skipBooting: true);
+/** @var Container $container */
+$container->get(SchemaDirector::class)->create();
+$container->get(SubscriptionEngine::class)->execute(new Setup(skipBooting: true));
 ```
 :::note
 You can use the predefined [cli commands](cli.md) for this.
@@ -377,7 +326,7 @@ You can use the predefined [cli commands](cli.md) for this.
 We are now ready to use the Event Sourcing System. We can load, change and save aggregates.
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Repository\Repository;
 
 $hotel1 = Hotel::create(Uuid::generate(), 'HOTEL');
@@ -396,7 +345,7 @@ $hotels = $hotelProjector->getHotels();
 ```
 :::note
 You can also use other forms of IDs such as uuid version 6 or a custom format.
-You can find more about this in the [aggregate id](aggregate-id.md) documentation.
+You can find more about [identifiers](identifier.md).
 :::
 
 ## Result
@@ -415,3 +364,4 @@ If there are still open questions, create a ticket on Github and we will try to 
 * [How to store aggregates](repository.md)
 * [How to create a projection and processors](subscription.md)
 * [How to setup the database](store.md)
+* [How to configure the container](container.md)

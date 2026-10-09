@@ -157,7 +157,7 @@ bin/console event-sourcing:subscription:run
 ```
 By default, the command looks for new events every second (`--sleep=1000`)
 and processes up to 100 events per run (`--message-limit=100`).
-If your store supports it (`DoctrineDbalStore` and `StreamDoctrineDbalStore` with PostgreSQL),
+If your store supports it (`StreamDoctrineDbalStore` and `TaggableDoctrineDbalStore` with PostgreSQL),
 the worker does not poll but waits for a notification from the database, so new events are processed right away.
 
 :::warning
@@ -170,13 +170,15 @@ After adding a new subscriber, run the setup and boot step and restart the run c
 
 The boot and run commands are workers and support the following options:
 
-| Option            | Description                                                                 |
-|-------------------|-----------------------------------------------------------------------------|
-| `--run-limit`     | Stop the worker after this number of runs.                                  |
-| `--message-limit` | How many events are processed per run.                                      |
-| `--memory-limit`  | Stop the worker if it uses more memory than this, e.g. `250MB`.             |
-| `--time-limit`    | Stop the worker after this number of seconds.                               |
-| `--sleep`         | How many milliseconds the worker waits between two runs.                    |
+| Option                  | Description                                                                        |
+|-------------------------|------------------------------------------------------------------------------------|
+| `--run-limit`           | Stop the worker after this number of runs.                                         |
+| `--message-limit`       | How many events are processed per run.                                             |
+| `--memory-limit`        | Stop the worker if it uses more memory than this, e.g. `256M` or `250MB`.          |
+| `--time-limit`          | Stop the worker after this number of seconds.                                      |
+| `--sleep`               | How many milliseconds the worker waits between two runs.                           |
+| `--restart-signal-file` | Stop the worker when this file is touched after it has started.                    |
+| `--heartbeat-file`      | Touch this file on start and after every run, and remove it when the worker stops. |
 
 ```bash
 bin/console event-sourcing:subscription:run --memory-limit=250MB --time-limit=3600
@@ -185,6 +187,39 @@ bin/console event-sourcing:subscription:run --memory-limit=250MB --time-limit=36
 Use the memory and time limits together with a process manager like supervisor or systemd,
 which restarts the worker after it stopped. This prevents memory leaks from piling up
 and makes sure that a deployment is picked up.
+:::
+
+The worker stops gracefully on `SIGTERM` and `SIGINT`, so it finishes the current run before it exits.
+If a run hits the `--message-limit`, the next run starts immediately without waiting for the sleep timer,
+so a lagging subscription catches up as fast as possible.
+
+#### Restart after a deployment
+
+Long-running workers keep the code they were started with.
+Pass a `--restart-signal-file` and touch the file during the deployment.
+All workers that were started before stop after their current run and are restarted by your process manager.
+
+```bash
+bin/console event-sourcing:subscription:run --restart-signal-file=var/worker-restart
+
+# during deployment
+touch var/worker-restart
+```
+:::note
+All workers that should restart have to see the same file, e.g. on a shared volume.
+:::
+
+#### Heartbeat
+
+With `--heartbeat-file` you can detect a worker that is stuck,
+e.g. with a liveness probe that checks how old the file is.
+
+```bash
+bin/console event-sourcing:subscription:run --heartbeat-file=/tmp/worker-heartbeat
+```
+:::warning
+The heartbeat file is only updated between runs.
+Choose the threshold of your probe larger than your longest run plus the sleep timer.
 :::
 
 ### Status
@@ -339,14 +374,10 @@ It is a worker like the subscription run command and supports the same
 ```bash
 bin/console event-sourcing:watch
 ```
-You can limit the output to one stream, or to an aggregate name and aggregate ID.
-The stream and the aggregate options cannot be combined.
-The `--stream` option needs the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore),
-the `--aggregate` and `--aggregate-id` options need the `DoctrineDbalStore`.
+You can limit the output to one stream with the `--stream` option.
 
 ```bash
 bin/console event-sourcing:watch --stream="profile-*"
-bin/console event-sourcing:watch --aggregate=profile --aggregate-id=018d6a1c-5f2b-7f3e-9c4a-2b6a1f0e8d7c
 ```
 ## Debug command
 
@@ -385,13 +416,14 @@ The subscriber repository is optional. If you don't pass it, the subscriber sect
 
 The store migration command copies all events from one store into another one.
 You need it when you switch the store implementation,
-for example from the `DoctrineDbalStore` to the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore).
+for example from the [StreamDoctrineDbalStore](store.md#streamdoctrinedbalstore)
+to the [TaggableDoctrineDbalStore](store.md#taggabledoctrinedbalstore).
 
 * StoreMigrateCommand: `event-sourcing:store:migrate`
 
 ```php
 use Patchlevel\EventSourcing\Console\Command\StoreMigrateCommand;
-use Patchlevel\EventSourcing\Message\Translator\AggregateToStreamHeaderTranslator;
+use Patchlevel\EventSourcing\Message\Translator\ExtractEventTagTranslator;
 use Patchlevel\EventSourcing\Store\Store;
 use Symfony\Component\Console\Application;
 
@@ -404,14 +436,15 @@ $cli->add(
     new StoreMigrateCommand(
         $oldStore,
         $newStore,
-        [new AggregateToStreamHeaderTranslator()],
+        [new ExtractEventTagTranslator()],
     ),
 );
 ```
 The third constructor argument is a list of [translators](message.md#translator)
 that are applied to every message before it is written into the new store.
-The `AggregateToStreamHeaderTranslator` converts the `AggregateHeader` into the stream based headers
-and is what you need for a migration to the `StreamDoctrineDbalStore`.
+The `ExtractEventTagTranslator` reads the tags from the events and adds them as `TagsHeader`,
+which is what you need for a migration to the `TaggableDoctrineDbalStore`.
+If both stores work with the same headers, you can leave the list empty.
 
 Events are written in batches. You can control the batch size with the `buffer` option:
 
@@ -429,6 +462,10 @@ You can create it with the [schema commands](#schema-commands).
 :::
 
 ## CLI example
+
+:::tip
+If you use the [container](container.md), `Factory::commands()` returns all commands already configured.
+:::
 
 A cli php file can look like this:
 
@@ -547,5 +584,6 @@ Here you can find more information on how to
 ## Learn more
 
 * [How to configure store](store.md)
+* [How to configure the container](container.md)
 * [How to configure subscription engine](subscription.md)
 * [How to use subscriptions](subscription.md#usage)

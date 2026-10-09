@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\RetryStrategy;
 
+use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyNotFound;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
@@ -49,5 +50,14 @@ final class RetryStrategyRepositoryTest extends TestCase
         );
 
         self::assertSame($strategy, $repository->get('test'));
+    }
+
+    public function testWithDefault(): void
+    {
+        $strategy = new NoRetryStrategy();
+
+        $repository = RetryStrategyRepository::withDefault($strategy);
+
+        self::assertSame($strategy, $repository->getDefaultRetryStrategy());
     }
 }

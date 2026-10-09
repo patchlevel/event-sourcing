@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Console\Command;
 
 use Closure;
+use LogicException;
 use Patchlevel\EventSourcing\Console\InputHelper;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
+use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\Worker\DefaultWorker;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -66,6 +70,18 @@ final class SubscriptionBootCommand extends SubscriptionCommand
                 0,
             )
             ->addOption(
+                'restart-signal-file',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Stop the worker when this file is touched after it has started (e.g. on deployment)',
+            )
+            ->addOption(
+                'heartbeat-file',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'Touch this file after every run, e.g. for liveness probes',
+            )
+            ->addOption(
                 'setup',
                 null,
                 InputOption::VALUE_NONE,
@@ -81,32 +97,49 @@ final class SubscriptionBootCommand extends SubscriptionCommand
         $timeLimit = InputHelper::nullablePositiveInt($input->getOption('time-limit'));
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
         $setup = InputHelper::bool($input->getOption('setup'));
+        $restartSignalFile = InputHelper::nullableString($input->getOption('restart-signal-file'));
+        $heartbeatFile = InputHelper::nullableString($input->getOption('heartbeat-file'));
 
         $criteria = $this->subscriptionEngineCriteria($input);
         $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
         if ($setup) {
-            $this->engine->setup($criteria);
+            $this->engine->execute(new Setup(
+                $criteria->ids,
+                $criteria->groups,
+            ));
         }
 
         $logger = new ConsoleLogger($output);
         $finished = false;
 
         $worker = DefaultWorker::create(
-            function (Closure $stop) use ($criteria, $messageLimit, &$finished): void {
-                $result = $this->engine->boot($criteria, $messageLimit);
+            function (Closure $stop) use ($criteria, $messageLimit, &$finished): bool {
+                $result = $this->engine->execute(new Boot(
+                    $criteria->ids,
+                    $criteria->groups,
+                    $messageLimit,
+                ));
+
+                if (!$result instanceof ProcessedResult) {
+                    throw new LogicException('Expected ProcessedResult');
+                }
 
                 if (!$result->finished) {
-                    return;
+                    return true;
                 }
 
                 $finished = true;
                 $stop();
+
+                return false;
             },
             [
                 'runLimit' => $runLimit,
                 'memoryLimit' => $memoryLimit,
                 'timeLimit' => $timeLimit,
+                'restartSignalFile' => $restartSignalFile,
+                'heartbeatFile' => $heartbeatFile,
             ],
             $logger,
             $this->workerEventDispatcher,

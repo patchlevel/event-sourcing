@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Console\Command;
 
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Reactivate;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -17,7 +18,10 @@ final class SubscriptionReactivateCommand extends SubscriptionCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $criteria = $this->subscriptionEngineCriteria($input);
-        $this->engine->reactivate($criteria);
+        $this->engine->execute(new Reactivate(
+            $criteria->ids,
+            $criteria->groups,
+        ));
 
         return 0;
     }

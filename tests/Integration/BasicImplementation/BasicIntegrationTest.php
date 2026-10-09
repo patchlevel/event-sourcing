@@ -6,30 +6,20 @@ namespace Patchlevel\EventSourcing\Tests\Integration\BasicImplementation;
 
 use DateTimeImmutable;
 use Doctrine\DBAL\Connection;
-use Patchlevel\EventSourcing\Clock\SystemClock;
-use Patchlevel\EventSourcing\CommandBus\ServiceLocator;
-use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
+use Patchlevel\EventSourcing\CommandBus\CommandBus;
+use Patchlevel\EventSourcing\Container\Factory;
 use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Message\Pipe;
 use Patchlevel\EventSourcing\Message\Reducer;
-use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Translator\UntilEventTranslator;
-use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
-use Patchlevel\EventSourcing\QueryBus\ServiceHandlerProvider;
-use Patchlevel\EventSourcing\QueryBus\SyncQueryBus;
-use Patchlevel\EventSourcing\Repository\DefaultRepositoryManager;
-use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
-use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\QueryBus\QueryBus;
+use Patchlevel\EventSourcing\Repository\RepositoryManager;
+use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Snapshot\Adapter\InMemorySnapshotAdapter;
-use Patchlevel\EventSourcing\Snapshot\DefaultSnapshotStore;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateIdCriterion;
-use Patchlevel\EventSourcing\Store\Criteria\AggregateNameCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
-use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
-use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepositoryManager;
-use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
-use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Command\AdjustStockForProduct;
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Command\ChangeProfileName;
@@ -43,7 +33,6 @@ use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Projection\Pr
 use Patchlevel\EventSourcing\Tests\Integration\BasicImplementation\Query\QueryProfileName;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
-use Psr\Clock\ClockInterface;
 
 #[CoversNothing]
 final class BasicIntegrationTest extends TestCase
@@ -63,45 +52,33 @@ final class BasicIntegrationTest extends TestCase
 
     public function testSuccessful(): void
     {
-        $store = new DoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/Header',
-            ]),
-        );
-
         $profileProjector = new ProfileProjector($this->connection);
 
-        $engine = new DefaultSubscriptionEngine(
-            $store,
-            new InMemorySubscriptionStore(),
-            new MetadataSubscriberAccessorRepository([
-                $profileProjector,
-                new SendEmailProcessor(),
-            ]),
-        );
+        $configuration = [
+            'connection' => ['service' => 'app.connection'],
+            'aggregates' => [__DIR__],
+            'events' => [__DIR__ . '/Events'],
+            'headers' => [__DIR__ . '/Header'],
+            'hydrator' => ['default_lazy' => true, 'cryptography' => true, 'lifecycle' => true],
+            'subscription' => [
+                'subscribers' => [$profileProjector, new SendEmailProcessor()],
+                'store' => ['type' => 'in_memory'],
+                'gap_detection' => true,
+                'sync' => ['throw_on_error' => true],
+            ],
+            'message_decorators' => [new FooMessageDecorator()],
+            'services' => ['app.connection' => $this->connection],
+        ];
+        $container = Factory::create($configuration);
 
-        $manager = new RunSubscriptionEngineRepositoryManager(
-            new DefaultRepositoryManager(
-                new AggregateRootRegistry(['profile' => Profile::class]),
-                $store,
-                null,
-                null,
-                new FooMessageDecorator(),
-            ),
-            $engine,
-        );
+        $manager = $container->get(RepositoryManager::class);
+        $engine = $container->get(SubscriptionEngine::class);
 
         $repository = $manager->get(Profile::class);
 
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            $store,
-        );
-
+        $schemaDirector = $container->get(SchemaDirector::class);
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
@@ -129,45 +106,33 @@ final class BasicIntegrationTest extends TestCase
 
     public function testSnapshot(): void
     {
-        $store = new DoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/Header',
-            ]),
-        );
-
         $profileProjection = new ProfileProjector($this->connection);
+        $configuration = [
+            'connection' => ['service' => 'app.connection'],
+            'aggregates' => [__DIR__],
+            'events' => [__DIR__ . '/Events'],
+            'headers' => [__DIR__ . '/Header'],
+            'hydrator' => ['default_lazy' => true, 'cryptography' => true, 'lifecycle' => true],
+            'snapshot_stores' => ['default' => new InMemorySnapshotAdapter()],
+            'subscription' => [
+                'subscribers' => [$profileProjection, new SendEmailProcessor()],
+                'store' => ['type' => 'in_memory'],
+                'gap_detection' => true,
+                'sync' => ['throw_on_error' => true],
+            ],
+            'message_decorators' => [new FooMessageDecorator()],
+            'services' => ['app.connection' => $this->connection],
+        ];
+        $container = Factory::create($configuration);
 
-        $engine = new DefaultSubscriptionEngine(
-            $store,
-            new InMemorySubscriptionStore(),
-            new MetadataSubscriberAccessorRepository([
-                $profileProjection,
-                new SendEmailProcessor(),
-            ]),
-        );
-
-        $manager = new RunSubscriptionEngineRepositoryManager(
-            new DefaultRepositoryManager(
-                new AggregateRootRegistry(['profile' => Profile::class]),
-                $store,
-                null,
-                new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
-                new FooMessageDecorator(),
-            ),
-            $engine,
-        );
+        $manager = $container->get(RepositoryManager::class);
+        $engine = $container->get(SubscriptionEngine::class);
+        $schemaDirector = $container->get(SchemaDirector::class);
 
         $repository = $manager->get(Profile::class);
 
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            $store,
-        );
-
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
         $profile = Profile::create($profileId, 'John');
@@ -195,29 +160,26 @@ final class BasicIntegrationTest extends TestCase
 
     public function testTempProjection(): void
     {
-        $store = new DoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/Header',
-            ]),
-        );
+        $configuration = [
+            'connection' => ['service' => 'app.connection'],
+            'aggregates' => [__DIR__],
+            'events' => [__DIR__ . '/Events'],
+            'headers' => [__DIR__ . '/Header'],
+            'hydrator' => ['default_lazy' => true, 'cryptography' => true, 'lifecycle' => true],
+            'subscription' => [
+                'store' => ['type' => 'in_memory'],
+                'gap_detection' => true,
+                'sync' => ['throw_on_error' => true],
+            ],
+            'services' => ['app.connection' => $this->connection],
+        ];
+        $container = Factory::create($configuration);
 
-        $manager = new DefaultRepositoryManager(
-            new AggregateRootRegistry(['profile' => Profile::class]),
-            $store,
-            null,
-            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
-            new FooMessageDecorator(),
-        );
-
+        $manager = $container->get(RepositoryManager::class);
+        $store = $container->get(Store::class);
         $repository = $manager->get(Profile::class);
 
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            $store,
-        );
-
+        $schemaDirector = $container->get(SchemaDirector::class);
         $schemaDirector->create();
 
         $profileId = ProfileId::generate();
@@ -240,11 +202,9 @@ final class BasicIntegrationTest extends TestCase
                 },
             ])
             ->reduce(
-                new Pipe(
-                    $store->load(new Criteria(
-                        new AggregateIdCriterion($profileId->toString()),
-                        new AggregateNameCriterion('profile'),
-                    )),
+                $store->load(new Criteria(
+                    new StreamCriterion('profile-' . $profileId->toString()),
+                ))->transform(
                     new UntilEventTranslator(new DateTimeImmutable()),
                 ),
             );
@@ -254,56 +214,31 @@ final class BasicIntegrationTest extends TestCase
 
     public function testCommandBus(): void
     {
-        $store = new DoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/Header',
-            ]),
-        );
-
-        $aggregateRootRegistry = new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]);
-
-        $manager = new DefaultRepositoryManager(
-            new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]),
-            $store,
-            null,
-            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
-            new FooMessageDecorator(),
-        );
-
         $profileProjection = new ProfileProjector($this->connection);
+        $configuration = [
+            'connection' => ['service' => 'app.connection'],
+            'aggregates' => [__DIR__],
+            'events' => [__DIR__ . '/Events'],
+            'headers' => [__DIR__ . '/Header'],
+            'hydrator' => ['default_lazy' => true, 'cryptography' => true, 'lifecycle' => true],
+            'subscription' => [
+                'subscribers' => [$profileProjection, new SendEmailProcessor()],
+                'store' => ['type' => 'in_memory'],
+                'gap_detection' => true,
+                'sync' => ['throw_on_error' => true],
+            ],
+            'services' => ['app.connection' => $this->connection],
+            'parameters' => ['env' => 'test'],
+        ];
+        $container = Factory::create($configuration);
 
-        $engine = new DefaultSubscriptionEngine(
-            $store,
-            new InMemorySubscriptionStore(),
-            new MetadataSubscriberAccessorRepository([
-                $profileProjection,
-                new SendEmailProcessor(),
-            ]),
-        );
+        $manager = $container->get(RepositoryManager::class);
+        $engine = $container->get(SubscriptionEngine::class);
+        $commandBus = $container->get(CommandBus::class);
 
-        $manager = new RunSubscriptionEngineRepositoryManager(
-            $manager,
-            $engine,
-        );
-
-        $commandBus = SyncCommandBus::createForAggregateHandlers(
-            $aggregateRootRegistry,
-            $manager,
-            new ServiceLocator([
-                ClockInterface::class => new SystemClock(),
-                'env' => 'test',
-            ]),
-        );
-
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            $store,
-        );
-
+        $schemaDirector = $container->get(SchemaDirector::class);
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
 
@@ -332,58 +267,31 @@ final class BasicIntegrationTest extends TestCase
 
     public function testQueryBus(): void
     {
-        $store = new DoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/Header',
-            ]),
-        );
-
-        $aggregateRootRegistry = new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]);
-
-        $manager = new DefaultRepositoryManager(
-            new AggregateRootRegistry(['profile_with_commands' => ProfileWithCommands::class]),
-            $store,
-            null,
-            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
-            new FooMessageDecorator(),
-        );
-
         $profileProjection = new ProfileProjector($this->connection);
+        $configuration = [
+            'connection' => ['service' => 'app.connection'],
+            'aggregates' => [__DIR__],
+            'events' => [__DIR__ . '/Events'],
+            'headers' => [__DIR__ . '/Header'],
+            'hydrator' => ['default_lazy' => true, 'cryptography' => true, 'lifecycle' => true],
+            'subscription' => [
+                'subscribers' => [$profileProjection],
+                'store' => ['type' => 'in_memory'],
+                'gap_detection' => true,
+                'sync' => ['throw_on_error' => true],
+            ],
+            'services' => ['app.connection' => $this->connection],
+            'parameters' => ['env' => 'test'],
+        ];
+        $container = Factory::create($configuration);
 
-        $engine = new DefaultSubscriptionEngine(
-            $store,
-            new InMemorySubscriptionStore(),
-            new MetadataSubscriberAccessorRepository([
-                $profileProjection,
-                new SendEmailProcessor(),
-            ]),
-        );
-
-        $manager = new RunSubscriptionEngineRepositoryManager(
-            $manager,
-            $engine,
-        );
-
-        $commandBus = SyncCommandBus::createForAggregateHandlers(
-            $aggregateRootRegistry,
-            $manager,
-            new ServiceLocator([
-                ClockInterface::class => new SystemClock(),
-                'env' => 'test',
-            ]),
-        );
-
-        $queryBus = new SyncQueryBus(new ServiceHandlerProvider([$profileProjection]));
-
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            $store,
-        );
+        $engine = $container->get(SubscriptionEngine::class);
+        $commandBus = $container->get(CommandBus::class);
+        $queryBus = $container->get(QueryBus::class);
+        $schemaDirector = $container->get(SchemaDirector::class);
 
         $schemaDirector->create();
-        $engine->setup(skipBooting: true);
+        $engine->execute(new Setup(skipBooting: true));
 
         $profileId = ProfileId::generate();
 
@@ -397,33 +305,24 @@ final class BasicIntegrationTest extends TestCase
 
     public function testAggregateInitialization(): void
     {
-        $store = new DoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
-            DefaultHeadersSerializer::createFromPaths([
-                __DIR__ . '/Header',
-            ]),
-        );
+        $configuration = [
+            'connection' => ['service' => 'app.connection'],
+            'aggregates' => [__DIR__],
+            'events' => [__DIR__ . '/Events'],
+            'headers' => [__DIR__ . '/Header'],
+            'hydrator' => ['default_lazy' => true, 'cryptography' => true, 'lifecycle' => true],
+            'subscription' => [
+                'store' => ['type' => 'in_memory'],
+                'gap_detection' => true,
+                'sync' => ['throw_on_error' => true],
+            ],
+            'services' => ['app.connection' => $this->connection],
+        ];
+        $container = Factory::create($configuration);
 
-        $aggregateRootRegistry = new AggregateRootRegistry(['stock' => Stock::class]);
-
-        $manager = new DefaultRepositoryManager(
-            $aggregateRootRegistry,
-            $store,
-            null,
-            new DefaultSnapshotStore(['default' => new InMemorySnapshotAdapter()]),
-            new FooMessageDecorator(),
-        );
-
-        $commandBus = SyncCommandBus::createForAggregateHandlers(
-            $aggregateRootRegistry,
-            $manager,
-        );
-
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            $store,
-        );
+        $manager = $container->get(RepositoryManager::class);
+        $commandBus = $container->get(CommandBus::class);
+        $schemaDirector = $container->get(SchemaDirector::class);
 
         $schemaDirector->create();
 

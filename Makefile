@@ -39,6 +39,11 @@ phpunit-integration-postgres: vendor                                            
 phpunit-integration-mysql: vendor                                               ## run phpunit integration tests on mysql
 	DB_URL="pdo-mysql://root@127.0.0.1:3306/eventstore?charset=utf8" vendor/bin/phpunit --testsuite=integration
 
+.PHONY: phpunit-container
+phpunit-container: vendor                                                       ## run phpunit integration tests with third party containers (changes composer.json)
+	composer require --dev php-di/php-di laminas/laminas-servicemanager league/container
+	vendor/bin/phpunit --no-coverage tests/Integration/Container
+
 .PHONY: phpunit-unit
 phpunit-unit: vendor                                             				## run phpunit unit tests
 	XDEBUG_MODE=coverage vendor/bin/phpunit --testsuite=unit
@@ -49,7 +54,7 @@ infection: vendor                                                               
 
 .PHONY: infection-diff
 infection-diff: vendor                                                          ## run infection on differences
-	php -d memory_limit=312M vendor/bin/infection --threads=max --git-diff-lines --git-diff-base=origin/HEAD --ignore-msi-with-no-mutations --only-covered --min-msi=80 --min-covered-msi=95
+	php -d memory_limit=312M vendor/bin/infection --threads=max --git-diff-lines --git-diff-base=origin/HEAD --ignore-msi-with-no-mutations --with-uncovered --min-msi=90 --min-covered-msi=95
 
 .PHONY: static
 static: phpstan cs                                              			 ## run static analyser
@@ -74,13 +79,9 @@ benchmark-diff-test: benchmark-base benchmark-diff                              
 .PHONY: dev
 dev: static test                                                                ## run dev tools
 
-.PHONY: docs
-docs: mkdocs                                                                          ## run mkdocs
-	cd docs && python3 -m mkdocs serve
-
-.PHONY: mkdocs
-mkdocs:                                                                         ## install mkdocs
-	cd docs && pip3 install -r requirements.txt
+.PHONY: config-shape
+config-shape: vendor                                                           ## generate the array shapes of the container configuration
+	bin/generate-config-shape
 
 .PHONY: docs-extract-php
 docs-extract-php:

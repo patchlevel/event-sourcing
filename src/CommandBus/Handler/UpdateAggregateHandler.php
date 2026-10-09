@@ -6,8 +6,8 @@ namespace Patchlevel\EventSourcing\CommandBus\Handler;
 
 use InvalidArgumentException;
 use Patchlevel\EventSourcing\Aggregate\AggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\AggregateRootId;
 use Patchlevel\EventSourcing\Attribute\Id;
+use Patchlevel\EventSourcing\Identifier\Identifier;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use ReflectionClass;
 
@@ -40,7 +40,7 @@ final class UpdateAggregateHandler
         $repository->save($aggregate);
     }
 
-    private function aggregateRootId(object $command): AggregateRootId
+    private function aggregateRootId(object $command): Identifier
     {
         $reflectionClass = new ReflectionClass($command);
 
@@ -53,7 +53,7 @@ final class UpdateAggregateHandler
 
             $value = $property->getValue($command);
 
-            if (!$value instanceof AggregateRootId) {
+            if (!$value instanceof Identifier) {
                 throw new InvalidArgumentException('Id property must be an instance of AggregateRootId');
             }
 

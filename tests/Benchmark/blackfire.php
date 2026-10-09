@@ -7,7 +7,7 @@ use Doctrine\DBAL\DriverManager;
 use Patchlevel\EventSourcing\Repository\DefaultRepository;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
-use Patchlevel\EventSourcing\Store\DoctrineDbalStore;
+use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Profile;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\ProfileId;
 
@@ -24,7 +24,7 @@ $connection = DriverManager::getConnection([
     'path' => DB_PATH,
 ]);
 
-$store = new DoctrineDbalStore(
+$store = new StreamDoctrineDbalStore(
     $connection,
     DefaultEventSerializer::createFromPaths([__DIR__ . '/BasicImplementation/Events']),
 );

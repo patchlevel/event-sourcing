@@ -82,10 +82,10 @@ You can define normalizers to bring the properties into the correct format.
 
 ```php
 use Patchlevel\EventSourcing\Aggregate\BasicAggregateRoot;
-use Patchlevel\EventSourcing\Aggregate\Uuid;
 use Patchlevel\EventSourcing\Attribute\Aggregate;
 use Patchlevel\EventSourcing\Attribute\Id;
 use Patchlevel\EventSourcing\Attribute\Snapshot;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 
 #[Aggregate('profile')]
 #[Snapshot('default')]
@@ -239,7 +239,7 @@ it can lead to data loss or broken aggregates!
 You can also load an aggregate from the snapshot store:
 
 ```php
-use Patchlevel\EventSourcing\Aggregate\Uuid;
+use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Snapshot\SnapshotStore;
 
 $id = Uuid::fromString('229286ff-6f95-4df6-bc72-0a239fe7b284');
@@ -261,4 +261,4 @@ You still have to bring the aggregate up to date by loading the missing events f
 * [How to define aggregates](aggregate.md)
 * [How to store and load aggregates](repository.md)
 * [How to split streams](split-stream.md)
-* [How to work with personal data](personal-data.md)
+* [How to work with sensitive and personal data](sensitive-data.md)

@@ -6,14 +6,13 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
 use Closure;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
-use Patchlevel\EventSourcing\Subscription\Store\LockableSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Store\TransactionCommitNotPossible;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-
-use function iterator_to_array;
+use RuntimeException;
 
 #[CoversClass(SubscriptionManager::class)]
 final class SubscriptionManagerTest extends TestCase
@@ -110,34 +109,15 @@ final class SubscriptionManagerTest extends TestCase
         self::assertSame([$subscription], $result);
     }
 
-    public function testFindForUpdateWithoutLock(): void
+    public function testForEachClaimedProcessesClaimedSubscription(): void
     {
         $subscription = new Subscription('foo');
         $criteria = new SubscriptionCriteria();
 
         $store = $this->createMock(SubscriptionStore::class);
-        $store->expects($this->once())->method('update')->with($subscription);
         $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
-
-        $manager = new SubscriptionManager($store);
-        $result = $manager->findForUpdate($criteria, static function ($subscriptions) use ($manager) {
-            $manager->update(...$subscriptions);
-
-            return $subscriptions;
-        });
-
-        self::assertSame([$subscription], iterator_to_array($result));
-    }
-
-    public function testFindForUpdateWithLock(): void
-    {
-        $subscription = new Subscription('foo');
-        $criteria = new SubscriptionCriteria();
-
-        $store = $this->createMock(LockableSubscriptionStore::class);
+        $store->expects($this->once())->method('claim')->with('foo', $criteria)->willReturn($subscription);
         $store->expects($this->once())->method('update')->with($subscription);
-        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
-
         $store
             ->expects($this->once())
             ->method('inLock')
@@ -145,12 +125,56 @@ final class SubscriptionManagerTest extends TestCase
             ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
 
         $manager = new SubscriptionManager($store);
-        $result = $manager->findForUpdate($criteria, static function ($subscriptions) use ($manager) {
-            $manager->update(...$subscriptions);
+        $result = $manager->forEachClaimed($criteria, static function (Subscription $claimed) use ($manager) {
+            $manager->update($claimed);
 
-            return $subscriptions;
+            return $claimed;
         });
 
-        self::assertSame([$subscription], iterator_to_array($result));
+        self::assertSame([$subscription], $result);
+    }
+
+    public function testForEachClaimedSkipsWhenClaimReturnsNull(): void
+    {
+        $subscription = new Subscription('foo');
+        $criteria = new SubscriptionCriteria();
+
+        $store = $this->createMock(SubscriptionStore::class);
+        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
+        $store->expects($this->once())->method('claim')->with('foo', $criteria)->willReturn(null);
+        $store->expects($this->never())->method('update');
+        $store
+            ->expects($this->once())
+            ->method('inLock')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $manager = new SubscriptionManager($store);
+        $result = $manager->forEachClaimed($criteria, static fn (Subscription $claimed) => $claimed);
+
+        self::assertSame([], $result);
+    }
+
+    public function testForEachClaimedIsolatesTransientErrors(): void
+    {
+        $subscription = new Subscription('foo');
+        $criteria = new SubscriptionCriteria();
+
+        $store = $this->createMock(SubscriptionStore::class);
+        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
+        $store->expects($this->once())->method('claim')->with('foo', $criteria)->willReturn($subscription);
+        $store
+            ->expects($this->once())
+            ->method('inLock')
+            ->willReturnCallback(static fn (Closure $closure): mixed => $closure());
+
+        $manager = new SubscriptionManager($store);
+        $result = $manager->forEachClaimed(
+            $criteria,
+            static function (): never {
+                throw new TransactionCommitNotPossible(new RuntimeException('deadlock'));
+            },
+        );
+
+        self::assertSame([], $result);
     }
 }

@@ -13,17 +13,22 @@ use Doctrine\DBAL\Platforms\MySQLPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Query\QueryBuilder;
+use Doctrine\DBAL\Result;
 use Doctrine\DBAL\Schema\Schema;
+use Doctrine\DBAL\Types\DateTimeTzImmutableType;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\DBAL\Types\Types;
+use Generator;
 use Patchlevel\EventSourcing\Clock\SystemClock;
 use Patchlevel\EventSourcing\Message\HeaderNotFound;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Serializer\DefaultHeadersSerializer;
 use Patchlevel\EventSourcing\Message\Serializer\HeadersSerializer;
+use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Schema\DoctrineHelper;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Serializer\EventSerializer;
+use Patchlevel\EventSourcing\Serializer\SerializedEvent;
 use Patchlevel\EventSourcing\Store\Criteria\ArchivedCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventIdCriterion;
@@ -33,6 +38,7 @@ use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Dbal\ProvideDbalConnection;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
 use Patchlevel\EventSourcing\Store\Header\IndexHeader;
 use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
@@ -42,6 +48,7 @@ use PDO;
 use Pdo\Pgsql;
 use Psr\Clock\ClockInterface;
 use Ramsey\Uuid\Uuid;
+use WeakReference;
 
 use function array_fill;
 use function array_filter;
@@ -49,7 +56,6 @@ use function array_merge;
 use function array_values;
 use function class_exists;
 use function count;
-use function explode;
 use function floor;
 use function implode;
 use function in_array;
@@ -58,10 +64,9 @@ use function is_string;
 use function sprintf;
 use function str_contains;
 use function str_replace;
+use function usleep;
 
-use const PHP_VERSION_ID;
-
-final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, DoctrineSchemaConfigurator
+final class StreamDoctrineDbalStore implements Store, ListenableStore, DoctrineSchemaConfigurator, ProvideDbalConnection
 {
     /**
      * PostgreSQL has a limit of 65535 parameters in a single query.
@@ -90,6 +95,9 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
 
     private bool $hasLock = false;
 
+    /** @var WeakReference<PDO>|null */
+    private WeakReference|null $listeningConnection = null;
+
     /** @param array{table_name?: string, locking?: bool, lock_id?: int, lock_timeout?: int, keep_index?: bool} $config */
     public function __construct(
         private readonly Connection $connection,
@@ -115,7 +123,7 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
         int|null $limit = null,
         int|null $offset = null,
         bool $backwards = false,
-    ): StreamDoctrineDbalStoreStream {
+    ): Stream {
         $builder = $this->connection->createQueryBuilder()
             ->select('*')
             ->from($this->config['table_name'])
@@ -126,15 +134,14 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
         $builder->setMaxResults($limit);
         $builder->setFirstResult($offset ?? 0);
 
-        return new StreamDoctrineDbalStoreStream(
-            $this->connection->executeQuery(
-                $builder->getSQL(),
-                $builder->getParameters(),
-                $builder->getParameterTypes(),
+        return new Stream(
+            $this->buildGenerator(
+                $this->connection->executeQuery(
+                    $builder->getSQL(),
+                    $builder->getParameters(),
+                    $builder->getParameterTypes(),
+                ),
             ),
-            $this->eventSerializer,
-            $this->headersSerializer,
-            $this->connection->getDatabasePlatform(),
         );
     }
 
@@ -328,6 +335,8 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
                     $this->executeSave($columns, $placeholders, $parameters, $types, $this->connection);
                 }
 
+                $this->notify();
+
                 if (!$this->config['keep_index'] || !($this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform)) {
                     return;
                 }
@@ -456,6 +465,14 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
         $table->setPrimaryKey(['id']);
         $table->addUniqueIndex(['event_id']);
         $table->addUniqueIndex(['stream', 'playhead']);
+
+        if ($connection->getDatabasePlatform() instanceof PostgreSQLPlatform) {
+            // the predicate is written the way postgres returns it, otherwise the schema diff never settles
+            $table->addIndex(['stream', 'playhead'], options: ['where' => '(archived = false)']);
+
+            return;
+        }
+
         $table->addIndex(['stream', 'playhead', 'archived']);
     }
 
@@ -479,76 +496,61 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
         );
     }
 
-    public function supportSubscription(): bool
-    {
-        return $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform && class_exists(PDO::class);
-    }
-
     public function wait(int $timeoutMilliseconds): void
     {
-        if (!$this->supportSubscription()) {
+        if (!($this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform) || !class_exists(PDO::class)) {
+            usleep($timeoutMilliseconds * 1000);
+
             return;
         }
 
-        $this->connection->executeStatement(sprintf('LISTEN "%s"', $this->config['table_name']));
+        /** @var PDO $nativeConnection */
+        $nativeConnection = $this->connection->getNativeConnection();
 
-        if (PHP_VERSION_ID >= 80400) {
-            /** @var Pgsql $nativeConnection */
-            $nativeConnection = $this->connection->getNativeConnection();
-            $nativeConnection->getNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
-        } else {
-            /** @var PDO $nativeConnection */
-            $nativeConnection = $this->connection->getNativeConnection();
-            $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+        // LISTEN only receives notifications sent after it was executed. Events committed before
+        // would be missed, so the first call returns immediately and lets the caller load them first.
+        // The native connection is compared to listen again after a reconnect.
+        if ($this->listeningConnection?->get() !== $nativeConnection) {
+            $this->connection->executeStatement(sprintf('LISTEN "%s"', $this->config['table_name']));
+            $this->listeningConnection = WeakReference::create($nativeConnection);
+
+            return;
         }
+
+        if (!$this->receiveNotification($nativeConnection, $timeoutMilliseconds)) {
+            return;
+        }
+
+        // The caller loads all new events anyway, so queued notifications can be discarded.
+        do {
+            $received = $this->receiveNotification($nativeConnection, 0);
+        } while ($received);
     }
 
-    public function setupSubscription(): void
+    private function receiveNotification(PDO $nativeConnection, int $timeoutMilliseconds): bool
     {
-        if (!$this->supportSubscription()) {
+        if ($nativeConnection instanceof Pgsql) {
+            return $nativeConnection->getNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds) !== false;
+        }
+
+        /** @var array<string, mixed>|false $notification the stub is missing the false return type */
+        $notification = $nativeConnection->pgsqlGetNotify(PDO::FETCH_ASSOC, $timeoutMilliseconds);
+
+        return $notification !== false;
+    }
+
+    private function notify(): void
+    {
+        if (!($this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform)) {
             return;
         }
 
-        $functionName = $this->createTriggerFunctionName();
-
-        $this->connection->executeStatement(sprintf(
-            <<<'SQL'
-                CREATE OR REPLACE FUNCTION %1$s() RETURNS TRIGGER AS $$
-                    BEGIN
-                        PERFORM pg_notify('%2$s', NEW.stream::text);
-                        RETURN NEW;
-                    END;
-                $$ LANGUAGE plpgsql;
-                SQL,
-            $functionName,
-            $this->config['table_name'],
-        ));
-
-        $this->connection->executeStatement(sprintf(
-            'DROP TRIGGER IF EXISTS notify_trigger ON %s;',
-            $this->config['table_name'],
-        ));
-        $this->connection->executeStatement(sprintf(
-            'CREATE TRIGGER notify_trigger AFTER INSERT OR UPDATE ON %1$s FOR EACH ROW EXECUTE PROCEDURE %2$s();',
-            $this->config['table_name'],
-            $functionName,
-        ));
+        $this->connection->executeStatement(sprintf('NOTIFY "%s"', $this->config['table_name']));
     }
 
     public function connection(): Connection
     {
         return $this->connection;
-    }
-
-    private function createTriggerFunctionName(): string
-    {
-        $tableConfig = explode('.', $this->config['table_name']);
-
-        if (count($tableConfig) === 1) {
-            return sprintf('notify_%1$s', $tableConfig[0]);
-        }
-
-        return sprintf('%1$s.notify_%2$s', $tableConfig[0], $tableConfig[1]);
     }
 
     /**
@@ -666,5 +668,39 @@ final class StreamDoctrineDbalStore implements StreamStore, SubscriptionStore, D
         }
 
         throw new LockingNotImplemented($platform::class);
+    }
+
+    /** @return Generator<int, Message> */
+    private function buildGenerator(Result $result): Generator
+    {
+        /** @var DateTimeTzImmutableType $dateTimeType */
+        $dateTimeType = Type::getType(Types::DATETIMETZ_IMMUTABLE);
+        $platform = $this->connection->getDatabasePlatform();
+
+        /** @var array{id: positive-int, stream: string, playhead: int|string|null, event_id: string, event_name: string, event_payload: string, recorded_on: string, archived: int|string, custom_headers: string} $data */
+        foreach ($result->iterateAssociative() as $data) {
+            $event = $this->eventSerializer->deserialize(new SerializedEvent(
+                $data['event_name'],
+                $data['event_payload'],
+            ));
+
+            $message = Message::create($event)
+                ->withHeader(new IndexHeader($data['id']))
+                ->withHeader(new StreamNameHeader($data['stream']))
+                ->withHeader(new RecordedOnHeader($dateTimeType->convertToPHPValue($data['recorded_on'], $platform)))
+                ->withHeader(new EventIdHeader($data['event_id']));
+
+            if ($data['playhead'] !== null) {
+                $message = $message->withHeader(new PlayheadHeader((int)$data['playhead']));
+            }
+
+            if ($data['archived']) {
+                $message = $message->withHeader(new ArchivedHeader());
+            }
+
+            $customHeaders = $this->headersSerializer->deserialize($data['custom_headers']);
+
+            yield $data['id'] => $message->withHeaders($customHeaders);
+        }
     }
 }

@@ -431,7 +431,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $store->update($subscription);
 
         self::assertSame(42, $store->get('foo')->position());
-        self::assertSame(0, $store->get('bar')->position());
+        self::assertNull($store->get('bar')->position());
     }
 
     public function testUpdateRemovedSubscription(): void
@@ -992,7 +992,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
 
         $store->add(new Subscription('foo'));
 
-        self::assertSame(0, $store->get('foo')->position());
+        self::assertNull($store->get('foo')->position());
     }
 
     public function testFindHydratesAllFields(): void
