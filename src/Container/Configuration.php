@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\QueryBus\HandlerProvider as QueryBusHandlerProvider
 use Patchlevel\EventSourcing\Repository\AggregateOutdated;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\MessageDecorator;
 use Patchlevel\EventSourcing\Snapshot\Adapter\SnapshotAdapter;
+use Patchlevel\EventSourcing\Store\AppendConditionNotMet;
 use Patchlevel\EventSourcing\Subscription\Cleanup\CleanupTaskHandler;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
 use Patchlevel\Hydrator\Extension;
@@ -313,7 +314,7 @@ final class Configuration
                     'default_max_retries' => ConfigurationNormalizer::int(3, 1),
                     'default_exceptions' => ConfigurationNormalizer::typed(
                         'list<class-string<\\Throwable>>',
-                        ConfigurationNormalizer::stringList([AggregateOutdated::class]),
+                        ConfigurationNormalizer::stringList([AggregateOutdated::class, AppendConditionNotMet::class]),
                     ),
                 ]),
             ]),

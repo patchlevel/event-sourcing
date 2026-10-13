@@ -221,6 +221,7 @@ These are all options with their default values.
 ```php
 use Patchlevel\EventSourcing\Container\Factory;
 use Patchlevel\EventSourcing\Repository\AggregateOutdated;
+use Patchlevel\EventSourcing\Store\AppendConditionNotMet;
 
 $container = Factory::create([
     'connection' => [
@@ -258,7 +259,7 @@ $container = Factory::create([
         'instant_retry' => [
             'enabled' => true,
             'default_max_retries' => 3,
-            'default_exceptions' => [AggregateOutdated::class],
+            'default_exceptions' => [AggregateOutdated::class, AppendConditionNotMet::class],
         ],
     ],
     'query_bus' => [

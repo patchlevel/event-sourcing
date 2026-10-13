@@ -39,6 +39,50 @@ but we found a better way to do this with the `Micro Aggregate` feature.
 
 Typehints for the `AggregateRepository` have been changed, from `AggregateRootId` to `Identifier`.
 
+## Command Bus
+
+### InstantRetryCommandBus
+
+The `InstantRetryCommandBus` now retries every command, not only commands marked with the `#[InstantRetry]` attribute.
+Without the attribute, the default max retries and default exceptions of the decorator are used.
+The attribute only overrides these defaults.
+`AppendConditionNotMet` has also been added to the default exceptions.
+
+If you want to retry only commands with the attribute, set the default exceptions to an empty list
+and define the exceptions in the attribute instead.
+
+before:
+
+```php
+use Patchlevel\EventSourcing\Attribute\InstantRetry;
+use Patchlevel\EventSourcing\CommandBus\CommandBus;
+use Patchlevel\EventSourcing\CommandBus\InstantRetryCommandBus;
+
+/** @var CommandBus $commandBus */
+$commandBus = new InstantRetryCommandBus($commandBus);
+
+#[InstantRetry]
+final class CreateProfile
+{
+}
+```
+after:
+
+```php
+use Patchlevel\EventSourcing\Attribute\InstantRetry;
+use Patchlevel\EventSourcing\CommandBus\CommandBus;
+use Patchlevel\EventSourcing\CommandBus\InstantRetryCommandBus;
+use Patchlevel\EventSourcing\Repository\AggregateOutdated;
+
+/** @var CommandBus $commandBus */
+$commandBus = new InstantRetryCommandBus($commandBus, 3, []);
+
+#[InstantRetry(exceptions: [AggregateOutdated::class])]
+final class CreateProfile
+{
+}
+```
+
 ## Subscription
 
 The constructor of the `DefaultSubscriptionEngine` class has been changed.
