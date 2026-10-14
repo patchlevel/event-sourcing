@@ -29,7 +29,7 @@ final class PartitionRouter
     /** Maximum length of a subscription id in bytes, the id of a partition has to fit into it. */
     public const MAX_ID_LENGTH = 255;
 
-    /** @var array<string, array<string, true>> main subscription id => partition ids */
+    /** @var array<string, true> partition ids known to exist */
     private array $knownPartitions = [];
 
     private bool $routed = false;
@@ -46,11 +46,9 @@ final class PartitionRouter
         $partitionKey = $this->partitionKey($message, $main, $subscriber);
         $partitionId = Subscription::partitionId($main->id(), $partitionKey);
 
-        $this->knownPartitions[$main->id()] ??= $this->loadPartitions($main);
-
-        if (!isset($this->knownPartitions[$main->id()][$partitionId])) {
+        if (!$this->exists($partitionId)) {
             $this->subscriptionManager->add(Subscription::partition($main, $partitionKey, $index - 1));
-            $this->knownPartitions[$main->id()][$partitionId] = true;
+            $this->knownPartitions[$partitionId] = true;
 
             $this->logger?->info(sprintf(
                 'Subscription Engine: Partition "%s" of subscriber "%s" created.',
@@ -95,15 +93,20 @@ final class PartitionRouter
         return $partitionKey;
     }
 
-    /** @return array<string, true> */
-    private function loadPartitions(Subscription $main): array
+    /**
+     * Looks up only the partitions the routed messages belong to, so routing a few messages stays cheap
+     * no matter how many partitions the subscriber has.
+     */
+    private function exists(string $partitionId): bool
     {
-        $partitions = [];
-
-        foreach ($this->subscriptionManager->find(new SubscriptionCriteria(ids: [$main->id()], partitions: true)) as $partition) {
-            $partitions[$partition->id()] = true;
+        if (isset($this->knownPartitions[$partitionId])) {
+            return true;
         }
 
-        return $partitions;
+        if ($this->subscriptionManager->find(new SubscriptionCriteria(ids: [$partitionId], partitions: true)) === []) {
+            return false;
+        }
+
+        return $this->knownPartitions[$partitionId] = true;
     }
 }

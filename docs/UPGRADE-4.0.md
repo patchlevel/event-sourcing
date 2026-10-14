@@ -314,6 +314,33 @@ final class CustomMessageLoader implements MessageLoader
     }
 }
 ```
+A message loader also has to implement `loadIndices()`, which loads only the messages with the given indices.
+Partitions use it to read just the messages in their inbox. With a store, it is a load with the new `IndexCriterion`:
+
+```php
+use Patchlevel\EventSourcing\Message\Stream;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\IndexCriterion;
+use Patchlevel\EventSourcing\Store\Store;
+use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
+
+final class CustomMessageLoader implements MessageLoader
+{
+    public function __construct(
+        private readonly Store $store,
+    ) {
+    }
+
+    /** @param non-empty-list<int> $indices */
+    public function loadIndices(array $indices): Stream
+    {
+        return $this->store->load(new Criteria(new IndexCriterion(...$indices)));
+    }
+
+    // ...
+}
+```
+A custom store has to support the `IndexCriterion` as well.
 ### Batchable Subscriber
 
 The `Patchlevel\EventSourcing\Subscription\Subscriber\BatchableSubscriber` interface has been removed.

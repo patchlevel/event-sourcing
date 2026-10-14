@@ -24,6 +24,12 @@ final class PartitionInbox
         $this->lookup = array_fill_keys($indices, true);
     }
 
+    /** @return list<int> */
+    public function indices(): array
+    {
+        return $this->indices;
+    }
+
     public function contains(int $index): bool
     {
         return isset($this->lookup[$index]);

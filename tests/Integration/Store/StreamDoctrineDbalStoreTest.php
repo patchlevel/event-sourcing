@@ -22,6 +22,7 @@ use Patchlevel\EventSourcing\Store\Criteria\EventIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\IndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\TagCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
@@ -1246,5 +1247,34 @@ final class StreamDoctrineDbalStoreTest extends TestCase
         }
 
         $this->markTestSkipped('PostgreSQL does lock indefinitely');
+    }
+
+    public function testLoadWithIndexCriterion(): void
+    {
+        $profileId = ProfileId::generate();
+        $streamName = sprintf('profile-%s', $profileId->toString());
+
+        $messages = [];
+
+        for ($playhead = 1; $playhead <= 5; $playhead++) {
+            $messages[] = Message::create(new ProfileCreated($profileId, 'name-' . $playhead))
+                ->withHeader(new StreamNameHeader($streamName))
+                ->withHeader(new PlayheadHeader($playhead));
+        }
+
+        $this->store->save(...$messages);
+
+        $stream = null;
+
+        try {
+            $stream = $this->store->load(criteria: new Criteria(new IndexCriterion(4, 2)));
+
+            self::assertSame([2, 4], array_map(
+                static fn (Message $message) => $message->header(PlayheadHeader::class)->playhead,
+                iterator_to_array($stream, false),
+            ));
+        } finally {
+            $stream?->close();
+        }
     }
 }

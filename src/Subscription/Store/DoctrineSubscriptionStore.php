@@ -84,16 +84,58 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         return $this->createSubscription($result);
     }
 
-    /** @return list<Subscription> */
+    /**
+     * With pendingPartitionsOnly, the main subscriptions come first, then the partitions with messages in their inbox.
+     *
+     * @return list<Subscription>
+     */
     public function find(SubscriptionCriteria|null $criteria = null): array
     {
+        if ($criteria === null || !$criteria->pendingPartitionsOnly) {
+            return $this->fetch($criteria);
+        }
+
+        $mains = $criteria->partitions !== true ? $this->fetch($criteria, false) : [];
+        $partitions = $criteria->partitions !== false ? $this->fetch($criteria, true) : [];
+
+        return [...$mains, ...$partitions];
+    }
+
+    /**
+     * Partitions with pending messages are found by joining the inbox, which only holds the unprocessed messages.
+     * So the query costs as much as there is work, not as many partitions as there are.
+     *
+     * @return list<Subscription>
+     */
+    private function fetch(SubscriptionCriteria|null $criteria, bool|null $pendingPartitions = null): array
+    {
         $qb = $this->connection->createQueryBuilder()
-            ->select('*')
+            ->select($pendingPartitions === true ? $this->tableName . '.*' : '*')
             ->from($this->tableName)
-            ->orderBy('id');
+            ->orderBy($pendingPartitions === true ? $this->tableName . '.id' : 'id');
 
         if ($criteria !== null) {
             $this->applyCriteria($qb, $criteria);
+        }
+
+        if ($pendingPartitions === false) {
+            $qb->andWhere('partition_key IS NULL');
+        }
+
+        if ($pendingPartitions === true) {
+            $qb->andWhere('partition_key IS NOT NULL')
+                ->innerJoin(
+                    $this->tableName,
+                    sprintf(
+                        '(SELECT subscription_id, MAX(message_index) AS last_index FROM %s GROUP BY subscription_id)',
+                        $this->inboxTableName,
+                    ),
+                    'pending',
+                    sprintf(
+                        'pending.subscription_id = %1$s.id AND pending.last_index > %1$s.position',
+                        $this->tableName,
+                    ),
+                );
         }
 
         /** @var list<Data> $result */
@@ -114,6 +156,14 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
             ->setParameter('id', $id);
 
         $this->applyCriteria($qb, $criteria);
+
+        if ($criteria->pendingPartitionsOnly) {
+            $qb->andWhere(sprintf(
+                '%1$s.partition_key IS NULL OR EXISTS (SELECT 1 FROM %2$s WHERE %2$s.subscription_id = %1$s.id AND %2$s.message_index > %1$s.position)',
+                $this->tableName,
+                $this->inboxTableName,
+            ));
+        }
 
         if (!$this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
             $qb->forUpdate(ConflictResolutionMode::SKIP_LOCKED);
@@ -163,19 +213,11 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
                 );
         }
 
-        if ($criteria->partitions !== null) {
-            $qb->andWhere($criteria->partitions ? 'partition_key IS NOT NULL' : 'partition_key IS NULL');
-        }
-
-        if (!$criteria->pendingPartitionsOnly) {
+        if ($criteria->partitions === null) {
             return;
         }
 
-        $qb->andWhere(sprintf(
-            '%1$s.partition_key IS NULL OR EXISTS (SELECT 1 FROM %2$s WHERE %2$s.subscription_id = %1$s.id AND %2$s.message_index > %1$s.position)',
-            $this->tableName,
-            $this->inboxTableName,
-        ));
+        $qb->andWhere($criteria->partitions ? 'partition_key IS NOT NULL' : 'partition_key IS NULL');
     }
 
     public function add(Subscription $subscription): void

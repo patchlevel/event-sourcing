@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Metadata\Event\EventMetadataFactory;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\IndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
@@ -77,6 +78,12 @@ final class EventFilteredStoreMessageLoader implements MessageLoader
         }
 
         return array_keys($eventNames);
+    }
+
+    /** @param non-empty-list<int> $indices */
+    public function loadIndices(array $indices): Stream
+    {
+        return $this->store->load(new Criteria(new IndexCriterion(...$indices)));
     }
 
     public function lastIndex(): int

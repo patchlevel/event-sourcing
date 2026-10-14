@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\IndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
@@ -27,6 +28,12 @@ final class StoreMessageLoader implements MessageLoader
         }
 
         return $this->store->load($criteria);
+    }
+
+    /** @param non-empty-list<int> $indices */
+    public function loadIndices(array $indices): Stream
+    {
+        return $this->store->load(new Criteria(new IndexCriterion(...$indices)));
     }
 
     public function lastIndex(): int

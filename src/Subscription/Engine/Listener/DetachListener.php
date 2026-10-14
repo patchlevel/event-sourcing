@@ -38,6 +38,8 @@ final class DetachListener
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Active, Status::Paused, Status::Finished],
+                // partitions follow their main subscription, checking each of them would cost a claim per partition
+                partitions: false,
             ),
             function (Subscription $subscription): void {
                 $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
@@ -48,6 +50,17 @@ final class DetachListener
 
                 $subscription->detached();
                 $this->subscriptionManager->update($subscription);
+
+                $partitions = $this->subscriptionManager->find(new SubscriptionCriteria(
+                    ids: [$subscription->id()],
+                    status: [Status::Active, Status::Paused, Status::Finished],
+                    partitions: true,
+                ));
+
+                foreach ($partitions as $partition) {
+                    $partition->detached();
+                    $this->subscriptionManager->update($partition);
+                }
 
                 $this->logger?->info(
                     sprintf(

@@ -14,7 +14,9 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use function array_merge;
+use function array_values;
 use function count;
+use function ksort;
 use function max;
 use function min;
 use function sprintf;
@@ -73,14 +75,25 @@ final class SubscriptionRunner
 
         if (count($working) > 0) {
             [$startIndex, $endIndex] = $this->range($working, $inboxes);
-
-            $this->logger?->debug(sprintf(
-                'Subscription Engine: Event stream is processed from position %s.',
-                $startIndex ?? 'beginning',
-            ));
+            $indices = $this->inboxIndices($working, $inboxes);
 
             try {
-                $stream = $this->messageLoader->load($startIndex, $working->toArray());
+                if ($indices !== null) {
+                    // only partitions, so only the messages of their inboxes have to be loaded
+                    $this->logger?->debug(sprintf(
+                        'Subscription Engine: %d messages of the inbox are processed.',
+                        count($indices),
+                    ));
+
+                    $stream = $this->messageLoader->loadIndices($indices);
+                } else {
+                    $this->logger?->debug(sprintf(
+                        'Subscription Engine: Event stream is processed from position %s.',
+                        $startIndex ?? 'beginning',
+                    ));
+
+                    $stream = $this->messageLoader->load($startIndex, $working->toArray());
+                }
 
                 foreach ($stream as $index => $message) {
                     // a partition must not read past its inbox, the main subscription may not have routed these messages yet
@@ -240,6 +253,36 @@ final class SubscriptionRunner
         }
 
         return [$startIndex, $bounded ? $endIndex : null];
+    }
+
+    /**
+     * The indices of all inboxes, or null if a subscription has to read the stream.
+     *
+     * @param array<string, PartitionInbox> $inboxes
+     *
+     * @return non-empty-list<int>|null
+     */
+    private function inboxIndices(SubscriptionCollection $working, array $inboxes): array|null
+    {
+        $indices = [];
+
+        foreach ($working as $member) {
+            if (!$member->isPartition()) {
+                return null;
+            }
+
+            foreach ($inboxes[$member->id()]->indices() as $index) {
+                $indices[$index] = $index;
+            }
+        }
+
+        if ($indices === []) {
+            return null;
+        }
+
+        ksort($indices);
+
+        return array_values($indices);
     }
 
     /**
