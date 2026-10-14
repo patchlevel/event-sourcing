@@ -12,6 +12,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 
 use function array_map;
+use function array_unique;
+use function array_values;
 
 /** @interal */
 abstract class SubscriptionCommand extends Command
@@ -52,11 +54,12 @@ abstract class SubscriptionCommand extends Command
     ): SubscriptionEngineCriteria {
         $subscriptions = $this->engine->subscriptions($criteria);
 
+        // a subscriber id includes all partitions, so the list stays as short as the number of subscribers
         return new SubscriptionEngineCriteria(
-            array_map(
-                static fn ($subscription) => $subscription->id(),
+            array_values(array_unique(array_map(
+                static fn ($subscription) => $subscription->subscriberId(),
                 $subscriptions,
-            ),
+            ))),
         );
     }
 }

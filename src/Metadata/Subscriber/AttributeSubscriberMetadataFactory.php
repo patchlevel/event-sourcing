@@ -13,19 +13,24 @@ use Patchlevel\EventSourcing\Attribute\Cleanup;
 use Patchlevel\EventSourcing\Attribute\DisableEventEmitting;
 use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
+use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\RetryStrategy;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
+use ReflectionNamedType;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 
 use function array_key_exists;
 use function array_map;
 use function count;
+use function str_contains;
 
 final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFactory
 {
@@ -68,6 +73,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $flushAfterMessages = null;
         $shouldFlushMethod = null;
         $rollbackBatchMethod = null;
+        $partitionMethod = null;
 
         foreach ($methods as $method) {
             $attributes = $method->getAttributes(Subscribe::class);
@@ -163,6 +169,22 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 $setupMethod = $method->getName();
             }
 
+            if ($method->getAttributes(Partition::class)) {
+                if ($partitionMethod !== null) {
+                    throw new DuplicatePartitionMethod(
+                        $subscriber,
+                        $partitionMethod,
+                        $method->getName(),
+                    );
+                }
+
+                if (!$this->isPartitionMethodSignature($method)) {
+                    throw InvalidPartitionMethod::invalidSignature($subscriber, $method->getName());
+                }
+
+                $partitionMethod = $method->getName();
+            }
+
             if ($method->getAttributes(Cleanup::class)) {
                 if ($cleanupMethod !== null) {
                     throw new DuplicateCleanupMethod(
@@ -232,6 +254,10 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             );
         }
 
+        if ($partitionMethod !== null && str_contains($subscriberInfo->id, Subscription::PARTITION_SEPARATOR)) {
+            throw InvalidPartitionMethod::invalidSubscriberId($subscriber, $subscriberInfo->id);
+        }
+
         $metadata = new SubscriberMetadata(
             $subscriberInfo->id,
             $subscriberInfo->group,
@@ -245,6 +271,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $reflector->getAttributes(EnableEventEmittingDuringBoot::class) !== [],
             $reflector->getAttributes(DisableEventEmitting::class) !== [],
             $batch,
+            $partitionMethod,
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;
@@ -281,6 +308,19 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $method->getName(),
             $arguments,
         );
+    }
+
+    private function isPartitionMethodSignature(ReflectionMethod $method): bool
+    {
+        $parameters = $method->getParameters();
+
+        if (count($parameters) !== 1) {
+            return false;
+        }
+
+        $type = $parameters[0]->getType();
+
+        return $type instanceof ReflectionNamedType && $type->getName() === Message::class;
     }
 
     /** @param array<class-string|"*", SubscribeMethodMetadata> $subscribeMethods */

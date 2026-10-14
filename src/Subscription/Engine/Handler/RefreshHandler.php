@@ -76,7 +76,8 @@ final class RefreshHandler implements Handler
                 );
             }
 
-            $cleanupTasks = $this->cleanupTasks($subscriber);
+            // cleanup tasks belong to the subscriber as a whole and are only stored on its main subscription
+            $cleanupTasks = $subscription->isPartition() ? null : $this->cleanupTasks($subscriber);
 
             if ($subscription->cleanupTasks() !== $cleanupTasks) {
                 $changed = true;

@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionProcessed;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
@@ -14,11 +15,16 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 use function array_merge;
 use function count;
+use function max;
+use function min;
 use function sprintf;
 
 /** @internal */
 final class SubscriptionRunner
 {
+    /** How many messages of its inbox a partition processes at most in one run without a limit. */
+    private const INBOX_LIMIT = 1000;
+
     public function __construct(
         private readonly MessageLoader $messageLoader,
         private readonly SubscriptionManager $subscriptionManager,
@@ -53,12 +59,10 @@ final class SubscriptionRunner
             return ProcessedResult::empty();
         }
 
-        $startIndex = $members->lowestPosition();
-
-        $this->logger?->debug(sprintf(
-            'Subscription Engine: Event stream is processed from position %s.',
-            $startIndex ?? 'beginning',
-        ));
+        $inboxLimit = max(1, $limit ?? self::INBOX_LIMIT);
+        $inboxes = $this->loadInboxes($members, $inboxLimit);
+        $working = $this->workingMembers($members, $inboxes);
+        $router = new PartitionRouter($this->subscriptionManager, $this->logger);
 
         /** @var list<Error> $errors */
         $errors = [];
@@ -67,66 +71,209 @@ final class SubscriptionRunner
         $lastIndex = null;
         $limitReached = false;
 
-        try {
-            $stream = $this->messageLoader->load($startIndex, $members->toArray());
+        if (count($working) > 0) {
+            [$startIndex, $endIndex] = $this->range($working, $inboxes);
 
-            foreach ($stream as $index => $message) {
-                $messageCounter++;
-                $lastIndex = $index;
+            $this->logger?->debug(sprintf(
+                'Subscription Engine: Event stream is processed from position %s.',
+                $startIndex ?? 'beginning',
+            ));
 
-                foreach ($members as $member) {
-                    if ($member->position() >= $index) {
-                        continue;
+            try {
+                $stream = $this->messageLoader->load($startIndex, $working->toArray());
+
+                foreach ($stream as $index => $message) {
+                    // a partition must not read past its inbox, the main subscription may not have routed these messages yet
+                    if ($endIndex !== null && $index > $endIndex) {
+                        break;
                     }
 
-                    $error = $this->messageProcessor->process($index, $message, $member);
+                    $messageCounter++;
+                    $lastIndex = $index;
 
-                    if (!$error) {
-                        continue;
+                    foreach ($working as $member) {
+                        if ($member->position() >= $index) {
+                            continue;
+                        }
+
+                        if ($member->isPartition() && !$inboxes[$member->id()]->contains($index)) {
+                            continue;
+                        }
+
+                        $error = $this->messageProcessor->process($index, $message, $member, $router);
+
+                        if (!$error) {
+                            continue;
+                        }
+
+                        $errors[] = $error;
+                        $working->remove($member);
+                        $members->remove($member);
+
+                        if (count($working) === 0) {
+                            break 2;
+                        }
                     }
 
-                    $errors[] = $error;
-                    $members->remove($member);
+                    if ($limit !== null && $messageCounter >= $limit) {
+                        $this->logger?->info(sprintf(
+                            'Subscription Engine: Message limit (%d) reached, finish processing.',
+                            $limit,
+                        ));
 
-                    if (count($members) === 0) {
-                        break 2;
+                        $limitReached = true;
+
+                        break;
                     }
                 }
-
-                if ($limit !== null && $messageCounter >= $limit) {
-                    $this->logger?->info(sprintf(
-                        'Subscription Engine: Message limit (%d) reached, finish processing.',
-                        $limit,
-                    ));
-
-                    $limitReached = true;
-
-                    break;
-                }
+            } finally {
+                $stream?->close();
             }
-        } finally {
-            $stream?->close();
         }
 
         if ($lastIndex !== null) {
-            foreach ($members as $member) {
+            foreach ($working as $member) {
                 $event = new OnSubscriptionProcessed($member, $lastIndex);
                 $this->eventDispatcher->dispatch($event);
                 $errors = array_merge($errors, $event->errors);
             }
-        }
 
-        if ($lastIndex !== null) {
-            foreach ($members as $member) {
+            foreach ($working as $member) {
+                if ($member->isPartition()) {
+                    $this->finishInbox($member, $inboxes[$member->id()]);
+                }
+
                 $this->subscriptionManager->update($member);
             }
         }
 
-        if (!$limitReached) {
+        $inboxFull = $this->hasFullInbox($members, $inboxes, $inboxLimit);
+
+        if (!$limitReached && !$inboxFull) {
             $this->finishMembers($members, $boot);
         }
 
-        return new ProcessedResult($messageCounter, !$limitReached, $errors);
+        return new ProcessedResult(
+            $messageCounter,
+            !$limitReached && !$inboxFull && !$router->hasRouted(),
+            $errors,
+        );
+    }
+
+    /**
+     * @param positive-int $limit
+     *
+     * @return array<string, PartitionInbox> partition id => its inbox
+     */
+    private function loadInboxes(SubscriptionCollection $members, int $limit): array
+    {
+        $inboxes = [];
+
+        foreach ($members as $member) {
+            if (!$member->isPartition()) {
+                continue;
+            }
+
+            $inboxes[$member->id()] = new PartitionInbox(
+                $this->subscriptionManager->inbox($member->id(), $member->position() ?? -1, $limit),
+            );
+        }
+
+        return $inboxes;
+    }
+
+    /** @param array<string, PartitionInbox> $inboxes */
+    private function workingMembers(SubscriptionCollection $members, array $inboxes): SubscriptionCollection
+    {
+        $working = [];
+
+        foreach ($members as $member) {
+            if ($member->isPartition() && $inboxes[$member->id()]->isEmpty()) {
+                continue;
+            }
+
+            $working[] = $member;
+        }
+
+        return new SubscriptionCollection($working);
+    }
+
+    /**
+     * A partition reads only the range of its inbox. The range is unbounded as soon as a subscription
+     * reads the whole stream.
+     *
+     * @param array<string, PartitionInbox> $inboxes
+     *
+     * @return array{int|null, int|null}
+     */
+    private function range(SubscriptionCollection $working, array $inboxes): array
+    {
+        $startIndex = null;
+        $endIndex = null;
+        $first = true;
+        $bounded = true;
+
+        foreach ($working as $member) {
+            if ($member->isPartition()) {
+                $inbox = $inboxes[$member->id()];
+                $start = $inbox->first() - 1;
+                $endIndex = max($endIndex ?? 0, $inbox->last());
+            } else {
+                $start = $member->position();
+                $bounded = false;
+            }
+
+            if ($first) {
+                $startIndex = $start;
+                $first = false;
+
+                continue;
+            }
+
+            if ($startIndex === null || $start === null) {
+                $startIndex = null;
+
+                continue;
+            }
+
+            $startIndex = min($startIndex, $start);
+        }
+
+        return [$startIndex, $bounded ? $endIndex : null];
+    }
+
+    /**
+     * A partition never moves past its inbox, otherwise it would skip messages the main subscription routes later.
+     * Everything up to the new position has been processed and is removed from the inbox.
+     */
+    private function finishInbox(Subscription $partition, PartitionInbox $inbox): void
+    {
+        $position = $partition->position();
+
+        if ($position === null) {
+            return;
+        }
+
+        $end = $inbox->last();
+
+        if ($position > $end) {
+            $partition->changePosition($end);
+            $position = $end;
+        }
+
+        $this->subscriptionManager->removeFromInbox($partition->id(), $position);
+    }
+
+    /** @param array<string, PartitionInbox> $inboxes */
+    private function hasFullInbox(SubscriptionCollection $members, array $inboxes, int $limit): bool
+    {
+        foreach ($members as $member) {
+            if ($member->isPartition() && $inboxes[$member->id()]->count() >= $limit) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function finishMembers(SubscriptionCollection $members, bool $boot): void
@@ -137,7 +284,12 @@ final class SubscriptionRunner
                     continue;
                 }
 
-                if ($member->runMode() === RunMode::Once) {
+                // the main subscription may still route messages into the inbox of a booting partition
+                if ($member->isPartition() && $this->main($member)?->isBooting()) {
+                    continue;
+                }
+
+                if ($member->runMode() === RunMode::Once && $this->isRoutingFinished($member)) {
                     $member->finished();
 
                     $this->logger?->info(sprintf(
@@ -162,6 +314,10 @@ final class SubscriptionRunner
                 continue;
             }
 
+            if (!$this->isRoutingFinished($member)) {
+                continue;
+            }
+
             $member->finished();
             $this->subscriptionManager->update($member);
 
@@ -170,5 +326,22 @@ final class SubscriptionRunner
                 $member->id(),
             ));
         }
+    }
+
+    /** A partition is only done when its main subscription has routed all messages. */
+    private function isRoutingFinished(Subscription $subscription): bool
+    {
+        if (!$subscription->isPartition()) {
+            return true;
+        }
+
+        return $this->main($subscription)?->isFinished() ?? true;
+    }
+
+    private function main(Subscription $partition): Subscription|null
+    {
+        return $this->subscriptionManager->find(
+            new SubscriptionCriteria(ids: [$partition->subscriberId()], partitions: false),
+        )[0] ?? null;
     }
 }

@@ -83,6 +83,27 @@ final class DummySubscriptionStore implements SubscriptionStore
         $this->removedSubscriptions[] = clone $subscription;
     }
 
+    /** @param list<int> $indices */
+    public function addToInbox(string $subscriptionId, array $indices): void
+    {
+        $this->parentStore->addToInbox($subscriptionId, $indices);
+    }
+
+    /**
+     * @param positive-int $limit
+     *
+     * @return list<int>
+     */
+    public function inbox(string $subscriptionId, int $afterIndex, int $limit): array
+    {
+        return $this->parentStore->inbox($subscriptionId, $afterIndex, $limit);
+    }
+
+    public function removeFromInbox(string $subscriptionId, int $toIndex): void
+    {
+        $this->parentStore->removeFromInbox($subscriptionId, $toIndex);
+    }
+
     public function reset(): void
     {
         $this->addedSubscriptions = [];

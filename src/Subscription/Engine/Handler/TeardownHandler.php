@@ -44,6 +44,7 @@ final class TeardownHandler implements Handler
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Detached],
+                partitions: false,
             ),
             function (Subscription $subscription): Result {
                 if ($subscription->hasCleanupTasks()) {

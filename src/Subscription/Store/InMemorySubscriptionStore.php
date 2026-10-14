@@ -11,13 +11,19 @@ use Psr\Clock\ClockInterface;
 
 use function array_filter;
 use function array_key_exists;
+use function array_keys;
+use function array_slice;
 use function array_values;
 use function in_array;
+use function sort;
 
 final class InMemorySubscriptionStore implements SubscriptionStore
 {
     /** @var array<string, Subscription> */
     private array $subscriptions = [];
+
+    /** @var array<string, array<int, true>> */
+    private array $inbox = [];
 
     /** @param list<Subscription> $subscriptions */
     public function __construct(
@@ -50,7 +56,7 @@ final class InMemorySubscriptionStore implements SubscriptionStore
         return array_values(
             array_filter(
                 $subscriptions,
-                static fn (Subscription $subscription): bool => self::matches($subscription, $criteria),
+                fn (Subscription $subscription): bool => $this->matches($subscription, $criteria),
             ),
         );
     }
@@ -63,7 +69,7 @@ final class InMemorySubscriptionStore implements SubscriptionStore
 
         $subscription = $this->subscriptions[$id];
 
-        if (!self::matches($subscription, $criteria)) {
+        if (!$this->matches($subscription, $criteria)) {
             return null;
         }
 
@@ -82,10 +88,13 @@ final class InMemorySubscriptionStore implements SubscriptionStore
         return $closure();
     }
 
-    private static function matches(Subscription $subscription, SubscriptionCriteria $criteria): bool
+    private function matches(Subscription $subscription, SubscriptionCriteria $criteria): bool
     {
         if ($criteria->ids !== null) {
-            if (!in_array($subscription->id(), $criteria->ids, true)) {
+            if (
+                !in_array($subscription->id(), $criteria->ids, true)
+                && !in_array($subscription->subscriberId(), $criteria->ids, true)
+            ) {
                 return false;
             }
         }
@@ -100,6 +109,14 @@ final class InMemorySubscriptionStore implements SubscriptionStore
             if (!in_array($subscription->status(), $criteria->status, true)) {
                 return false;
             }
+        }
+
+        if ($criteria->partitions !== null && $subscription->isPartition() !== $criteria->partitions) {
+            return false;
+        }
+
+        if ($criteria->pendingPartitionsOnly && $subscription->isPartition()) {
+            return $this->inbox($subscription->id(), $subscription->position() ?? -1, 1) !== [];
         }
 
         return true;
@@ -129,11 +146,48 @@ final class InMemorySubscriptionStore implements SubscriptionStore
 
     public function remove(Subscription $subscription): void
     {
-        unset($this->subscriptions[$subscription->id()]);
+        unset($this->subscriptions[$subscription->id()], $this->inbox[$subscription->id()]);
+    }
+
+    /** @param list<int> $indices */
+    public function addToInbox(string $subscriptionId, array $indices): void
+    {
+        foreach ($indices as $index) {
+            $this->inbox[$subscriptionId][$index] = true;
+        }
+    }
+
+    /**
+     * @param positive-int $limit
+     *
+     * @return list<int>
+     */
+    public function inbox(string $subscriptionId, int $afterIndex, int $limit): array
+    {
+        $indices = array_values(array_filter(
+            array_keys($this->inbox[$subscriptionId] ?? []),
+            static fn (int $index): bool => $index > $afterIndex,
+        ));
+
+        sort($indices);
+
+        return array_slice($indices, 0, $limit);
+    }
+
+    public function removeFromInbox(string $subscriptionId, int $toIndex): void
+    {
+        foreach (array_keys($this->inbox[$subscriptionId] ?? []) as $index) {
+            if ($index > $toIndex) {
+                continue;
+            }
+
+            unset($this->inbox[$subscriptionId][$index]);
+        }
     }
 
     public function clear(): void
     {
         $this->subscriptions = [];
+        $this->inbox = [];
     }
 }

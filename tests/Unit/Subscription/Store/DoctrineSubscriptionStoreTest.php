@@ -61,6 +61,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                 'retry_attempt' => 0,
                 'last_saved_at' => '2024-01-01 10:00:00',
                 'cleanup_tasks' => null,
+                'subscriber_id' => 'foo',
+                'partition_key' => null,
             ]);
 
         $store = new DoctrineSubscriptionStore($connection);
@@ -111,6 +113,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                 'retry_attempt' => 2,
                 'last_saved_at' => '2024-01-01 10:00:00',
                 'cleanup_tasks' => serialize([$task]),
+                'subscriber_id' => 'foo',
+                'partition_key' => null,
             ]);
 
         $store = new DoctrineSubscriptionStore($connection);
@@ -187,6 +191,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                     'retry_attempt' => 0,
                     'last_saved_at' => '2024-01-01 10:00:00',
                     'cleanup_tasks' => null,
+                    'subscriber_id' => 'foo',
+                    'partition_key' => null,
                 ],
             ]);
         $connection
@@ -225,9 +231,10 @@ final class DoctrineSubscriptionStoreTest extends TestCase
             ->expects($this->once())
             ->method('executeQuery')
             ->with(
-                'SELECT * FROM subscriptions WHERE (id IN (:ids)) AND (group_name IN (:groups)) AND (status IN (:status)) ORDER BY id',
+                'SELECT * FROM subscriptions WHERE (id IN (:ids) OR subscriber_id IN (:subscriber_ids)) AND (group_name IN (:groups)) AND (status IN (:status)) ORDER BY id',
                 [
                     'ids' => ['foo'],
+                    'subscriber_ids' => ['foo'],
                     'groups' => ['default'],
                     'status' => ['active'],
                 ],
@@ -269,6 +276,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                 'retry_attempt' => 0,
                 'last_saved_at' => '2024-01-01 10:00:00',
                 'cleanup_tasks' => null,
+                'subscriber_id' => 'foo',
+                'partition_key' => null,
             ]);
         $connection
             ->expects($this->once())
@@ -347,6 +356,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                     'retry_attempt' => 0,
                     'last_saved_at' => $now,
                     'cleanup_tasks' => null,
+                    'subscriber_id' => 'foo',
+                    'partition_key' => null,
                 ],
                 ['last_saved_at' => Types::DATETIME_IMMUTABLE],
             );
@@ -384,6 +395,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                     'retry_attempt' => 0,
                     'last_saved_at' => $now,
                     'cleanup_tasks' => null,
+                    'subscriber_id' => 'foo',
+                    'partition_key' => null,
                 ],
                 ['last_saved_at' => Types::DATETIME_IMMUTABLE],
             );
@@ -476,9 +489,16 @@ final class DoctrineSubscriptionStoreTest extends TestCase
     {
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('delete')
-            ->with('subscriptions', ['id' => 'foo']);
+            ->willReturnCallback(static function (string $table, array $criteria): int {
+                self::assertContains([$table, $criteria], [
+                    ['subscriptions', ['id' => 'foo']],
+                    ['subscriptions_inbox', ['subscription_id' => 'foo']],
+                ]);
+
+                return 1;
+            });
 
         $store = new DoctrineSubscriptionStore($connection);
 
@@ -574,10 +594,25 @@ final class DoctrineSubscriptionStoreTest extends TestCase
             ->setNotnull(true);
         $table->addColumn('cleanup_tasks', Types::TEXT)
             ->setNotnull(false);
+        $table->addColumn('subscriber_id', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $table->addColumn('partition_key', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
         $table->addIndex(['status']);
+        $table->addIndex(['subscriber_id']);
+
+        $inbox = $expectedSchema->createTable('subscriptions_inbox');
+        $inbox->addColumn('subscription_id', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $inbox->addColumn('message_index', Types::INTEGER)
+            ->setNotnull(true);
+        $inbox->setPrimaryKey(['subscription_id', 'message_index']);
 
         $schema = new Schema();
         $store->configureSchema($schema, $connection);

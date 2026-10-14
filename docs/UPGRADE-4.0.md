@@ -470,6 +470,29 @@ are logged and retried on the next pass without landing in `result.errors`. Any 
 that single subscription into status `Error` and surfaces in `result.errors`, while the remaining
 subscriptions keep processing.
 
+#### Subscription partitions
+
+Subscribers can be split into partitions with `#[Partition]`, see the subscription docs.
+The subscription table gets the columns `subscriber_id` and `partition_key`, and there is a new table
+`subscriptions_inbox` (or `{table name}_inbox`). Since `subscriber_id` is not nullable, fill it before
+making it `NOT NULL`, otherwise the migration fails on existing rows:
+
+```sql
+ALTER TABLE subscriptions ADD subscriber_id VARCHAR(255) DEFAULT NULL;
+ALTER TABLE subscriptions ADD partition_key VARCHAR(255) DEFAULT NULL;
+UPDATE subscriptions SET subscriber_id = id;
+ALTER TABLE subscriptions ALTER COLUMN subscriber_id SET NOT NULL;
+CREATE INDEX IDX_SUBSCRIPTIONS_SUBSCRIBER_ID ON subscriptions (subscriber_id);
+CREATE TABLE subscriptions_inbox (subscription_id VARCHAR(255) NOT NULL, message_index INT NOT NULL, PRIMARY KEY (subscription_id, message_index));
+```
+Adjust the table names if you configured your own, and the `ALTER COLUMN` syntax for MySQL (`MODIFY`).
+
+A custom `SubscriptionStore` has to persist `partitionKey()` and `subscriberId()`, implement the inbox methods
+`addToInbox()`, `inbox()` and `removeFromInbox()`, remove the inbox in `remove()`, and support the new
+`partitions` and `pendingPartitionsOnly` criteria. The `ids` of `SubscriptionCriteria` now match the subscription
+id or the subscriber id, so the id of a partitioned subscriber also selects its partitions.
+For subscribers without partitions nothing changes, because the subscriber id is the subscription id.
+
 #### No global ordering across subscriptions
 
 Subscriptions are processed independently, so there is no global ordering of messages across

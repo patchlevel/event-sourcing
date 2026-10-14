@@ -13,6 +13,7 @@ use Psr\Log\LoggerInterface;
 use SplObjectStorage;
 use Throwable;
 
+use function max;
 use function sprintf;
 
 /** @internal */
@@ -26,6 +27,12 @@ final class SubscriptionManager
 
     /** @var SplObjectStorage<Subscription, null> */
     private SplObjectStorage $forRemove;
+
+    /** @var array<string, list<int>> */
+    private array $forInbox = [];
+
+    /** @var array<string, int> */
+    private array $forInboxRemove = [];
 
     public function __construct(
         private readonly SubscriptionStore $subscriptionStore,
@@ -142,6 +149,28 @@ final class SubscriptionManager
         }
     }
 
+    /** Routes a message into the inbox of a partition. */
+    public function addToInbox(string $subscriptionId, int $index): void
+    {
+        $this->forInbox[$subscriptionId][] = $index;
+    }
+
+    /** Removes the processed messages up to and including the given index from the inbox of a partition. */
+    public function removeFromInbox(string $subscriptionId, int $toIndex): void
+    {
+        $this->forInboxRemove[$subscriptionId] = max($toIndex, $this->forInboxRemove[$subscriptionId] ?? $toIndex);
+    }
+
+    /**
+     * @param positive-int $limit
+     *
+     * @return list<int>
+     */
+    public function inbox(string $subscriptionId, int $afterIndex, int $limit): array
+    {
+        return $this->subscriptionStore->inbox($subscriptionId, $afterIndex, $limit);
+    }
+
     public function flush(): void
     {
         foreach ($this->forAdd as $subscription) {
@@ -172,6 +201,14 @@ final class SubscriptionManager
             $this->subscriptionStore->remove($subscription);
         }
 
+        foreach ($this->forInbox as $subscriptionId => $indices) {
+            $this->subscriptionStore->addToInbox($subscriptionId, $indices);
+        }
+
+        foreach ($this->forInboxRemove as $subscriptionId => $toIndex) {
+            $this->subscriptionStore->removeFromInbox($subscriptionId, $toIndex);
+        }
+
         $this->clearPending();
     }
 
@@ -180,5 +217,7 @@ final class SubscriptionManager
         $this->forAdd = new SplObjectStorage();
         $this->forUpdate = new SplObjectStorage();
         $this->forRemove = new SplObjectStorage();
+        $this->forInbox = [];
+        $this->forInboxRemove = [];
     }
 }

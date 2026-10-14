@@ -84,6 +84,18 @@ final class MetadataSubscriberAccessor
         return $this->subscriber->$method(...);
     }
 
+    /** @return Closure(Message):mixed|null */
+    public function partitionMethod(): Closure|null
+    {
+        $method = $this->metadata->partitionMethod;
+
+        if ($method === null) {
+            return null;
+        }
+
+        return $this->subscriber->$method(...);
+    }
+
     /** @return list<class-string|'*'> */
     public function events(): array
     {

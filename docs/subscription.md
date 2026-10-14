@@ -848,6 +848,63 @@ Use `#[BatchFlush(afterMessages: ...)]` or a `#[BatchShouldFlush]` method to pre
 This allows you to decide when it's suitable to process the data and then release the memory.
 :::
 
+### Partitioning
+
+A subscriber is normally a single subscription: one worker processes it at a time, and an error stops it completely.
+With `#[Partition]` the subscriber is split into one subscription per partition key.
+The partitions are processed independently, so several workers can process them in parallel,
+and an error only stops the partition it happened in.
+
+The method marked with `#[Partition]` gets the `Message` and returns the partition key.
+Choose a key from your domain that groups everything that has to be processed in order, like the tenant or the aggregate.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Message\Message;
+
+#[Projector('profile_1')]
+final class ProfileProjector
+{
+    #[Partition]
+    public function partition(Message $message): string
+    {
+        return $message->header(TenantHeader::class)->tenant;
+    }
+
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(ProfileCreated $event): void
+    {
+        // ...
+    }
+}
+```
+The subscription with the subscriber id is the main subscription. It never calls your subscribe methods.
+Instead, it resolves the partition key of every message exactly once and puts the message into the inbox of that partition.
+Partitions are created on the fly as new keys appear, get the id `{subscriber id}#{partition key}`
+and start with the group, run mode and status of the main subscription.
+A partition only processes the messages in its inbox and is only claimed by a worker if its inbox has messages,
+so idle partitions cost nothing.
+
+Setup, teardown and cleanup belong to the subscriber as a whole and only run on the main subscription.
+Removing the main subscription removes its partitions as well.
+
+:::warning
+The order of messages is only guaranteed within a partition, never across partitions.
+Give all events of an aggregate the same key if your projection relies on their order.
+:::
+
+:::note
+The partition key must be a non-empty string and the partition id must not exceed 255 bytes.
+The id of a partitioned subscriber must not contain `#`.
+:::
+
+:::tip
+Changing the partition method is safe: messages that were already routed stay in their partition.
+Only the order between the old and the new partition of the same aggregate is not guaranteed during the change.
+:::
+
 ## Subscription Engine
 
 The subscription engine manages individual subscribers and keeps the subscriptions running.
@@ -1560,6 +1617,7 @@ $subscriptionEngine->execute(new Run(limit: 100));
 ```
 The per-subscription order is always preserved. There is no global ordering across different
 subscriptions, but since subscriptions are independent of each other this does not matter.
+To process a single subscriber in parallel, split it into [partitions](#partitioning).
 
 :::note
 This requires a database that supports `SKIP LOCKED` (PostgreSQL and MySQL do). SQLite serializes
@@ -1644,6 +1702,8 @@ foreach ($subscriptions as $subscription) {
     echo $subscription->status()->value;
 }
 ```
+The ids of the criteria match the subscription id or the subscriber id,
+so a partitioned subscriber includes all its partitions.
 ## Learn more
 
 * [How to use CLI commands](cli.md)

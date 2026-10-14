@@ -31,6 +31,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Listener\BatchSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DetachListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DiscoverSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailSubscriber;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\RemovePartitionsListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
@@ -163,6 +164,14 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $this->subscriptionManager,
                 $this->subscriberRepository,
                 $this->retryStrategyRepository,
+                $this->logger,
+            ),
+        );
+
+        $this->eventDispatcher->addSubscriber(
+            new RemovePartitionsListener(
+                $this->subscriptionManager,
+                $this->eventDispatcher,
                 $this->logger,
             ),
         );

@@ -32,6 +32,7 @@ use function assert;
 use function json_decode;
 use function json_encode;
 use function serialize;
+use function sprintf;
 use function unserialize;
 
 use const JSON_THROW_ON_ERROR;
@@ -48,15 +49,21 @@ use const JSON_THROW_ON_ERROR;
  *     retry_attempt: int,
  *     last_saved_at: string,
  *     cleanup_tasks: string|null,
+ *     subscriber_id: string,
+ *     partition_key: string|null,
  * }
  */
 final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSchemaConfigurator
 {
+    private readonly string $inboxTableName;
+
     public function __construct(
         private readonly Connection $connection,
         private readonly ClockInterface $clock = new SystemClock(),
         private readonly string $tableName = 'subscriptions',
+        string|null $inboxTableName = null,
     ) {
+        $this->inboxTableName = $inboxTableName ?? $tableName . '_inbox';
     }
 
     public function get(string $subscriptionId): Subscription
@@ -125,9 +132,14 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
     private function applyCriteria(QueryBuilder $qb, SubscriptionCriteria $criteria): void
     {
         if ($criteria->ids !== null) {
-            $qb->andWhere('id IN (:ids)')
+            $qb->andWhere('id IN (:ids) OR subscriber_id IN (:subscriber_ids)')
                 ->setParameter(
                     'ids',
+                    $criteria->ids,
+                    ArrayParameterType::STRING,
+                )
+                ->setParameter(
+                    'subscriber_ids',
                     $criteria->ids,
                     ArrayParameterType::STRING,
                 );
@@ -142,16 +154,28 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
                 );
         }
 
-        if ($criteria->status === null) {
+        if ($criteria->status !== null) {
+            $qb->andWhere('status IN (:status)')
+                ->setParameter(
+                    'status',
+                    array_map(static fn (Status $status) => $status->value, $criteria->status),
+                    ArrayParameterType::STRING,
+                );
+        }
+
+        if ($criteria->partitions !== null) {
+            $qb->andWhere($criteria->partitions ? 'partition_key IS NOT NULL' : 'partition_key IS NULL');
+        }
+
+        if (!$criteria->pendingPartitionsOnly) {
             return;
         }
 
-        $qb->andWhere('status IN (:status)')
-            ->setParameter(
-                'status',
-                array_map(static fn (Status $status) => $status->value, $criteria->status),
-                ArrayParameterType::STRING,
-            );
+        $qb->andWhere(sprintf(
+            '%1$s.partition_key IS NULL OR EXISTS (SELECT 1 FROM %2$s WHERE %2$s.subscription_id = %1$s.id AND %2$s.message_index > %1$s.position)',
+            $this->tableName,
+            $this->inboxTableName,
+        ));
     }
 
     public function add(Subscription $subscription): void
@@ -175,6 +199,8 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
                     'retry_attempt' => $subscription->retryAttempt(),
                     'last_saved_at' => $subscription->lastSavedAt(),
                     'cleanup_tasks' => $subscription->cleanupTasks() !== null ? serialize($subscription->cleanupTasks()) : null,
+                    'subscriber_id' => $subscription->subscriberId(),
+                    'partition_key' => $subscription->partitionKey(),
                 ],
                 [
                     'last_saved_at' => Types::DATETIME_IMMUTABLE,
@@ -236,6 +262,60 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
     public function remove(Subscription $subscription): void
     {
         $this->connection->delete($this->tableName, ['id' => $subscription->id()]);
+        $this->connection->delete($this->inboxTableName, ['subscription_id' => $subscription->id()]);
+    }
+
+    /** @param list<int> $indices */
+    public function addToInbox(string $subscriptionId, array $indices): void
+    {
+        foreach ($indices as $index) {
+            $this->connection->insert(
+                $this->inboxTableName,
+                [
+                    'subscription_id' => $subscriptionId,
+                    'message_index' => $index,
+                ],
+            );
+        }
+    }
+
+    /**
+     * @param positive-int $limit
+     *
+     * @return list<int>
+     */
+    public function inbox(string $subscriptionId, int $afterIndex, int $limit): array
+    {
+        $sql = $this->connection->createQueryBuilder()
+            ->select('message_index')
+            ->from($this->inboxTableName)
+            ->where('subscription_id = :subscription_id')
+            ->andWhere('message_index > :after_index')
+            ->orderBy('message_index')
+            ->setMaxResults($limit)
+            ->getSQL();
+
+        /** @var list<int|string> $indices */
+        $indices = $this->connection->fetchFirstColumn($sql, [
+            'subscription_id' => $subscriptionId,
+            'after_index' => $afterIndex,
+        ]);
+
+        return array_map(static fn (int|string $index): int => (int)$index, $indices);
+    }
+
+    public function removeFromInbox(string $subscriptionId, int $toIndex): void
+    {
+        $this->connection->executeStatement(
+            sprintf(
+                'DELETE FROM %s WHERE subscription_id = :subscription_id AND message_index <= :to_index',
+                $this->inboxTableName,
+            ),
+            [
+                'subscription_id' => $subscriptionId,
+                'to_index' => $toIndex,
+            ],
+        );
     }
 
     /**
@@ -302,9 +382,27 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         $table->addColumn('cleanup_tasks', Types::TEXT)
             ->setNotnull(false);
 
+        $table->addColumn('subscriber_id', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $table->addColumn('partition_key', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(false);
+
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
         $table->addIndex(['status']);
+        $table->addIndex(['subscriber_id']);
+
+        $inbox = $schema->createTable($this->inboxTableName);
+
+        $inbox->addColumn('subscription_id', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $inbox->addColumn('message_index', Types::INTEGER)
+            ->setNotnull(true);
+
+        $inbox->setPrimaryKey(['subscription_id', 'message_index']);
     }
 
     /** @param Data $row */
@@ -327,6 +425,7 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
             $row['retry_attempt'],
             self::normalizeDateTime($row['last_saved_at'], $this->connection->getDatabasePlatform()),
             $row['cleanup_tasks'] !== null ? unserialize($row['cleanup_tasks']) : null,
+            $row['partition_key'],
         );
     }
 

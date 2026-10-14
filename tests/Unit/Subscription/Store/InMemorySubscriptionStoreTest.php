@@ -15,6 +15,8 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
+use function array_map;
+
 #[CoversClass(InMemorySubscriptionStore::class)]
 final class InMemorySubscriptionStoreTest extends TestCase
 {
@@ -209,5 +211,97 @@ final class InMemorySubscriptionStoreTest extends TestCase
         $subscription = new Subscription('foo');
 
         self::assertSame($subscription, $store->inLock(static fn (): Subscription => $subscription));
+    }
+
+    public function testFindPartitions(): void
+    {
+        $store = new InMemorySubscriptionStore();
+
+        $main = new Subscription('profile', status: Status::Active, position: 0);
+        $partition = Subscription::partition($main, 'tenant-a', 0);
+        $other = new Subscription('other');
+
+        $store->add($other);
+        $store->add($main);
+        $store->add($partition);
+
+        self::assertSame(
+            ['profile', 'profile#tenant-a'],
+            array_map(static fn (Subscription $s) => $s->id(), $store->find(new SubscriptionCriteria(ids: ['profile']))),
+            'the subscriber id includes its partitions',
+        );
+        self::assertSame(
+            ['profile#tenant-a'],
+            array_map(static fn (Subscription $s) => $s->id(), $store->find(new SubscriptionCriteria(ids: ['profile#tenant-a']))),
+            'a single partition can be targeted by its id',
+        );
+        self::assertSame(
+            ['other', 'profile'],
+            array_map(static fn (Subscription $s) => $s->id(), $store->find(new SubscriptionCriteria(partitions: false))),
+        );
+        self::assertSame(
+            ['profile#tenant-a'],
+            array_map(static fn (Subscription $s) => $s->id(), $store->find(new SubscriptionCriteria(partitions: true))),
+        );
+
+        $found = $store->get('profile#tenant-a');
+        self::assertSame('profile', $found->subscriberId());
+        self::assertSame('tenant-a', $found->partitionKey());
+    }
+
+    public function testInbox(): void
+    {
+        $store = new InMemorySubscriptionStore();
+
+        $store->addToInbox('profile#a', [5, 3, 9]);
+        $store->addToInbox('profile#b', [4]);
+
+        self::assertSame([3, 5, 9], $store->inbox('profile#a', -1, 10));
+        self::assertSame([5, 9], $store->inbox('profile#a', 3, 10));
+        self::assertSame([3, 5], $store->inbox('profile#a', -1, 2));
+
+        $store->removeFromInbox('profile#a', 5);
+
+        self::assertSame([9], $store->inbox('profile#a', -1, 10));
+        self::assertSame([4], $store->inbox('profile#b', -1, 10));
+    }
+
+    public function testPendingPartitionsOnly(): void
+    {
+        $store = new InMemorySubscriptionStore();
+
+        $main = new Subscription('profile', status: Status::Active, position: 0);
+        $store->add($main);
+        $store->add(Subscription::partition($main, 'pending', 3));
+        $store->add(Subscription::partition($main, 'processed', 7));
+        $store->add(Subscription::partition($main, 'empty', 0));
+
+        $store->addToInbox('profile#pending', [4]);
+        $store->addToInbox('profile#processed', [7]);
+
+        self::assertSame(
+            ['profile', 'profile#pending'],
+            array_map(
+                static fn (Subscription $s) => $s->id(),
+                $store->find(new SubscriptionCriteria(pendingPartitionsOnly: true)),
+            ),
+        );
+
+        self::assertNotNull($store->claim('profile#pending', new SubscriptionCriteria(pendingPartitionsOnly: true)));
+        self::assertNull($store->claim('profile#empty', new SubscriptionCriteria(pendingPartitionsOnly: true)));
+    }
+
+    public function testRemoveAlsoRemovesTheInbox(): void
+    {
+        $store = new InMemorySubscriptionStore();
+
+        $partition = Subscription::partition(new Subscription('profile'), 'a', 0);
+        $store->add($partition);
+        $store->addToInbox($partition->id(), [1, 2]);
+
+        $store->remove($partition);
+        $store->add($partition);
+
+        self::assertSame([], $store->inbox($partition->id(), -1, 10));
     }
 }

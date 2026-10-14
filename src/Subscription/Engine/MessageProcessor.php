@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentRe
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\RecordedOnArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\NoSuitableResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
@@ -55,8 +56,16 @@ final class MessageProcessor
         );
     }
 
-    public function process(int $index, Message $message, Subscription $subscription): Error|null
-    {
+    /**
+     * The router is required for the main subscription of a partitioned subscriber, which routes the messages into the
+     * inboxes of its partitions instead of calling the subscriber.
+     */
+    public function process(
+        int $index,
+        Message $message,
+        Subscription $subscription,
+        PartitionRouter|null $router = null,
+    ): Error|null {
         $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
 
         if (!$subscriber) {
@@ -75,12 +84,23 @@ final class MessageProcessor
                 ),
             );
 
-            $event = new OnHandleMessageSuccess($subscription, $message, $index);
-            $this->eventDispatcher->dispatch($event);
+            $this->success($index, $message, $subscription);
 
-            if ($event->shouldChangePosition) {
-                $subscription->changePosition($index);
+            return null;
+        }
+
+        if (!$subscription->isPartition() && $subscriber->metadata()->partitionMethod !== null) {
+            if ($router === null) {
+                throw new UnexpectedError(sprintf('The partitioned subscription "%s" needs a router.', $subscription->id()));
             }
+
+            try {
+                $router->route($index, $message, $subscription, $subscriber);
+            } catch (Throwable $e) {
+                return $this->error($index, $message, $subscription, $subscriber, $e);
+            }
+
+            $this->success($index, $message, $subscription);
 
             return null;
         }
@@ -92,39 +112,12 @@ final class MessageProcessor
             );
 
             $this->eventDispatcher->dispatch($event);
-        } catch (Throwable $e) {
-            $this->logger?->error(
-                sprintf(
-                    'Subscription Engine: Subscriber "%s" for "%s" could not process the event "%s": %s',
-                    $subscriber::class,
-                    $subscription->id(),
-                    $message->event()::class,
-                    $e->getMessage(),
-                ),
-            );
 
-            $this->eventDispatcher->dispatch(
-                new OnHandleMessageError(
-                    $subscription,
-                    $e,
-                    $message,
-                    $index,
-                ),
-            );
-
-            return new Error(
-                $subscription->id(),
-                $e->getMessage(),
-                $e,
-            );
-        }
-
-        try {
             $context = new ArgumentResolverContext($message, $subscription, $subscriber->metadata());
 
             foreach ($subscribeMethods as $subscribeMethod) {
                 $arguments = $this->resolveArguments(
-                    $subscription->id(),
+                    $subscription->subscriberId(),
                     $message->event()::class,
                     $subscriber->subscriber()::class,
                     $subscribeMethod,
@@ -134,43 +127,10 @@ final class MessageProcessor
                 $subscriber->subscriber()->{$subscribeMethod->name}(...$arguments);
             }
         } catch (Throwable $e) {
-            $this->logger?->error(
-                sprintf(
-                    'Subscription Engine: Subscriber "%s" for "%s" could not process the event "%s": %s',
-                    $subscriber::class,
-                    $subscription->id(),
-                    $message->event()::class,
-                    $e->getMessage(),
-                ),
-            );
-
-            $this->eventDispatcher->dispatch(
-                new OnHandleMessageError(
-                    $subscription,
-                    $e,
-                    $message,
-                    $index,
-                ),
-            );
-
-            return new Error(
-                $subscription->id(),
-                $e->getMessage(),
-                $e,
-            );
+            return $this->error($index, $message, $subscription, $subscriber, $e);
         }
 
-        $event = new OnHandleMessageSuccess(
-            $subscription,
-            $message,
-            $index,
-        );
-
-        $this->eventDispatcher->dispatch($event);
-
-        if ($event->shouldChangePosition) {
-            $subscription->changePosition($index);
-        }
+        $this->success($index, $message, $subscription);
 
         $this->logger?->debug(
             sprintf(
@@ -184,6 +144,52 @@ final class MessageProcessor
         return null;
     }
 
+    private function success(int $index, Message $message, Subscription $subscription): void
+    {
+        $event = new OnHandleMessageSuccess($subscription, $message, $index);
+        $this->eventDispatcher->dispatch($event);
+
+        if (!$event->shouldChangePosition) {
+            return;
+        }
+
+        $subscription->changePosition($index);
+    }
+
+    /** @param MetadataSubscriberAccessor<object> $subscriber */
+    private function error(
+        int $index,
+        Message $message,
+        Subscription $subscription,
+        MetadataSubscriberAccessor $subscriber,
+        Throwable $throwable,
+    ): Error {
+        $this->logger?->error(
+            sprintf(
+                'Subscription Engine: Subscriber "%s" for "%s" could not process the event "%s": %s',
+                $subscriber::class,
+                $subscription->id(),
+                $message->event()::class,
+                $throwable->getMessage(),
+            ),
+        );
+
+        $this->eventDispatcher->dispatch(
+            new OnHandleMessageError(
+                $subscription,
+                $throwable,
+                $message,
+                $index,
+            ),
+        );
+
+        return new Error(
+            $subscription->id(),
+            $throwable->getMessage(),
+            $throwable,
+        );
+    }
+
     /**
      * @param class-string $eventClass
      * @param class-string $subscriberClass
@@ -191,13 +197,13 @@ final class MessageProcessor
      * @return list<mixed>
      */
     private function resolveArguments(
-        string $subscriptionId,
+        string $subscriberId,
         string $eventClass,
         string $subscriberClass,
         SubscribeMethodMetadata $method,
         ArgumentResolverContext $context,
     ): array {
-        $resolvers = $this->resolversFor($subscriptionId, $eventClass, $subscriberClass, $method);
+        $resolvers = $this->resolversFor($subscriberId, $eventClass, $subscriberClass, $method);
 
         $arguments = [];
 
@@ -215,13 +221,13 @@ final class MessageProcessor
      * @return list<ArgumentResolver>
      */
     private function resolversFor(
-        string $subscriptionId,
+        string $subscriberId,
         string $eventClass,
         string $subscriberClass,
         SubscribeMethodMetadata $method,
     ): array {
-        if (isset($this->resolverCache[$subscriptionId][$eventClass][$method->name])) {
-            return $this->resolverCache[$subscriptionId][$eventClass][$method->name];
+        if (isset($this->resolverCache[$subscriberId][$eventClass][$method->name])) {
+            return $this->resolverCache[$subscriberId][$eventClass][$method->name];
         }
 
         $resolvers = [];
@@ -230,7 +236,7 @@ final class MessageProcessor
             $resolvers[] = $this->resolverFor($argument, $eventClass, $subscriberClass, $method);
         }
 
-        return $this->resolverCache[$subscriptionId][$eventClass][$method->name] = $resolvers;
+        return $this->resolverCache[$subscriberId][$eventClass][$method->name] = $resolvers;
     }
 
     /**

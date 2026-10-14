@@ -145,6 +145,7 @@ final class LayerDependenciesTest
             $this->layer('Metadata\Subscriber'),
             [
                 $this->layer('Attribute'),
+                $this->layer('Message'),
                 $this->metadataLayer(),
                 $this->layer('Subscription'),
             ],

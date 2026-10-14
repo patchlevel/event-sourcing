@@ -42,6 +42,7 @@ final class RemoveHandler implements Handler
             new SubscriptionCriteria(
                 ids: $command->ids,
                 groups: $command->groups,
+                partitions: false,
             ),
             function (Subscription $subscription): Result {
                 if ($subscription->isNew()) {

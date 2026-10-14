@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Attribute\Cleanup;
 use Patchlevel\EventSourcing\Attribute\DisableEventEmitting;
 use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
+use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\RetryStrategy;
@@ -30,12 +31,14 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateBeginBatchMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateCleanupMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateFailedMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateFlushMethod;
+use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicatePartitionMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateRollbackBatchMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSetupMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateShouldFlushMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSubscribeMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateTeardownMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\IncompleteBatchMethods;
+use Patchlevel\EventSourcing\Metadata\Subscriber\InvalidPartitionMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\MixedTeardownAndCleanupMethods;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -284,6 +287,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
         class {
             // phpcs:disable
+            // @phpstan-ignore missingType.parameter (the missing type is what this test is about)
             #[Subscribe(ProfileVisited::class)]
             public function profileVisited($message): void
             {
@@ -800,5 +804,108 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $metadata = $metadataFactory->metadata($subscriber::class);
 
         self::assertSame('custom_strategy', $metadata->retryStrategy);
+    }
+
+    public function testPartitionMethod(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Partition]
+            public function partition(Message $message): string
+            {
+                return 'key';
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertSame('partition', $metadata->partitionMethod);
+    }
+
+    public function testNoPartitionMethod(): void
+    {
+        $subscriber = new #[Subscriber('foo#bar', RunMode::FromBeginning)]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertNull($metadata->partitionMethod);
+    }
+
+    public function testDuplicatePartitionMethodException(): void
+    {
+        $this->expectException(DuplicatePartitionMethod::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Partition]
+            public function partition1(Message $message): string
+            {
+                return 'key';
+            }
+
+            #[Partition]
+            public function partition2(Message $message): string
+            {
+                return 'key';
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testPartitionMethodWithInvalidSignature(): void
+    {
+        $this->expectException(InvalidPartitionMethod::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Partition]
+            public function partition(Message $message, string $other): string
+            {
+                return $other;
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testPartitionMethodWithEventArgument(): void
+    {
+        $this->expectException(InvalidPartitionMethod::class);
+
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Partition]
+            public function partition(ProfileVisited $event): string
+            {
+                return 'key';
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testPartitionedSubscriberIdWithSeparator(): void
+    {
+        $this->expectException(InvalidPartitionMethod::class);
+
+        $subscriber = new #[Subscriber('foo#bar', RunMode::FromBeginning)]
+        class {
+            #[Partition]
+            public function partition(Message $message): string
+            {
+                return 'key';
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadataFactory->metadata($subscriber::class);
     }
 }

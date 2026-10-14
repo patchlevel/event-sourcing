@@ -7,9 +7,16 @@ namespace Patchlevel\EventSourcing\Subscription;
 use DateTimeImmutable;
 use Throwable;
 
+use function str_ends_with;
+use function strlen;
+use function substr;
+
 final class Subscription
 {
     public const DEFAULT_GROUP = 'default';
+
+    /** Separates the subscriber id from the partition key in the id of a partition. */
+    public const PARTITION_SEPARATOR = '#';
 
     /** @param list<object>|null $cleanupTasks */
     public function __construct(
@@ -22,7 +29,36 @@ final class Subscription
         private int $retryAttempt = 0,
         private DateTimeImmutable|null $lastSavedAt = null,
         private array|null $cleanupTasks = null,
+        private readonly string|null $partitionKey = null,
     ) {
+        if ($partitionKey !== null && !str_ends_with($id, self::PARTITION_SEPARATOR . $partitionKey)) {
+            throw new InvalidPartitionId($id, $partitionKey);
+        }
+    }
+
+    /**
+     * Creates the partition of a partitioned subscriber. The partition belongs to the same subscriber as the given main
+     * subscription and starts with its group, run mode and status.
+     */
+    public static function partition(self $main, string $partitionKey, int $position): self
+    {
+        if ($main->isPartition()) {
+            throw new PartitionOfPartitionNotPossible($main->id());
+        }
+
+        return new self(
+            self::partitionId($main->id(), $partitionKey),
+            $main->group(),
+            $main->runMode(),
+            $main->status(),
+            $position,
+            partitionKey: $partitionKey,
+        );
+    }
+
+    public static function partitionId(string $subscriberId, string $partitionKey): string
+    {
+        return $subscriberId . self::PARTITION_SEPARATOR . $partitionKey;
     }
 
     public function id(): string
@@ -30,9 +66,26 @@ final class Subscription
         return $this->id;
     }
 
+    /**
+     * The id of the subscriber, the same as the id for every subscription that is not a partition.
+     */
     public function subscriberId(): string
     {
-        return $this->id;
+        if ($this->partitionKey === null) {
+            return $this->id;
+        }
+
+        return substr($this->id, 0, -strlen(self::PARTITION_SEPARATOR . $this->partitionKey));
+    }
+
+    public function partitionKey(): string|null
+    {
+        return $this->partitionKey;
+    }
+
+    public function isPartition(): bool
+    {
+        return $this->partitionKey !== null;
     }
 
     public function group(): string

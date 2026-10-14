@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Subscription\InvalidPartitionId;
 use Patchlevel\EventSourcing\Subscription\NoErrorToRetry;
+use Patchlevel\EventSourcing\Subscription\PartitionOfPartitionNotPossible;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscription;
@@ -263,5 +265,47 @@ final class SubscriptionTest extends TestCase
 
         self::assertSame([$task], $subscription->cleanupTasks());
         self::assertTrue($subscription->hasCleanupTasks());
+    }
+
+    public function testPartition(): void
+    {
+        $main = new Subscription('profile', 'projector', RunMode::Once, Status::Booting, 10);
+
+        $partition = Subscription::partition($main, 'tenant-a', 4);
+
+        self::assertSame('profile#tenant-a', $partition->id());
+        self::assertSame('profile', $partition->subscriberId());
+        self::assertSame('tenant-a', $partition->partitionKey());
+        self::assertTrue($partition->isPartition());
+        self::assertSame('projector', $partition->group());
+        self::assertSame(RunMode::Once, $partition->runMode());
+        self::assertSame(Status::Booting, $partition->status());
+        self::assertSame(4, $partition->position());
+
+        self::assertFalse($main->isPartition());
+        self::assertSame('profile', $main->subscriberId());
+        self::assertNull($main->partitionKey());
+    }
+
+    public function testPartitionKeyMayContainTheSeparator(): void
+    {
+        $partition = Subscription::partition(new Subscription('profile'), 'a#b', 0);
+
+        self::assertSame('profile#a#b', $partition->id());
+        self::assertSame('profile', $partition->subscriberId());
+    }
+
+    public function testPartitionOfPartition(): void
+    {
+        $this->expectException(PartitionOfPartitionNotPossible::class);
+
+        Subscription::partition(Subscription::partition(new Subscription('profile'), 'a', 0), 'b', 0);
+    }
+
+    public function testInvalidPartitionId(): void
+    {
+        $this->expectException(InvalidPartitionId::class);
+
+        new Subscription('profile#a', partitionKey: 'b');
     }
 }

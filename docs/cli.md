@@ -238,6 +238,13 @@ If the subscription has an error, the command also prints the error message and 
 ```bash
 bin/console event-sourcing:subscription:status profile_1
 ```
+For a partitioned subscriber, the table shows a summary of its partitions.
+Use `--partitions` to list them, and pass the id of a partition to show its details.
+
+```bash
+bin/console event-sourcing:subscription:status --partitions
+bin/console event-sourcing:subscription:status 'profile_1#tenant-a'
+```
 ### Pause
 
 The `event-sourcing:subscription:pause` command pauses subscriptions.

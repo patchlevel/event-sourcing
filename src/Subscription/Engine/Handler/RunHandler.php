@@ -36,6 +36,7 @@ final class RunHandler implements Handler
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Active],
+                pendingPartitionsOnly: true,
             ),
             fn (Subscription $subscription): ProcessedResult => $this->runner->process(
                 [$subscription],
