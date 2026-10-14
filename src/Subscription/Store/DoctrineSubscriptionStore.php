@@ -13,6 +13,7 @@ use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
+use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Query\ForUpdate\ConflictResolutionMode;
 use Doctrine\DBAL\Query\QueryBuilder;
@@ -30,11 +31,13 @@ use Psr\Clock\ClockInterface;
 
 use function array_chunk;
 use function array_fill;
+use function array_keys;
 use function array_map;
 use function array_merge;
 use function assert;
 use function count;
 use function implode;
+use function in_array;
 use function json_decode;
 use function json_encode;
 use function serialize;
@@ -63,6 +66,53 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
 {
     /** How many inbox rows or conditions go into one statement, far below the parameter limits of the databases. */
     private const INBOX_CHUNK = 500;
+
+    /** How many subscriptions go into one insert or update, 100 rows stay below 3000 parameters. */
+    private const ROW_CHUNK = 100;
+
+    /** In the order of the insert. */
+    private const COLUMN_TYPES = [
+        'id' => ParameterType::STRING,
+        'group_name' => ParameterType::STRING,
+        'run_mode' => ParameterType::STRING,
+        'status' => ParameterType::STRING,
+        'position' => ParameterType::INTEGER,
+        'error_message' => ParameterType::STRING,
+        'error_previous_status' => ParameterType::STRING,
+        'error_context' => ParameterType::STRING,
+        'retry_attempt' => ParameterType::INTEGER,
+        'last_saved_at' => Types::DATETIME_IMMUTABLE,
+        'cleanup_tasks' => ParameterType::STRING,
+        'subscriber_id' => ParameterType::STRING,
+        'partition_key' => ParameterType::STRING,
+    ];
+
+    /** The columns an update may change, the id, the subscriber id and the partition key never change. */
+    private const UPDATE_COLUMNS = [
+        'group_name',
+        'run_mode',
+        'status',
+        'position',
+        'error_message',
+        'error_previous_status',
+        'error_context',
+        'retry_attempt',
+        'last_saved_at',
+        'cleanup_tasks',
+    ];
+
+    private const POSTGRES_CASTS = [
+        'group_name' => 'VARCHAR',
+        'run_mode' => 'VARCHAR',
+        'status' => 'VARCHAR',
+        'position' => 'INTEGER',
+        'error_message' => 'TEXT',
+        'error_previous_status' => 'VARCHAR',
+        'error_context' => 'JSON',
+        'retry_attempt' => 'INTEGER',
+        'last_saved_at' => 'TIMESTAMP(0) WITH TIME ZONE',
+        'cleanup_tasks' => 'TEXT',
+    ];
 
     private readonly string $inboxTableName;
 
@@ -268,28 +318,12 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
 
     public function add(Subscription $subscription): void
     {
-        $subscriptionError = $subscription->subscriptionError();
-
         $subscription->updateLastSavedAt($this->clock->now());
 
         try {
             $this->connection->insert(
                 $this->tableName,
-                [
-                    'id' => $subscription->id(),
-                    'group_name' => $subscription->group(),
-                    'run_mode' => $subscription->runMode()->value,
-                    'status' => $subscription->status()->value,
-                    'position' => $subscription->position(),
-                    'error_message' => $subscriptionError?->errorMessage,
-                    'error_previous_status' => $subscriptionError?->previousStatus?->value,
-                    'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
-                    'retry_attempt' => $subscription->retryAttempt(),
-                    'last_saved_at' => $subscription->lastSavedAt(),
-                    'cleanup_tasks' => $subscription->cleanupTasks() !== null ? serialize($subscription->cleanupTasks()) : null,
-                    'subscriber_id' => $subscription->subscriberId(),
-                    'partition_key' => $subscription->partitionKey(),
-                ],
+                $this->row($subscription),
                 [
                     'last_saved_at' => Types::DATETIME_IMMUTABLE,
                 ],
@@ -299,26 +333,58 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         }
     }
 
+    /** @param non-empty-list<Subscription> $subscriptions */
+    public function addAll(array $subscriptions): void
+    {
+        $now = $this->clock->now();
+
+        foreach (array_chunk($subscriptions, self::ROW_CHUNK) as $chunk) {
+            $values = [];
+            $parameters = [];
+            $types = [];
+
+            foreach ($chunk as $subscription) {
+                $subscription->updateLastSavedAt($now);
+
+                $row = $this->row($subscription);
+                $values[] = '(' . implode(', ', array_fill(0, count($row), '?')) . ')';
+
+                foreach ($row as $column => $value) {
+                    $parameters[] = $value;
+                    $types[] = self::COLUMN_TYPES[$column];
+                }
+            }
+
+            try {
+                $this->connection->executeStatement(
+                    sprintf(
+                        'INSERT INTO %s (%s) VALUES %s',
+                        $this->tableName,
+                        implode(', ', array_keys(self::COLUMN_TYPES)),
+                        implode(', ', $values),
+                    ),
+                    $parameters,
+                    $types,
+                );
+            } catch (UniqueConstraintViolationException $e) {
+                throw new SubscriptionAlreadyExists(
+                    implode('", "', array_map(static fn (Subscription $subscription): string => $subscription->id(), $chunk)),
+                    $e,
+                );
+            }
+        }
+    }
+
     public function update(Subscription $subscription): void
     {
-        $subscriptionError = $subscription->subscriptionError();
-
         $subscription->updateLastSavedAt($this->clock->now());
+
+        $row = $this->row($subscription);
+        unset($row['id'], $row['subscriber_id'], $row['partition_key']);
 
         $effectedRows = $this->connection->update(
             $this->tableName,
-            [
-                'group_name' => $subscription->group(),
-                'run_mode' => $subscription->runMode()->value,
-                'status' => $subscription->status()->value,
-                'position' => $subscription->position(),
-                'error_message' => $subscriptionError?->errorMessage,
-                'error_previous_status' => $subscriptionError?->previousStatus?->value,
-                'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
-                'retry_attempt' => $subscription->retryAttempt(),
-                'last_saved_at' => $subscription->lastSavedAt(),
-                'cleanup_tasks' => $subscription->cleanupTasks() !== null ? serialize($subscription->cleanupTasks()) : null,
-            ],
+            $row,
             [
                 'id' => $subscription->id(),
             ],
@@ -345,6 +411,122 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         if ($exists === false) {
             throw new SubscriptionNotFound($subscription->id());
         }
+    }
+
+    /**
+     * One UPDATE per chunk with a CASE per column, the only form of a batch update that all supported databases share.
+     *
+     * @param non-empty-list<Subscription> $subscriptions
+     */
+    public function updateAll(array $subscriptions): void
+    {
+        $now = $this->clock->now();
+        $isPostgres = $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform;
+
+        foreach (array_chunk($subscriptions, self::ROW_CHUNK) as $chunk) {
+            $rows = [];
+
+            foreach ($chunk as $subscription) {
+                $subscription->updateLastSavedAt($now);
+                $rows[$subscription->id()] = $this->row($subscription);
+            }
+
+            $assignments = [];
+            $parameters = [];
+            $types = [];
+
+            foreach (self::UPDATE_COLUMNS as $column) {
+                $cases = [];
+
+                foreach ($rows as $id => $row) {
+                    // postgres can not infer the type of a parameter in a CASE and would assign text to every column
+                    $cases[] = $isPostgres
+                        ? sprintf('WHEN ? THEN CAST(? AS %s)', self::POSTGRES_CASTS[$column])
+                        : 'WHEN ? THEN ?';
+
+                    $parameters[] = (string)$id;
+                    $parameters[] = $row[$column];
+                    $types[] = ParameterType::STRING;
+                    $types[] = self::COLUMN_TYPES[$column];
+                }
+
+                $assignments[] = sprintf('%s = CASE id %s END', $column, implode(' ', $cases));
+            }
+
+            $ids = array_keys($rows);
+
+            foreach ($ids as $id) {
+                $parameters[] = (string)$id;
+                $types[] = ParameterType::STRING;
+            }
+
+            $effectedRows = $this->connection->executeStatement(
+                sprintf(
+                    'UPDATE %s SET %s WHERE id IN (%s)',
+                    $this->tableName,
+                    implode(', ', $assignments),
+                    implode(', ', array_fill(0, count($ids), '?')),
+                ),
+                $parameters,
+                $types,
+            );
+
+            if ($effectedRows === count($ids)) {
+                continue;
+            }
+
+            // mysql and mariadb count the changed rows, not the matched ones, so check which subscriptions exist
+            $existing = $this->connection->fetchFirstColumn(
+                sprintf('SELECT id FROM %s WHERE id IN (%s)', $this->tableName, implode(', ', array_fill(0, count($ids), '?'))),
+                array_map(static fn (int|string $id): string => (string)$id, $ids),
+            );
+
+            foreach ($ids as $id) {
+                if (!in_array((string)$id, $existing, true)) {
+                    throw new SubscriptionNotFound((string)$id);
+                }
+            }
+        }
+    }
+
+    /**
+     * The values of all columns, last_saved_at is converted by its type.
+     *
+     * @return array{
+     *     id: string,
+     *     group_name: string,
+     *     run_mode: string,
+     *     status: string,
+     *     position: int|null,
+     *     error_message: string|null,
+     *     error_previous_status: string|null,
+     *     error_context: string|null,
+     *     retry_attempt: int,
+     *     last_saved_at: DateTimeImmutable|null,
+     *     cleanup_tasks: string|null,
+     *     subscriber_id: string,
+     *     partition_key: string|null,
+     * }
+     */
+    private function row(Subscription $subscription): array
+    {
+        $subscriptionError = $subscription->subscriptionError();
+
+        return [
+            'id' => $subscription->id(),
+            'group_name' => $subscription->group(),
+            'run_mode' => $subscription->runMode()->value,
+            'status' => $subscription->status()->value,
+            'position' => $subscription->position(),
+            'error_message' => $subscriptionError?->errorMessage,
+            'error_previous_status' => $subscriptionError?->previousStatus?->value,
+            'error_context' => $subscriptionError?->errorContext !== null ? json_encode($subscriptionError->errorContext, JSON_THROW_ON_ERROR) : null,
+            'retry_attempt' => $subscription->retryAttempt(),
+            'last_saved_at' => $subscription->lastSavedAt(),
+            'cleanup_tasks' => $subscription->cleanupTasks() !== null ? serialize($subscription->cleanupTasks()) : null,
+            'subscriber_id' => $subscription->subscriberId(),
+            'partition_key' => $subscription->partitionKey(),
+        ];
     }
 
     public function remove(Subscription $subscription): void

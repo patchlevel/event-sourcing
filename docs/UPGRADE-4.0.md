@@ -517,7 +517,8 @@ Adjust the table names if you configured your own, and the `ALTER COLUMN` syntax
 
 A custom `SubscriptionStore` has to persist `partitionKey()` and `subscriberId()`, implement the inbox methods
 `addToInbox()`, `inbox()` and `removeFromInbox()`, remove the inbox in `remove()`, and support the new
-`partitions` and `pendingPartitionsOnly` criteria. The `ids` of `SubscriptionCriteria` now match the subscription
+`partitions` and `pendingPartitionsOnly` criteria. It also has to implement `claimAll()`, `addAll()` and `updateAll()`,
+which work on several subscriptions at once. A simple loop over `claim()`, `add()` and `update()` is enough. The `ids` of `SubscriptionCriteria` now match the subscription
 id or the subscriber id, so the id of a partitioned subscriber also selects its partitions.
 For subscribers without partitions nothing changes, because the subscriber id is the subscription id.
 

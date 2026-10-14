@@ -31,8 +31,26 @@ interface SubscriptionStore
     /** @throws SubscriptionAlreadyExists */
     public function add(Subscription $subscription): void;
 
+    /**
+     * Adds several subscriptions at once.
+     *
+     * @param non-empty-list<Subscription> $subscriptions
+     *
+     * @throws SubscriptionAlreadyExists
+     */
+    public function addAll(array $subscriptions): void;
+
     /** @throws SubscriptionNotFound */
     public function update(Subscription $subscription): void;
+
+    /**
+     * Updates several subscriptions at once.
+     *
+     * @param non-empty-list<Subscription> $subscriptions
+     *
+     * @throws SubscriptionNotFound
+     */
+    public function updateAll(array $subscriptions): void;
 
     /**
      * Removes the subscription together with its inbox.

@@ -1213,4 +1213,113 @@ final class DoctrineSubscriptionStoreTest extends TestCase
             ),
         );
     }
+
+    public function testAddAll(): void
+    {
+        $store = $this->createStore();
+
+        $main = new Subscription('foo', 'bar', RunMode::Once, Status::Active, 10, null, 3, null, [new DropTableTask('baz')]);
+        $main->error('error message');
+        $partition = Subscription::partition(new Subscription('foo', status: Status::Booting), 'tenant-a', 5);
+
+        $store->addAll([$main, $partition, new Subscription('other')]);
+
+        self::assertEquals($main, $store->get('foo'));
+        self::assertEquals($partition, $store->get('foo#tenant-a'));
+        self::assertSame('foo', $store->get('foo#tenant-a')->subscriberId());
+        self::assertSame(Status::New, $store->get('other')->status());
+    }
+
+    public function testAddAllDuplicate(): void
+    {
+        $store = $this->createStore();
+        $store->add(new Subscription('foo'));
+
+        $this->expectException(SubscriptionAlreadyExists::class);
+
+        $store->addAll([new Subscription('bar'), new Subscription('foo')]);
+    }
+
+    public function testUpdateAll(): void
+    {
+        $store = $this->createStore();
+
+        $store->addAll([
+            new Subscription('a', status: Status::Active, position: 1),
+            new Subscription('b', status: Status::Active, position: 1),
+            new Subscription('c', status: Status::Active, position: 1),
+        ]);
+
+        $a = $store->get('a');
+        $a->changePosition(42);
+        $a->changeGroup('other');
+        $a->changeRunMode(RunMode::Once);
+        $a->replaceCleanupTasks([new DropIndexTask('idx', 'table')]);
+
+        $b = $store->get('b');
+        $b->error(new RuntimeException('error message'));
+
+        $store->updateAll([$a, $b]);
+
+        $loadedA = $store->get('a');
+        self::assertSame(42, $loadedA->position());
+        self::assertSame('other', $loadedA->group());
+        self::assertSame(RunMode::Once, $loadedA->runMode());
+        self::assertEquals([new DropIndexTask('idx', 'table')], $loadedA->cleanupTasks());
+        self::assertNull($loadedA->subscriptionError());
+
+        $loadedB = $store->get('b');
+        self::assertSame(Status::Error, $loadedB->status());
+        self::assertSame(1, $loadedB->position());
+        self::assertSame('error message', $loadedB->subscriptionError()?->errorMessage);
+        self::assertSame(RuntimeException::class, $loadedB->subscriptionError()?->errorContext[0]['class'] ?? null);
+
+        self::assertSame(1, $store->get('c')->position(), 'other subscriptions are not touched');
+    }
+
+    public function testUpdateAllWithoutChanges(): void
+    {
+        $store = $this->createStore();
+
+        $store->addAll([new Subscription('a'), new Subscription('b')]);
+
+        // mysql and mariadb report no affected rows if nothing changed
+        $store->updateAll([$store->get('a'), $store->get('b')]);
+        $store->updateAll([$store->get('a'), $store->get('b')]);
+
+        self::assertSame(Status::New, $store->get('a')->status());
+    }
+
+    public function testUpdateAllUnknownSubscription(): void
+    {
+        $store = $this->createStore();
+        $store->add(new Subscription('a'));
+
+        $this->expectException(SubscriptionNotFound::class);
+
+        $store->updateAll([$store->get('a'), new Subscription('unknown')]);
+    }
+
+    public function testUpdateAllInChunks(): void
+    {
+        $store = $this->createStore();
+
+        $subscriptions = [];
+
+        for ($i = 0; $i < 250; $i++) {
+            $subscriptions[] = new Subscription('s' . $i, status: Status::Active, position: 0);
+        }
+
+        $store->addAll($subscriptions);
+
+        foreach ($subscriptions as $i => $subscription) {
+            $subscription->changePosition($i + 1);
+        }
+
+        $store->updateAll($subscriptions);
+
+        self::assertCount(250, $store->find());
+        self::assertSame(1, $store->get('s0')->position());
+        self::assertSame(250, $store->get('s249')->position());
+    }
 }

@@ -71,6 +71,22 @@ final class DummySubscriptionStore implements SubscriptionStore
         $this->addedSubscriptions[] = clone $subscription;
     }
 
+    /** @param non-empty-list<Subscription> $subscriptions */
+    public function addAll(array $subscriptions): void
+    {
+        foreach ($subscriptions as $subscription) {
+            $this->add($subscription);
+        }
+    }
+
+    /** @param non-empty-list<Subscription> $subscriptions */
+    public function updateAll(array $subscriptions): void
+    {
+        foreach ($subscriptions as $subscription) {
+            $this->update($subscription);
+        }
+    }
+
     public function update(Subscription $subscription): void
     {
         $this->parentStore->update($subscription);

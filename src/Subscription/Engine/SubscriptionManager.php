@@ -283,13 +283,17 @@ final class SubscriptionManager
 
     public function flush(): void
     {
+        $toAdd = [];
+
         foreach ($this->forAdd as $subscription) {
             if ($this->forRemove->offsetExists($subscription)) {
                 continue;
             }
 
-            $this->subscriptionStore->add($subscription);
+            $toAdd[] = $subscription;
         }
+
+        $toUpdate = [];
 
         foreach ($this->forUpdate as $subscription) {
             if ($this->forAdd->offsetExists($subscription)) {
@@ -300,7 +304,20 @@ final class SubscriptionManager
                 continue;
             }
 
-            $this->subscriptionStore->update($subscription);
+            $toUpdate[] = $subscription;
+        }
+
+        // a group of partitions or a catching up router changes many subscriptions at once
+        if (count($toAdd) === 1) {
+            $this->subscriptionStore->add($toAdd[0]);
+        } elseif ($toAdd !== []) {
+            $this->subscriptionStore->addAll($toAdd);
+        }
+
+        if (count($toUpdate) === 1) {
+            $this->subscriptionStore->update($toUpdate[0]);
+        } elseif ($toUpdate !== []) {
+            $this->subscriptionStore->updateAll($toUpdate);
         }
 
         foreach ($this->forRemove as $subscription) {

@@ -323,4 +323,18 @@ final class InMemorySubscriptionStoreTest extends TestCase
             ),
         );
     }
+
+    public function testAddAllAndUpdateAll(): void
+    {
+        $store = new InMemorySubscriptionStore();
+
+        $store->addAll([new Subscription('a'), new Subscription('b')]);
+
+        $a = $store->get('a');
+        $a->changePosition(5);
+        $store->updateAll([$a, $store->get('b')]);
+
+        self::assertSame(5, $store->get('a')->position());
+        self::assertCount(2, $store->find());
+    }
 }
