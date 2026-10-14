@@ -15,6 +15,8 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Throwable;
 
+use function array_map;
+
 /**
  * @internal
  *
@@ -31,21 +33,26 @@ final class RunHandler implements Handler
     public function __invoke(Command $command): ProcessedResult
     {
         /** @var list<ProcessedResult> $results */
-        $results = $this->subscriptionManager->forEachClaimed(
+        $results = $this->subscriptionManager->forEachClaimedGroup(
             new SubscriptionCriteria(
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Active],
                 pendingPartitionsOnly: true,
             ),
-            fn (Subscription $subscription): ProcessedResult => $this->runner->process(
-                [$subscription],
+            $command->partitionsPerClaim,
+            $command->subscriptionsPerClaim,
+            fn (array $subscriptions): ProcessedResult => $this->runner->process(
+                $subscriptions,
                 $command->limit,
             ),
-            static fn (Subscription $subscription, Throwable $e): ProcessedResult => new ProcessedResult(
+            static fn (array $subscriptions, Throwable $e): ProcessedResult => new ProcessedResult(
                 0,
                 false,
-                [new Error($subscription->id(), $e->getMessage(), $e)],
+                array_map(
+                    static fn (Subscription $subscription): Error => new Error($subscription->id(), $e->getMessage(), $e),
+                    $subscriptions,
+                ),
             ),
         );
 

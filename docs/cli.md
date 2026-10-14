@@ -170,15 +170,17 @@ After adding a new subscriber, run the setup and boot step and restart the run c
 
 The boot and run commands are workers and support the following options:
 
-| Option                  | Description                                                                        |
-|-------------------------|------------------------------------------------------------------------------------|
-| `--run-limit`           | Stop the worker after this number of runs.                                         |
-| `--message-limit`       | How many events are processed per run.                                             |
-| `--memory-limit`        | Stop the worker if it uses more memory than this, e.g. `256M` or `250MB`.          |
-| `--time-limit`          | Stop the worker after this number of seconds.                                      |
-| `--sleep`               | How many milliseconds the worker waits between two runs.                           |
-| `--restart-signal-file` | Stop the worker when this file is touched after it has started.                    |
-| `--heartbeat-file`      | Touch this file on start and after every run, and remove it when the worker stops. |
+| Option                      | Description                                                                                                    |
+|-----------------------------|----------------------------------------------------------------------------------------------------------------|
+| `--run-limit`               | Stop the worker after this number of runs.                                                                     |
+| `--message-limit`           | How many events are processed per run.                                                                         |
+| `--memory-limit`            | Stop the worker if it uses more memory than this, e.g. `256M` or `250MB`.                                      |
+| `--time-limit`              | Stop the worker after this number of seconds.                                                                  |
+| `--sleep`                   | How many milliseconds the worker waits between two runs.                                                       |
+| `--restart-signal-file`     | Stop the worker when this file is touched after it has started.                                                |
+| `--heartbeat-file`          | Touch this file on start and after every run, and remove it when the worker stops.                             |
+| `--subscriptions-per-claim` | How many subscriptions are processed together in one transaction (default `1`).                                |
+| `--partitions-per-claim`    | How many [partitions](subscription.md#partitioning) are processed together in one transaction (default `100`). |
 
 ```bash
 bin/console event-sourcing:subscription:run --memory-limit=250MB --time-limit=3600

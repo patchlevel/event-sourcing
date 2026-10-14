@@ -1619,6 +1619,28 @@ The per-subscription order is always preserved. There is no global ordering acro
 subscriptions, but since subscriptions are independent of each other this does not matter.
 To process a single subscriber in parallel, split it into [partitions](#partitioning).
 
+### Processing several subscriptions together
+
+By default every subscription is claimed and processed in its own transaction.
+With `subscriptionsPerClaim`, several subscriptions are processed together: the stream is read once from the lowest
+position, and the group is committed in one transaction.
+Partitions are claimed in groups of 100 by default, because they only read their inbox and are often many.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(new Run(limit: 100, subscriptionsPerClaim: 10, partitionsPerClaim: 200));
+```
+An error still only stops the subscription it happened in, the others of the group are committed.
+Partitions and other subscriptions are never mixed in one group.
+
+:::warning
+A group holds the locks of all its subscriptions until it is committed.
+Large groups make the work spread worse over several workers, and the `limit` applies to the whole group.
+:::
+
 :::note
 This requires a database that supports `SKIP LOCKED` (PostgreSQL and MySQL do). SQLite serializes
 writes anyway and simply ignores the clause, so a single worker is used there.

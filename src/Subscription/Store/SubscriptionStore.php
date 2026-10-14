@@ -18,6 +18,16 @@ interface SubscriptionStore
     /** Claims one subscription via a row lock (SKIP LOCKED); null if held by another worker or no match. */
     public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null;
 
+    /**
+     * Claims several subscriptions at once via row locks (SKIP LOCKED), leaving out the ones that are held by another
+     * worker or no longer match.
+     *
+     * @param non-empty-list<string> $ids
+     *
+     * @return list<Subscription>
+     */
+    public function claimAll(array $ids, SubscriptionCriteria $criteria): array;
+
     /** @throws SubscriptionAlreadyExists */
     public function add(Subscription $subscription): void;
 
@@ -32,24 +42,30 @@ interface SubscriptionStore
     public function remove(Subscription $subscription): void;
 
     /**
-     * Adds message indices to the inbox of a partition. The main subscription of a partitioned subscriber routes every
+     * Adds message indices to the inboxes of partitions. The main subscription of a partitioned subscriber routes every
      * message exactly once, the partition then only processes the messages in its inbox.
      *
-     * @param list<int> $indices
+     * @param array<string, non-empty-list<int>> $indices subscription id => message indices
      */
-    public function addToInbox(string $subscriptionId, array $indices): void;
+    public function addToInbox(array $indices): void;
 
     /**
-     * Returns the indices in the inbox after the given index in ascending order.
+     * Returns at most $limit indices per subscription after the given index, in ascending order.
+     * Subscriptions with an empty inbox are left out.
      *
-     * @param positive-int $limit
+     * @param array<string, int> $afterIndex subscription id => index after which the inbox is read
+     * @param positive-int       $limit
      *
-     * @return list<int>
+     * @return array<string, non-empty-list<int>>
      */
-    public function inbox(string $subscriptionId, int $afterIndex, int $limit): array;
+    public function inbox(array $afterIndex, int $limit): array;
 
-    /** Removes all indices up to and including the given index from the inbox. */
-    public function removeFromInbox(string $subscriptionId, int $toIndex): void;
+    /**
+     * Removes all indices up to and including the given index from the inboxes.
+     *
+     * @param array<string, int> $toIndex subscription id => index up to which the inbox is cleared
+     */
+    public function removeFromInbox(array $toIndex): void;
 
     /**
      * @param Closure():T $closure

@@ -253,17 +253,20 @@ final class InMemorySubscriptionStoreTest extends TestCase
     {
         $store = new InMemorySubscriptionStore();
 
-        $store->addToInbox('profile#a', [5, 3, 9]);
-        $store->addToInbox('profile#b', [4]);
+        $store->addToInbox(['profile#a' => [5, 3, 9], 'profile#b' => [4]]);
 
-        self::assertSame([3, 5, 9], $store->inbox('profile#a', -1, 10));
-        self::assertSame([5, 9], $store->inbox('profile#a', 3, 10));
-        self::assertSame([3, 5], $store->inbox('profile#a', -1, 2));
+        self::assertSame(['profile#a' => [3, 5, 9]], $store->inbox(['profile#a' => -1], 10));
+        self::assertSame(['profile#a' => [5, 9]], $store->inbox(['profile#a' => 3], 10));
+        self::assertSame(
+            ['profile#a' => [3, 5], 'profile#b' => [4]],
+            $store->inbox(['profile#a' => -1, 'profile#b' => -1], 2),
+            'the limit applies to every subscription',
+        );
+        self::assertSame([], $store->inbox(['profile#c' => -1], 10), 'an empty inbox is left out');
 
-        $store->removeFromInbox('profile#a', 5);
+        $store->removeFromInbox(['profile#a' => 5, 'profile#b' => 3]);
 
-        self::assertSame([9], $store->inbox('profile#a', -1, 10));
-        self::assertSame([4], $store->inbox('profile#b', -1, 10));
+        self::assertSame(['profile#a' => [9], 'profile#b' => [4]], $store->inbox(['profile#a' => -1, 'profile#b' => -1], 10));
     }
 
     public function testPendingPartitionsOnly(): void
@@ -276,8 +279,7 @@ final class InMemorySubscriptionStoreTest extends TestCase
         $store->add(Subscription::partition($main, 'processed', 7));
         $store->add(Subscription::partition($main, 'empty', 0));
 
-        $store->addToInbox('profile#pending', [4]);
-        $store->addToInbox('profile#processed', [7]);
+        $store->addToInbox(['profile#pending' => [4], 'profile#processed' => [7]]);
 
         self::assertSame(
             ['profile', 'profile#pending'],
@@ -297,11 +299,28 @@ final class InMemorySubscriptionStoreTest extends TestCase
 
         $partition = Subscription::partition(new Subscription('profile'), 'a', 0);
         $store->add($partition);
-        $store->addToInbox($partition->id(), [1, 2]);
+        $store->addToInbox([$partition->id() => [1, 2]]);
 
         $store->remove($partition);
         $store->add($partition);
 
-        self::assertSame([], $store->inbox($partition->id(), -1, 10));
+        self::assertSame([], $store->inbox([$partition->id() => -1], 10));
+    }
+
+    public function testClaimAll(): void
+    {
+        $store = new InMemorySubscriptionStore();
+
+        $store->add(new Subscription('a', status: Status::Active));
+        $store->add(new Subscription('b', status: Status::Paused));
+        $store->add(new Subscription('c', status: Status::Active));
+
+        self::assertSame(
+            ['a', 'c'],
+            array_map(
+                static fn (Subscription $s) => $s->id(),
+                $store->claimAll(['a', 'b', 'c', 'unknown'], new SubscriptionCriteria(status: [Status::Active])),
+            ),
+        );
     }
 }

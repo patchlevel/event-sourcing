@@ -485,7 +485,8 @@ happens per subscription inside `claim()`.
 For `Run` and `Boot`, the `limit` used to cap the total number of messages across the shared stream.
 Because there is no shared stream anymore, `limit` now caps the messages **per subscription**. One
 `subscription:run` pass therefore processes up to `limit × number of subscriptions` messages. The
-CLI default of `message-limit=100` now means "100 per subscription". It also defines the
+CLI default of `message-limit=100` now means "100 per subscription".
+If several subscriptions are claimed together with `subscriptionsPerClaim`, the limit applies to the whole group. It also defines the
 checkpoint/lock-hold granularity: a unit of at most `limit` messages commits atomically and releases
 the lock afterwards.
 

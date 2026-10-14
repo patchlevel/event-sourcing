@@ -13,6 +13,9 @@ use Psr\Log\LoggerInterface;
 use SplObjectStorage;
 use Throwable;
 
+use function array_map;
+use function count;
+use function implode;
 use function max;
 use function sprintf;
 
@@ -28,7 +31,7 @@ final class SubscriptionManager
     /** @var SplObjectStorage<Subscription, null> */
     private SplObjectStorage $forRemove;
 
-    /** @var array<string, list<int>> */
+    /** @var array<string, non-empty-list<int>> */
     private array $forInbox = [];
 
     /** @var array<string, int> */
@@ -53,38 +56,82 @@ final class SubscriptionManager
      */
     public function forEachClaimed(SubscriptionCriteria $criteria, Closure $closure, Closure|null $onError = null): array
     {
-        $snapshot = $this->subscriptionStore->find($criteria);
+        $groupOnError = null;
 
+        if ($onError !== null) {
+            $groupOnError = static function (array $subscriptions, Throwable $e) use ($onError): mixed {
+                /** @var non-empty-list<Subscription> $subscriptions */
+                return $onError($subscriptions[0], $e);
+            };
+        }
+
+        return $this->forEachClaimedGroup(
+            $criteria,
+            1,
+            1,
+            static function (array $subscriptions) use ($closure): mixed {
+                /** @var non-empty-list<Subscription> $subscriptions */
+                return $closure($subscriptions[0]);
+            },
+            $groupOnError,
+        );
+    }
+
+    /**
+     * Claims subscriptions in groups in one transaction and passes them to the closure together. Partitions and other
+     * subscriptions are never mixed, because the others have to read the whole stream while partitions only read their
+     * inbox. A subscription that is locked by another worker is left out of its group.
+     * If the closure throws, every subscription of the group goes into the error status.
+     *
+     * @param positive-int                                       $partitionsPerClaim
+     * @param positive-int                                       $subscriptionsPerClaim
+     * @param Closure(non-empty-list<Subscription>):T            $closure
+     * @param Closure(non-empty-list<Subscription>, Throwable):T $onError
+     *
+     * @return list<T>
+     *
+     * @template T
+     */
+    public function forEachClaimedGroup(
+        SubscriptionCriteria $criteria,
+        int $partitionsPerClaim,
+        int $subscriptionsPerClaim,
+        Closure $closure,
+        Closure|null $onError = null,
+    ): array {
         $results = [];
+        $groups = $this->groups($this->subscriptionStore->find($criteria), $partitionsPerClaim, $subscriptionsPerClaim);
 
-        foreach ($snapshot as $candidate) {
+        foreach ($groups as $candidates) {
             $skipped = false;
 
             try {
                 $outcome = $this->subscriptionStore->inLock(
                     /** @return T|null */
-                    function () use ($candidate, $criteria, $closure, $onError, &$skipped): mixed {
-                        $subscription = $this->subscriptionStore->claim($candidate->id(), $criteria);
+                    function () use ($candidates, $criteria, $closure, $onError, &$skipped): mixed {
+                        $subscriptions = $this->claim($candidates, $criteria);
 
-                        if ($subscription === null) {
+                        if ($subscriptions === []) {
                             $skipped = true;
 
                             return null;
                         }
 
                         try {
-                            return $closure($subscription);
+                            return $closure($subscriptions);
                         } catch (TransactionCommitNotPossible $e) {
                             throw $e;
                         } catch (Throwable $e) {
-                            $this->logger?->error(sprintf(
-                                'Subscription Engine: Subscription "%s" failed: %s',
-                                $subscription->id(),
-                                $e->getMessage(),
-                            ));
+                            foreach ($subscriptions as $subscription) {
+                                $this->logger?->error(sprintf(
+                                    'Subscription Engine: Subscription "%s" failed: %s',
+                                    $subscription->id(),
+                                    $e->getMessage(),
+                                ));
 
-                            $subscription->error($e);
-                            $this->update($subscription);
+                                $subscription->error($e);
+                                $this->update($subscription);
+                            }
 
                             if ($onError === null) {
                                 $skipped = true;
@@ -92,7 +139,7 @@ final class SubscriptionManager
                                 return null;
                             }
 
-                            return $onError($subscription, $e);
+                            return $onError($subscriptions, $e);
                         } finally {
                             $this->flush();
                         }
@@ -103,7 +150,7 @@ final class SubscriptionManager
 
                 $this->logger?->warning(sprintf(
                     'Subscription Engine: Subscription "%s" hit a transient error and will be retried on the next run: %s',
-                    $candidate->id(),
+                    implode('", "', array_map(static fn (Subscription $s): string => $s->id(), $candidates)),
                     $e->getMessage(),
                 ));
 
@@ -120,6 +167,64 @@ final class SubscriptionManager
         }
 
         return $results;
+    }
+
+    /**
+     * @param non-empty-list<Subscription> $candidates
+     *
+     * @return list<Subscription>
+     */
+    private function claim(array $candidates, SubscriptionCriteria $criteria): array
+    {
+        if (count($candidates) === 1) {
+            $subscription = $this->subscriptionStore->claim($candidates[0]->id(), $criteria);
+
+            return $subscription === null ? [] : [$subscription];
+        }
+
+        return $this->subscriptionStore->claimAll(
+            array_map(static fn (Subscription $subscription): string => $subscription->id(), $candidates),
+            $criteria,
+        );
+    }
+
+    /**
+     * Keeps the order of the snapshot as far as possible, a group is closed as soon as it is full.
+     *
+     * @param list<Subscription> $subscriptions
+     * @param positive-int       $partitionsPerClaim
+     * @param positive-int       $subscriptionsPerClaim
+     *
+     * @return list<non-empty-list<Subscription>>
+     */
+    private function groups(array $subscriptions, int $partitionsPerClaim, int $subscriptionsPerClaim): array
+    {
+        $groups = [];
+        $open = ['partitions' => [], 'subscriptions' => []];
+
+        foreach ($subscriptions as $subscription) {
+            $kind = $subscription->isPartition() ? 'partitions' : 'subscriptions';
+            $size = $subscription->isPartition() ? $partitionsPerClaim : $subscriptionsPerClaim;
+
+            $open[$kind][] = $subscription;
+
+            if (count($open[$kind]) < $size) {
+                continue;
+            }
+
+            $groups[] = $open[$kind];
+            $open[$kind] = [];
+        }
+
+        foreach ($open as $group) {
+            if ($group === []) {
+                continue;
+            }
+
+            $groups[] = $group;
+        }
+
+        return $groups;
     }
 
     /** @return list<Subscription> */
@@ -162,13 +267,18 @@ final class SubscriptionManager
     }
 
     /**
-     * @param positive-int $limit
+     * @param array<string, int> $afterIndex subscription id => index after which the inbox is read
+     * @param positive-int       $limit
      *
-     * @return list<int>
+     * @return array<string, non-empty-list<int>>
      */
-    public function inbox(string $subscriptionId, int $afterIndex, int $limit): array
+    public function inbox(array $afterIndex, int $limit): array
     {
-        return $this->subscriptionStore->inbox($subscriptionId, $afterIndex, $limit);
+        if ($afterIndex === []) {
+            return [];
+        }
+
+        return $this->subscriptionStore->inbox($afterIndex, $limit);
     }
 
     public function flush(): void
@@ -201,12 +311,12 @@ final class SubscriptionManager
             $this->subscriptionStore->remove($subscription);
         }
 
-        foreach ($this->forInbox as $subscriptionId => $indices) {
-            $this->subscriptionStore->addToInbox($subscriptionId, $indices);
+        if ($this->forInbox !== []) {
+            $this->subscriptionStore->addToInbox($this->forInbox);
         }
 
-        foreach ($this->forInboxRemove as $subscriptionId => $toIndex) {
-            $this->subscriptionStore->removeFromInbox($subscriptionId, $toIndex);
+        if ($this->forInboxRemove !== []) {
+            $this->subscriptionStore->removeFromInbox($this->forInboxRemove);
         }
 
         $this->clearPending();

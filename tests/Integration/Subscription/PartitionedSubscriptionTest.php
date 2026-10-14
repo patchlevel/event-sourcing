@@ -92,7 +92,7 @@ final class PartitionedSubscriptionTest extends TestCase
             self::assertSame(self::MAIN, $partition->subscriberId());
             self::assertSame('profile-' . $id, $partition->partitionKey());
             self::assertSame(Status::Active, $partition->status());
-            self::assertCount(1, $this->subscriptionStore->inbox($partition->id(), -1, 10));
+            self::assertCount(1, $this->subscriptionStore->inbox([$partition->id() => -1], 10)[$partition->id()] ?? []);
         }
 
         $this->runUntilFinished($engine);
@@ -102,7 +102,7 @@ final class PartitionedSubscriptionTest extends TestCase
         }
 
         foreach ($this->partitions() as $partition) {
-            self::assertSame([], $this->subscriptionStore->inbox($partition->id(), -1, 10), 'processed messages leave the inbox');
+            self::assertSame([], $this->subscriptionStore->inbox([$partition->id() => -1], 10), 'processed messages leave the inbox');
         }
     }
 
@@ -305,7 +305,7 @@ final class PartitionedSubscriptionTest extends TestCase
         }
 
         foreach ($this->partitions(PartitionedBatchProfileProjection::SUBSCRIBER_ID) as $partition) {
-            self::assertSame([], $this->subscriptionStore->inbox($partition->id(), -1, 10), $partition->id());
+            self::assertSame([], $this->subscriptionStore->inbox([$partition->id() => -1], 10), $partition->id());
         }
     }
 
@@ -365,11 +365,14 @@ final class PartitionedSubscriptionTest extends TestCase
         $this->repository->save($profile);
     }
 
-    /** @param positive-int|null $limit */
-    private function runUntilFinished(SubscriptionEngine $engine, int|null $limit = null): void
+    /**
+     * @param positive-int|null $limit
+     * @param positive-int      $partitionsPerClaim
+     */
+    private function runUntilFinished(SubscriptionEngine $engine, int|null $limit = null, int $partitionsPerClaim = 100): void
     {
         for ($i = 0; $i < 50; $i++) {
-            $result = $engine->execute(new Run(limit: $limit));
+            $result = $engine->execute(new Run(limit: $limit, partitionsPerClaim: $partitionsPerClaim));
             self::assertInstanceOf(ProcessedResult::class, $result);
 
             if ($result->finished) {
@@ -390,5 +393,39 @@ final class PartitionedSubscriptionTest extends TestCase
         }
 
         return $partitions;
+    }
+
+    public function testEachPartitionInItsOwnClaim(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $projection->failingNames = ['broken'];
+        $engine = $this->engine($projection);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        [$brokenId, $healthyId, $otherId] = $this->createProfiles(3, ['broken', 'healthy', 'other']);
+
+        $this->runUntilFinished($engine, partitionsPerClaim: 1);
+
+        self::assertSame(['healthy'], $projection->processed[$healthyId]);
+        self::assertSame(['other'], $projection->processed[$otherId]);
+        self::assertArrayNotHasKey($brokenId, $projection->processed);
+    }
+
+    public function testLimitAppliesToEveryPartitionOfAClaim(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        $ids = $this->createProfiles(5);
+
+        $engine->execute(new Run()); // the main subscription routes everything
+        $engine->execute(new Run(limit: 1));
+
+        foreach ($ids as $i => $id) {
+            self::assertSame(['name-' . $i], $projection->processed[$id], 'a limit of 1 still lets every partition of the group process a message');
+        }
     }
 }

@@ -128,7 +128,8 @@ final class SubscriptionRunner
                         }
                     }
 
-                    if ($limit !== null && $messageCounter >= $limit) {
+                    // the inbox of every partition is already limited, a shared limit would starve the others
+                    if ($indices === null && $limit !== null && $messageCounter >= $limit) {
                         $this->logger?->info(sprintf(
                             'Subscription Engine: Message limit (%d) reached, finish processing.',
                             $limit,
@@ -180,16 +181,22 @@ final class SubscriptionRunner
      */
     private function loadInboxes(SubscriptionCollection $members, int $limit): array
     {
-        $inboxes = [];
+        $afterIndex = [];
 
         foreach ($members as $member) {
             if (!$member->isPartition()) {
                 continue;
             }
 
-            $inboxes[$member->id()] = new PartitionInbox(
-                $this->subscriptionManager->inbox($member->id(), $member->position() ?? -1, $limit),
-            );
+            $afterIndex[$member->id()] = $member->position() ?? -1;
+        }
+
+        // one query for the inboxes of the whole group
+        $indices = $this->subscriptionManager->inbox($afterIndex, $limit);
+        $inboxes = [];
+
+        foreach ($afterIndex as $subscriptionId => $index) {
+            $inboxes[$subscriptionId] = new PartitionInbox($indices[$subscriptionId] ?? []);
         }
 
         return $inboxes;

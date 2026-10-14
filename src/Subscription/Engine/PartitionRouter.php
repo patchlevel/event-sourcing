@@ -29,8 +29,17 @@ final class PartitionRouter
     /** Maximum length of a subscription id in bytes, the id of a partition has to fit into it. */
     public const MAX_ID_LENGTH = 255;
 
+    /** After that many lookups of single partitions, all partitions of the subscriber are loaded at once. */
+    private const SINGLE_LOOKUPS = 50;
+
     /** @var array<string, true> partition ids known to exist */
     private array $knownPartitions = [];
+
+    /** @var array<string, int> main subscription id => single lookups so far */
+    private array $lookups = [];
+
+    /** @var array<string, true> main subscriptions whose partitions are all loaded */
+    private array $loaded = [];
 
     private bool $routed = false;
 
@@ -46,7 +55,7 @@ final class PartitionRouter
         $partitionKey = $this->partitionKey($message, $main, $subscriber);
         $partitionId = Subscription::partitionId($main->id(), $partitionKey);
 
-        if (!$this->exists($partitionId)) {
+        if (!$this->exists($main, $partitionId)) {
             $this->subscriptionManager->add(Subscription::partition($main, $partitionKey, $index - 1));
             $this->knownPartitions[$partitionId] = true;
 
@@ -94,13 +103,30 @@ final class PartitionRouter
     }
 
     /**
-     * Looks up only the partitions the routed messages belong to, so routing a few messages stays cheap
-     * no matter how many partitions the subscriber has.
+     * Looks up only the partitions the routed messages belong to, so routing a few messages stays cheap no matter how
+     * many partitions the subscriber has. When many messages are routed, e.g. while catching up, all partitions are
+     * loaded with one query instead.
      */
-    private function exists(string $partitionId): bool
+    private function exists(Subscription $main, string $partitionId): bool
     {
         if (isset($this->knownPartitions[$partitionId])) {
             return true;
+        }
+
+        if (isset($this->loaded[$main->id()])) {
+            return false;
+        }
+
+        $this->lookups[$main->id()] = ($this->lookups[$main->id()] ?? 0) + 1;
+
+        if ($this->lookups[$main->id()] > self::SINGLE_LOOKUPS) {
+            foreach ($this->subscriptionManager->find(new SubscriptionCriteria(ids: [$main->id()], partitions: true)) as $partition) {
+                $this->knownPartitions[$partition->id()] = true;
+            }
+
+            $this->loaded[$main->id()] = true;
+
+            return isset($this->knownPartitions[$partitionId]);
         }
 
         if ($this->subscriptionManager->find(new SubscriptionCriteria(ids: [$partitionId], partitions: true)) === []) {

@@ -6,6 +6,8 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
 use Closure;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
+use Patchlevel\EventSourcing\Subscription\Status;
+use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\TransactionCommitNotPossible;
@@ -13,6 +15,10 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Throwable;
+
+use function array_map;
+use function count;
 
 #[CoversClass(SubscriptionManager::class)]
 final class SubscriptionManagerTest extends TestCase
@@ -176,5 +182,54 @@ final class SubscriptionManagerTest extends TestCase
         );
 
         self::assertSame([], $result);
+    }
+
+    public function testForEachClaimedGroupKeepsPartitionsAndSubscriptionsApart(): void
+    {
+        $main = new Subscription('a');
+        $store = new InMemorySubscriptionStore([
+            $main,
+            Subscription::partition($main, '1', 0),
+            Subscription::partition($main, '2', 0),
+            Subscription::partition($main, '3', 0),
+            new Subscription('b'),
+            new Subscription('c'),
+        ]);
+
+        $manager = new SubscriptionManager($store);
+
+        $groups = $manager->forEachClaimedGroup(
+            new SubscriptionCriteria(),
+            2,
+            2,
+            static fn (array $subscriptions): array => array_map(
+                static fn (Subscription $subscription): string => $subscription->id(),
+                $subscriptions,
+            ),
+        );
+
+        self::assertSame([['a#1', 'a#2'], ['a', 'b'], ['a#3'], ['c']], $groups);
+    }
+
+    public function testForEachClaimedGroupPutsTheWholeGroupIntoError(): void
+    {
+        $store = new InMemorySubscriptionStore([
+            new Subscription('a', status: Status::Active),
+            new Subscription('b', status: Status::Active),
+        ]);
+
+        $manager = new SubscriptionManager($store);
+
+        $results = $manager->forEachClaimedGroup(
+            new SubscriptionCriteria(),
+            1,
+            2,
+            static fn (array $subscriptions): never => throw new RuntimeException('boom'),
+            static fn (array $subscriptions, Throwable $e): int => count($subscriptions),
+        );
+
+        self::assertSame([2], $results);
+        self::assertSame(Status::Error, $store->get('a')->status());
+        self::assertSame(Status::Error, $store->get('b')->status());
     }
 }

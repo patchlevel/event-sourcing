@@ -11,6 +11,7 @@ use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
 use Doctrine\DBAL\Query\ForUpdate\ConflictResolutionMode;
@@ -27,8 +28,13 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Psr\Clock\ClockInterface;
 
+use function array_chunk;
+use function array_fill;
 use function array_map;
+use function array_merge;
 use function assert;
+use function count;
+use function implode;
 use function json_decode;
 use function json_encode;
 use function serialize;
@@ -55,6 +61,9 @@ use const JSON_THROW_ON_ERROR;
  */
 final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSchemaConfigurator
 {
+    /** How many inbox rows or conditions go into one statement, far below the parameter limits of the databases. */
+    private const INBOX_CHUNK = 500;
+
     private readonly string $inboxTableName;
 
     public function __construct(
@@ -156,14 +165,7 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
             ->setParameter('id', $id);
 
         $this->applyCriteria($qb, $criteria);
-
-        if ($criteria->pendingPartitionsOnly) {
-            $qb->andWhere(sprintf(
-                '%1$s.partition_key IS NULL OR EXISTS (SELECT 1 FROM %2$s WHERE %2$s.subscription_id = %1$s.id AND %2$s.message_index > %1$s.position)',
-                $this->tableName,
-                $this->inboxTableName,
-            ));
-        }
+        $this->applyPending($qb, $criteria);
 
         if (!$this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
             $qb->forUpdate(ConflictResolutionMode::SKIP_LOCKED);
@@ -177,6 +179,50 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         }
 
         return $this->createSubscription($result);
+    }
+
+    /**
+     * @param non-empty-list<string> $ids
+     *
+     * @return list<Subscription>
+     */
+    public function claimAll(array $ids, SubscriptionCriteria $criteria): array
+    {
+        $qb = $this->connection->createQueryBuilder()
+            ->select('*')
+            ->from($this->tableName)
+            ->where('id IN (:claim_ids)')
+            ->setParameter('claim_ids', $ids, ArrayParameterType::STRING)
+            ->orderBy('id');
+
+        $this->applyCriteria($qb, $criteria);
+        $this->applyPending($qb, $criteria);
+
+        if (!$this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            $qb->forUpdate(ConflictResolutionMode::SKIP_LOCKED);
+        }
+
+        /** @var list<Data> $result */
+        $result = $qb->fetchAllAssociative();
+
+        return array_map(
+            fn (array $data) => $this->createSubscription($data),
+            $result,
+        );
+    }
+
+    /** A partition is only claimed if its inbox has messages after its position. */
+    private function applyPending(QueryBuilder $qb, SubscriptionCriteria $criteria): void
+    {
+        if (!$criteria->pendingPartitionsOnly) {
+            return;
+        }
+
+        $qb->andWhere(sprintf(
+            '%1$s.partition_key IS NULL OR EXISTS (SELECT 1 FROM %2$s WHERE %2$s.subscription_id = %1$s.id AND %2$s.message_index > %1$s.position)',
+            $this->tableName,
+            $this->inboxTableName,
+        ));
     }
 
     private function applyCriteria(QueryBuilder $qb, SubscriptionCriteria $criteria): void
@@ -307,57 +353,103 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         $this->connection->delete($this->inboxTableName, ['subscription_id' => $subscription->id()]);
     }
 
-    /** @param list<int> $indices */
-    public function addToInbox(string $subscriptionId, array $indices): void
+    /** @param array<string, non-empty-list<int>> $indices */
+    public function addToInbox(array $indices): void
     {
-        foreach ($indices as $index) {
-            $this->connection->insert(
-                $this->inboxTableName,
-                [
-                    'subscription_id' => $subscriptionId,
-                    'message_index' => $index,
-                ],
+        $rows = [];
+
+        foreach ($indices as $subscriptionId => $messageIndices) {
+            foreach ($messageIndices as $messageIndex) {
+                $rows[] = [$subscriptionId, $messageIndex];
+            }
+        }
+
+        foreach (array_chunk($rows, self::INBOX_CHUNK) as $chunk) {
+            $this->connection->executeStatement(
+                sprintf(
+                    'INSERT INTO %s (subscription_id, message_index) VALUES %s',
+                    $this->inboxTableName,
+                    implode(', ', array_fill(0, count($chunk), '(?, ?)')),
+                ),
+                array_merge(...$chunk),
+                array_merge(...array_fill(0, count($chunk), [ParameterType::STRING, ParameterType::INTEGER])),
             );
         }
     }
 
     /**
-     * @param positive-int $limit
+     * @param array<string, int> $afterIndex
+     * @param positive-int       $limit
      *
-     * @return list<int>
+     * @return array<string, non-empty-list<int>>
      */
-    public function inbox(string $subscriptionId, int $afterIndex, int $limit): array
+    public function inbox(array $afterIndex, int $limit): array
     {
-        $sql = $this->connection->createQueryBuilder()
-            ->select('message_index')
-            ->from($this->inboxTableName)
-            ->where('subscription_id = :subscription_id')
-            ->andWhere('message_index > :after_index')
-            ->orderBy('message_index')
-            ->setMaxResults($limit)
-            ->getSQL();
+        $inbox = [];
 
-        /** @var list<int|string> $indices */
-        $indices = $this->connection->fetchFirstColumn($sql, [
-            'subscription_id' => $subscriptionId,
-            'after_index' => $afterIndex,
-        ]);
+        foreach (array_chunk($afterIndex, self::INBOX_CHUNK, true) as $chunk) {
+            $conditions = [];
+            $parameters = [];
+            $types = [];
 
-        return array_map(static fn (int|string $index): int => (int)$index, $indices);
+            foreach ($chunk as $subscriptionId => $index) {
+                $conditions[] = '(subscription_id = ? AND message_index > ?)';
+                $parameters[] = (string)$subscriptionId;
+                $parameters[] = $index;
+                $types[] = ParameterType::STRING;
+                $types[] = ParameterType::INTEGER;
+            }
+
+            // sqlite compares the untyped row number with a string parameter as text, so the types are explicit
+            $parameters[] = $limit;
+            $types[] = ParameterType::INTEGER;
+
+            // the row number limits the messages per subscription, so one query serves a whole group of partitions
+            /** @var list<array{0: string, 1: int|string}> $rows */
+            $rows = $this->connection->fetchAllNumeric(
+                sprintf(
+                    'SELECT subscription_id, message_index FROM (
+                        SELECT subscription_id, message_index, ROW_NUMBER() OVER (PARTITION BY subscription_id ORDER BY message_index) AS inbox_position
+                        FROM %s
+                        WHERE %s
+                    ) inbox WHERE inbox_position <= ? ORDER BY subscription_id, message_index',
+                    $this->inboxTableName,
+                    implode(' OR ', $conditions),
+                ),
+                $parameters,
+                $types,
+            );
+
+            foreach ($rows as [$subscriptionId, $messageIndex]) {
+                $inbox[(string)$subscriptionId][] = (int)$messageIndex;
+            }
+        }
+
+        return $inbox;
     }
 
-    public function removeFromInbox(string $subscriptionId, int $toIndex): void
+    /** @param array<string, int> $toIndex */
+    public function removeFromInbox(array $toIndex): void
     {
-        $this->connection->executeStatement(
-            sprintf(
-                'DELETE FROM %s WHERE subscription_id = :subscription_id AND message_index <= :to_index',
-                $this->inboxTableName,
-            ),
-            [
-                'subscription_id' => $subscriptionId,
-                'to_index' => $toIndex,
-            ],
-        );
+        foreach (array_chunk($toIndex, self::INBOX_CHUNK, true) as $chunk) {
+            $conditions = [];
+            $parameters = [];
+            $types = [];
+
+            foreach ($chunk as $subscriptionId => $index) {
+                $conditions[] = '(subscription_id = ? AND message_index <= ?)';
+                $parameters[] = (string)$subscriptionId;
+                $parameters[] = $index;
+                $types[] = ParameterType::STRING;
+                $types[] = ParameterType::INTEGER;
+            }
+
+            $this->connection->executeStatement(
+                sprintf('DELETE FROM %s WHERE %s', $this->inboxTableName, implode(' OR ', $conditions)),
+                $parameters,
+                $types,
+            );
+        }
     }
 
     /**

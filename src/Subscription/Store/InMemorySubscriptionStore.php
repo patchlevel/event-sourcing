@@ -77,6 +77,28 @@ final class InMemorySubscriptionStore implements SubscriptionStore
     }
 
     /**
+     * @param non-empty-list<string> $ids
+     *
+     * @return list<Subscription>
+     */
+    public function claimAll(array $ids, SubscriptionCriteria $criteria): array
+    {
+        $claimed = [];
+
+        foreach ($ids as $id) {
+            $subscription = $this->claim($id, $criteria);
+
+            if ($subscription === null) {
+                continue;
+            }
+
+            $claimed[] = $subscription;
+        }
+
+        return $claimed;
+    }
+
+    /**
      * @param Closure():T $closure
      *
      * @return T
@@ -116,7 +138,7 @@ final class InMemorySubscriptionStore implements SubscriptionStore
         }
 
         if ($criteria->pendingPartitionsOnly && $subscription->isPartition()) {
-            return $this->inbox($subscription->id(), $subscription->position() ?? -1, 1) !== [];
+            return $this->inbox([$subscription->id() => $subscription->position() ?? -1], 1) !== [];
         }
 
         return true;
@@ -149,39 +171,55 @@ final class InMemorySubscriptionStore implements SubscriptionStore
         unset($this->subscriptions[$subscription->id()], $this->inbox[$subscription->id()]);
     }
 
-    /** @param list<int> $indices */
-    public function addToInbox(string $subscriptionId, array $indices): void
+    /** @param array<string, non-empty-list<int>> $indices */
+    public function addToInbox(array $indices): void
     {
-        foreach ($indices as $index) {
-            $this->inbox[$subscriptionId][$index] = true;
+        foreach ($indices as $subscriptionId => $messageIndices) {
+            foreach ($messageIndices as $messageIndex) {
+                $this->inbox[$subscriptionId][$messageIndex] = true;
+            }
         }
     }
 
     /**
-     * @param positive-int $limit
+     * @param array<string, int> $afterIndex
+     * @param positive-int       $limit
      *
-     * @return list<int>
+     * @return array<string, non-empty-list<int>>
      */
-    public function inbox(string $subscriptionId, int $afterIndex, int $limit): array
+    public function inbox(array $afterIndex, int $limit): array
     {
-        $indices = array_values(array_filter(
-            array_keys($this->inbox[$subscriptionId] ?? []),
-            static fn (int $index): bool => $index > $afterIndex,
-        ));
+        $inbox = [];
 
-        sort($indices);
+        foreach ($afterIndex as $subscriptionId => $index) {
+            $indices = array_values(array_filter(
+                array_keys($this->inbox[$subscriptionId] ?? []),
+                static fn (int $messageIndex): bool => $messageIndex > $index,
+            ));
 
-        return array_slice($indices, 0, $limit);
-    }
-
-    public function removeFromInbox(string $subscriptionId, int $toIndex): void
-    {
-        foreach (array_keys($this->inbox[$subscriptionId] ?? []) as $index) {
-            if ($index > $toIndex) {
+            if ($indices === []) {
                 continue;
             }
 
-            unset($this->inbox[$subscriptionId][$index]);
+            sort($indices);
+
+            $inbox[$subscriptionId] = array_slice($indices, 0, $limit);
+        }
+
+        return $inbox;
+    }
+
+    /** @param array<string, int> $toIndex */
+    public function removeFromInbox(array $toIndex): void
+    {
+        foreach ($toIndex as $subscriptionId => $index) {
+            foreach (array_keys($this->inbox[$subscriptionId] ?? []) as $messageIndex) {
+                if ($messageIndex > $index) {
+                    continue;
+                }
+
+                unset($this->inbox[$subscriptionId][$messageIndex]);
+            }
         }
     }
 
