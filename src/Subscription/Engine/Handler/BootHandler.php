@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionRunner;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Throwable;
 
@@ -25,18 +26,22 @@ final class BootHandler implements Handler
     public function __construct(
         private readonly SubscriptionManager $subscriptionManager,
         private readonly SubscriptionRunner $runner,
+        private readonly SubscriberAccessorRepository $subscriberRepository,
     ) {
     }
 
     public function __invoke(Command $command): ProcessedResult
     {
+        $criteria = new SubscriptionCriteria(
+            groups: $command->groups,
+            status: [Status::Booting],
+            subscriberIds: $command->ids,
+            shards: $command->shards,
+        );
+
         /** @var list<ProcessedResult> $results */
         $results = $this->subscriptionManager->forEachClaimed(
-            new SubscriptionCriteria(
-                ids: $command->ids,
-                groups: $command->groups,
-                status: [Status::Booting],
-            ),
+            $criteria,
             fn (Subscription $subscription): ProcessedResult => $this->runner->process(
                 [$subscription],
                 $command->limit,
@@ -49,6 +54,27 @@ final class BootHandler implements Handler
             ),
         );
 
-        return ProcessedResult::merge($results);
+        $result = ProcessedResult::merge($results);
+
+        if (!$result->finished || !$this->hasBootingSubscriptions($criteria)) {
+            return $result;
+        }
+
+        return new ProcessedResult($result->processedMessages, false, $result->errors);
+    }
+
+    /**
+     * Subscriptions can still be booting although every claimed one is finished, e.g. partitions that were discovered by
+     * another worker or by a main subscription that failed afterwards. Booting is only finished when none is left.
+     */
+    private function hasBootingSubscriptions(SubscriptionCriteria $criteria): bool
+    {
+        foreach ($this->subscriptionManager->find($criteria) as $subscription) {
+            if ($this->subscriberRepository->get($subscription->subscriberId()) !== null) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use Patchlevel\EventSourcing\Subscription\SubscriptionType;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Throwable;
@@ -40,8 +41,9 @@ final class RemoveHandler implements Handler
     {
         $results = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
-                ids: $command->ids,
                 groups: $command->groups,
+                subscriberIds: $command->ids,
+                types: [SubscriptionType::Main],
             ),
             function (Subscription $subscription): Result {
                 if ($subscription->isNew()) {

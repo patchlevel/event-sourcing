@@ -102,6 +102,24 @@ final class InMemorySubscriptionStore implements SubscriptionStore
             }
         }
 
+        if ($criteria->subscriberIds !== null) {
+            if (!in_array($subscription->subscriberId(), $criteria->subscriberIds, true)) {
+                return false;
+            }
+        }
+
+        if ($criteria->types !== null) {
+            if (!in_array($subscription->type(), $criteria->types, true)) {
+                return false;
+            }
+        }
+
+        if ($criteria->shards !== null && $subscription->shard() !== null) {
+            if (!in_array($subscription->shard(), $criteria->shards, true)) {
+                return false;
+            }
+        }
+
         return true;
     }
 

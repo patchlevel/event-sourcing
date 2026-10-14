@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use Patchlevel\EventSourcing\Subscription\SubscriptionType;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Throwable;
@@ -41,9 +42,10 @@ final class TeardownHandler implements Handler
     {
         $results = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
-                ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Detached],
+                subscriberIds: $command->ids,
+                types: [SubscriptionType::Main],
             ),
             function (Subscription $subscription): Result {
                 if ($subscription->hasCleanupTasks()) {

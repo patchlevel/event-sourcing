@@ -11,6 +11,11 @@ final class Subscription
 {
     public const DEFAULT_GROUP = 'default';
 
+    public const PARTITION_SEPARATOR = '#';
+
+    /** Maximum length of a subscription id in bytes, a partition id must fit into it as well. */
+    public const MAX_ID_LENGTH = 255;
+
     /** @param list<object>|null $cleanupTasks */
     public function __construct(
         private readonly string $id,
@@ -22,7 +27,30 @@ final class Subscription
         private int $retryAttempt = 0,
         private DateTimeImmutable|null $lastSavedAt = null,
         private array|null $cleanupTasks = null,
+        private readonly SubscriptionType $type = SubscriptionType::Main,
+        private readonly string|null $subscriberId = null,
+        private readonly string|null $partitionKey = null,
+        private readonly int|null $shard = null,
     ) {
+    }
+
+    public static function partition(
+        Subscription $root,
+        string $partitionKey,
+        int|null $shard,
+        int|null $position,
+    ): self {
+        return new self(
+            $root->subscriberId() . self::PARTITION_SEPARATOR . $partitionKey,
+            $root->group(),
+            $root->runMode(),
+            $root->status(),
+            $position,
+            type: SubscriptionType::Partition,
+            subscriberId: $root->subscriberId(),
+            partitionKey: $partitionKey,
+            shard: $shard,
+        );
     }
 
     public function id(): string
@@ -32,7 +60,22 @@ final class Subscription
 
     public function subscriberId(): string
     {
-        return $this->id;
+        return $this->subscriberId ?? $this->id;
+    }
+
+    public function type(): SubscriptionType
+    {
+        return $this->type;
+    }
+
+    public function partitionKey(): string|null
+    {
+        return $this->partitionKey;
+    }
+
+    public function shard(): int|null
+    {
+        return $this->shard;
     }
 
     public function group(): string

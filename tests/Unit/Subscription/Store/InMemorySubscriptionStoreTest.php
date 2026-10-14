@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionAlreadyExists;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use Patchlevel\EventSourcing\Subscription\SubscriptionType;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -209,5 +210,30 @@ final class InMemorySubscriptionStoreTest extends TestCase
         $subscription = new Subscription('foo');
 
         self::assertSame($subscription, $store->inLock(static fn (): Subscription => $subscription));
+    }
+
+    public function testFindByPartitionCriteria(): void
+    {
+        $main = new Subscription('main');
+        $root = new Subscription('root');
+        $partition0 = Subscription::partition($root, 'a', 0, null);
+        $partition1 = Subscription::partition($root, 'b', 1, null);
+
+        $store = new InMemorySubscriptionStore([$main, $root, $partition0, $partition1]);
+
+        self::assertSame(
+            [$root, $partition0, $partition1],
+            $store->find(new SubscriptionCriteria(subscriberIds: ['root'])),
+        );
+
+        self::assertSame(
+            [$main, $root],
+            $store->find(new SubscriptionCriteria(types: [SubscriptionType::Main])),
+        );
+
+        self::assertSame(
+            [$main, $root, $partition1],
+            $store->find(new SubscriptionCriteria(shards: [1])),
+        );
     }
 }

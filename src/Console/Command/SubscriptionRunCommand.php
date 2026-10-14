@@ -40,6 +40,12 @@ final class SubscriptionRunCommand extends SubscriptionCommand
 
         $this
             ->addOption(
+                'shard',
+                null,
+                InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
+                'only process partitions of these shards, subscriptions without shards are always processed',
+            )
+            ->addOption(
                 'run-limit',
                 null,
                 InputOption::VALUE_REQUIRED,
@@ -102,14 +108,16 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         $restartSignalFile = InputHelper::nullableString($input->getOption('restart-signal-file'));
         $heartbeatFile = InputHelper::nullableString($input->getOption('heartbeat-file'));
 
+        $shards = InputHelper::nullablePositiveIntOrZeroList($input->getOption('shard'));
+
         $criteria = $this->subscriptionEngineCriteria($input);
         $criteria = $this->resolveCriteriaIntoCriteriaWithOnlyIds($criteria);
 
         $logger = new ConsoleLogger($output);
 
         $worker = DefaultWorker::create(
-            function () use ($criteria, $messageLimit, $sleep): bool {
-                $result = $this->engine->execute(new Run($criteria->ids, $criteria->groups, $messageLimit));
+            function () use ($criteria, $messageLimit, $sleep, $shards): bool {
+                $result = $this->engine->execute(new Run($criteria->ids, $criteria->groups, $messageLimit, $shards));
 
                 if ($result instanceof ProcessedResult && !$result->finished) {
                     return true;

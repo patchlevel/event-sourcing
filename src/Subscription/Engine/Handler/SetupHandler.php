@@ -19,6 +19,7 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use Patchlevel\EventSourcing\Subscription\SubscriptionType;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -46,9 +47,10 @@ final class SetupHandler implements Handler
 
         $results = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
-                ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::New],
+                subscriberIds: $command->ids,
+                types: [SubscriptionType::Main],
             ),
             function (Subscription $subscription) use ($command, &$latestIndex): Result {
                 $latestIndex ??= $this->messageLoader->lastIndex();

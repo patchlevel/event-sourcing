@@ -30,6 +30,7 @@ final class DoStuffSubscriber
 For each subscriber ID, the engine will create a subscription.
 If the subscriber ID changes, a new subscription will be created.
 In some cases like projections, you want to change the subscriber ID to rebuild the projection.
+The subscriber ID must not contain `#`, it is reserved for [partitioning](#partitioning).
 :::
 
 :::tip
@@ -848,6 +849,112 @@ Use `#[BatchFlush(afterMessages: ...)]` or a `#[BatchShouldFlush]` method to pre
 This allows you to decide when it's suitable to process the data and then release the memory.
 :::
 
+### Partitioning
+
+A subscriber is normally a single subscription, which means it is processed by one worker at a time,
+and an error stops the whole subscriber.
+With `#[Partition]` you split a subscriber into several subscriptions, one per partition key.
+Each partition is processed independently, so several workers can process them in parallel,
+and an error only stops the affected partition while the others keep running.
+
+The method marked with `#[Partition]` returns the partition key for a message.
+Use a key from your domain that groups the events you want to process together, like the tenant.
+The method is called for every message the subscriber subscribes to, so the `Message` is usually the best
+argument, because headers and the stream name are available for every event.
+The arguments are resolved like those of a `#[Subscribe]` method,
+so you can also ask for the event or anything else an [argument resolver](#argument-resolver) provides.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Message\Message;
+
+#[Projector('profile_1')]
+final class ProfileProjector
+{
+    #[Partition]
+    public function partition(Message $message): string
+    {
+        return $message->header(TenantHeader::class)->tenant;
+    }
+
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(ProfileCreated $event): void
+    {
+        // ...
+    }
+
+    #[Subscribe(NameChanged::class)]
+    public function onNameChanged(NameChanged $event): void
+    {
+        // ...
+    }
+}
+```
+The subscription engine creates the partitions on its own as new keys appear.
+The main subscription of the subscriber, the one with the subscriber id, then only reads the stream and
+creates a new partition subscription as soon as a message returns an unknown key.
+It never calls your subscribe methods. Every partition then processes only the messages with its key.
+Partitions have the id `{subscriber id}#{partition key}` and inherit group, run mode and status of the
+main subscription.
+
+Setup, teardown and cleanup belong to the subscriber as a whole and run only once, on the main subscription.
+Removing the main subscription removes all of its partitions as well.
+
+:::warning
+The order of messages is only guaranteed within a partition, never across partitions.
+All events of an aggregate must therefore get the same partition key,
+and your projection must not rely on the order of events from different partitions.
+:::
+
+:::tip
+Keep the number of partition keys small.
+Every key results in its own subscription that reads the event stream on its own.
+A key per aggregate (e.g. the stream name) works, but creates as many subscriptions as there are aggregates.
+:::
+
+:::note
+The partition key must be a non-empty string and must not contain `#`.
+The partition id `{subscriberId}#{partitionKey}` must not exceed 255 bytes.
+:::
+
+:::warning
+If you add or remove `#[Partition]` on an existing subscriber, change the subscriber id as well (see [versioning](#versioning)),
+so the subscriber is rebuilt. Otherwise the existing subscription just continues from its current position with the new behavior.
+:::
+
+#### Shards
+
+Without shards, every worker processes every partition, whichever is free next.
+If you want to assign partitions to specific workers instead, define a number of shards.
+Every partition gets the shard `crc32(partition key) % shards` when it is created,
+so you don't have to bucket the partition key yourself.
+A worker can then be limited to some shards, see [parallel processing](#parallel-processing).
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Message\Message;
+
+#[Projector('profile_1')]
+final class ProfileProjector
+{
+    #[Partition(shards: 4)]
+    public function partition(Message $message): string
+    {
+        return $message->header(TenantHeader::class)->tenant;
+    }
+
+    // ...
+}
+```
+:::warning
+If you change the number of shards, the existing partitions no longer match.
+The main subscription and its partitions go into the error status,
+and you have to rebuild the subscriber (teardown and setup), for example by bumping the subscriber id.
+:::
+
 ## Subscription Engine
 
 The subscription engine manages individual subscribers and keeps the subscriptions running.
@@ -1566,6 +1673,20 @@ This requires a database that supports `SKIP LOCKED` (PostgreSQL and MySQL do). 
 writes anyway and simply ignores the clause, so a single worker is used there.
 :::
 
+With [shards](#shards) you can limit a worker to the partitions of certain shards.
+Subscriptions without a shard, like the main subscription of every subscriber,
+are processed by every worker.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(new Run(limit: 100, shards: [0, 1]));
+```
+On the command line, pass `--shard` to `event-sourcing:subscription:run` or `event-sourcing:subscription:boot`,
+e.g. `--shard=0 --shard=1`.
+
 ### Teardown
 
 If subscriptions are detached, they can be cleaned up here.
@@ -1644,6 +1765,10 @@ foreach ($subscriptions as $subscription) {
     echo $subscription->status()->value;
 }
 ```
+The `ids` of the criteria are subscriber ids, so the partitions of a partitioned subscriber are included.
+The command `event-sourcing:subscription:status` shows a partitioned subscriber as one row with a summary of its partitions.
+Use `--partitions` to list the partitions as well,
+and `--partition=<key>` together with the subscriber id to show the details and the error of one partition.
 ## Learn more
 
 * [How to use CLI commands](cli.md)

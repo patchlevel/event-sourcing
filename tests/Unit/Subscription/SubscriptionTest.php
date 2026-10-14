@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
+use Patchlevel\EventSourcing\Subscription\SubscriptionType;
 use Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -263,5 +264,38 @@ final class SubscriptionTest extends TestCase
 
         self::assertSame([$task], $subscription->cleanupTasks());
         self::assertTrue($subscription->hasCleanupTasks());
+    }
+
+    public function testMainSubscription(): void
+    {
+        $subscription = new Subscription('test');
+
+        self::assertSame('test', $subscription->subscriberId());
+        self::assertSame(SubscriptionType::Main, $subscription->type());
+        self::assertNull($subscription->partitionKey());
+        self::assertNull($subscription->shard());
+    }
+
+    public function testPartition(): void
+    {
+        $root = new Subscription(
+            'test',
+            'projector',
+            RunMode::FromNow,
+            Status::Booting,
+            10,
+        );
+
+        $partition = Subscription::partition($root, 'tenant-1', 3, 4);
+
+        self::assertSame('test#tenant-1', $partition->id());
+        self::assertSame('test', $partition->subscriberId());
+        self::assertSame(SubscriptionType::Partition, $partition->type());
+        self::assertSame('tenant-1', $partition->partitionKey());
+        self::assertSame(3, $partition->shard());
+        self::assertSame(4, $partition->position());
+        self::assertSame('projector', $partition->group());
+        self::assertSame(RunMode::FromNow, $partition->runMode());
+        self::assertSame(Status::Booting, $partition->status());
     }
 }

@@ -25,6 +25,7 @@ use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
+use Patchlevel\EventSourcing\Subscription\SubscriptionType;
 use Psr\Clock\ClockInterface;
 
 use function array_map;
@@ -48,6 +49,10 @@ use const JSON_THROW_ON_ERROR;
  *     retry_attempt: int,
  *     last_saved_at: string,
  *     cleanup_tasks: string|null,
+ *     subscriber_id: string,
+ *     type: string,
+ *     partition_key: string|null,
+ *     shard: int|string|null,
  * }
  */
 final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSchemaConfigurator
@@ -142,15 +147,42 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
                 );
         }
 
-        if ($criteria->status === null) {
+        if ($criteria->status !== null) {
+            $qb->andWhere('status IN (:status)')
+                ->setParameter(
+                    'status',
+                    array_map(static fn (Status $status) => $status->value, $criteria->status),
+                    ArrayParameterType::STRING,
+                );
+        }
+
+        if ($criteria->subscriberIds !== null) {
+            $qb->andWhere('subscriber_id IN (:subscriber_ids)')
+                ->setParameter(
+                    'subscriber_ids',
+                    $criteria->subscriberIds,
+                    ArrayParameterType::STRING,
+                );
+        }
+
+        if ($criteria->types !== null) {
+            $qb->andWhere('type IN (:types)')
+                ->setParameter(
+                    'types',
+                    array_map(static fn (SubscriptionType $type) => $type->value, $criteria->types),
+                    ArrayParameterType::STRING,
+                );
+        }
+
+        if ($criteria->shards === null) {
             return;
         }
 
-        $qb->andWhere('status IN (:status)')
+        $qb->andWhere('(shard IS NULL OR shard IN (:shards))')
             ->setParameter(
-                'status',
-                array_map(static fn (Status $status) => $status->value, $criteria->status),
-                ArrayParameterType::STRING,
+                'shards',
+                $criteria->shards,
+                ArrayParameterType::INTEGER,
             );
     }
 
@@ -175,6 +207,10 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
                     'retry_attempt' => $subscription->retryAttempt(),
                     'last_saved_at' => $subscription->lastSavedAt(),
                     'cleanup_tasks' => $subscription->cleanupTasks() !== null ? serialize($subscription->cleanupTasks()) : null,
+                    'subscriber_id' => $subscription->subscriberId(),
+                    'type' => $subscription->type()->value,
+                    'partition_key' => $subscription->partitionKey(),
+                    'shard' => $subscription->shard(),
                 ],
                 [
                     'last_saved_at' => Types::DATETIME_IMMUTABLE,
@@ -301,10 +337,22 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
             ->setNotnull(true);
         $table->addColumn('cleanup_tasks', Types::TEXT)
             ->setNotnull(false);
+        $table->addColumn('subscriber_id', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $table->addColumn('type', Types::STRING)
+            ->setLength(16)
+            ->setNotnull(true);
+        $table->addColumn('partition_key', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(false);
+        $table->addColumn('shard', Types::INTEGER)
+            ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
         $table->addIndex(['status']);
+        $table->addIndex(['subscriber_id']);
     }
 
     /** @param Data $row */
@@ -327,6 +375,10 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
             $row['retry_attempt'],
             self::normalizeDateTime($row['last_saved_at'], $this->connection->getDatabasePlatform()),
             $row['cleanup_tasks'] !== null ? unserialize($row['cleanup_tasks']) : null,
+            SubscriptionType::from($row['type']),
+            $row['subscriber_id'] !== $row['id'] ? $row['subscriber_id'] : null,
+            $row['partition_key'],
+            $row['shard'] !== null ? (int)$row['shard'] : null,
         );
     }
 

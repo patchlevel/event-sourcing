@@ -14,4 +14,16 @@ final class SubscriptionNotFound extends RuntimeException
     {
         parent::__construct(sprintf('Subscription with the id "%s" not found.', $subscriptionId));
     }
+
+    public static function forPartition(string $subscriberId, string $partitionKey): self
+    {
+        $exception = new self($subscriberId);
+        $exception->message = sprintf(
+            'Partition "%s" of the subscription with the id "%s" not found.',
+            $partitionKey,
+            $subscriberId,
+        );
+
+        return $exception;
+    }
 }

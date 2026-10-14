@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionRunner;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
+use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
@@ -175,7 +176,7 @@ final class SubscriptionRunnerTest extends TestCase
             $loader,
             new SubscriptionManager($this->createMock(SubscriptionStore::class)),
             $subscriberRepository,
-            new MessageProcessor($subscriberRepository, $eventDispatcher),
+            new MessageProcessor($subscriberRepository, new SubscriptionManager(new InMemorySubscriptionStore()), $eventDispatcher),
             $eventDispatcher,
         );
     }

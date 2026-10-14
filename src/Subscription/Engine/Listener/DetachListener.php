@@ -35,8 +35,8 @@ final class DetachListener
 
         $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
-                ids: $command->ids,
                 groups: $command->groups,
+                subscriberIds: $command->ids,
                 status: [Status::Active, Status::Paused, Status::Finished],
             ),
             function (Subscription $subscription): void {

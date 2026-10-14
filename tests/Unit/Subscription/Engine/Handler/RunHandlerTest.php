@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine\Handler;
 
 use Patchlevel\EventSourcing\Attribute\OnFailed;
+use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\RetryStrategy as RetryStrategyName;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
@@ -38,6 +39,10 @@ use Psr\Log\NullLogger;
 use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
+use function array_filter;
+
+use const ARRAY_FILTER_USE_KEY;
+
 #[CoversClass(RunHandler::class)]
 final class RunHandlerTest extends TestCase
 {
@@ -65,7 +70,7 @@ final class RunHandlerTest extends TestCase
         $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
         $eventDispatcher->addListener(OnCommand::class, new DetachListener($subscriptionManager, $subscriberRepository, new NullLogger()), 32);
 
-        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [], new NullLogger());
+        $messageProcessor = new MessageProcessor($subscriberRepository, $subscriptionManager, $eventDispatcher, [], new NullLogger());
 
         $runner = new SubscriptionRunner($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
 
@@ -110,6 +115,50 @@ final class RunHandlerTest extends TestCase
         );
 
         self::assertSame($message, $subscriber->message);
+    }
+
+    public function testRunningIsFinishedAfterDiscoveredPartitionsCaughtUp(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            #[Partition]
+            public function partition(): string
+            {
+                return 'a';
+            }
+
+            #[Subscribe(ProfileVisited::class)]
+            public function handle(): void
+            {
+            }
+        };
+
+        // the in-memory store returns the same subscription object for every claim
+        $store = new DummySubscriptionStore([
+            new Subscription('test', Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Active),
+        ]);
+
+        $messages = [1 => new Message(new ProfileVisited(ProfileId::fromString('test')))];
+
+        $messageLoader = $this->createMock(MessageLoader::class);
+        $messageLoader->method('load')->willReturnCallback(
+            static fn (int|null $startIndex): Stream => new Stream(array_filter(
+                $messages,
+                static fn (int $index): bool => $startIndex === null || $index > $startIndex,
+                ARRAY_FILTER_USE_KEY,
+            )),
+        );
+
+        [$handler, , $command] = $this->createHandler($messageLoader, $store, [$subscriber]);
+
+        $result = $handler($command);
+
+        self::assertFalse($result->finished, 'the discovered partition still has to be processed');
+
+        $result = $handler($command);
+
+        self::assertTrue($result->finished);
+        self::assertSame(1, $store->get('test#a')->position());
     }
 
     public function testRunningWithLimit(): void

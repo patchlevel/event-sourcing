@@ -73,11 +73,11 @@ final class BatchSubscriberTest extends TestCase
         $eventDispatcher->addSubscriber(new RetrySubscriber($subscriptionManager, $subscriberRepository, $retryStrategyRepository, new NullLogger()));
         $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
 
-        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [new BatchArgumentResolver($batchManager)], new NullLogger());
+        $messageProcessor = new MessageProcessor($subscriberRepository, $subscriptionManager, $eventDispatcher, [new BatchArgumentResolver($batchManager)], new NullLogger());
 
         $runner = new SubscriptionRunner($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
 
-        return new BootHandler($subscriptionManager, $runner);
+        return new BootHandler($subscriptionManager, $runner, $subscriberRepository);
     }
 
     /**
@@ -105,7 +105,7 @@ final class BatchSubscriberTest extends TestCase
         $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
         $eventDispatcher->addListener(OnCommand::class, new DetachListener($subscriptionManager, $subscriberRepository, new NullLogger()), 32);
 
-        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [new BatchArgumentResolver($batchManager)], new NullLogger());
+        $messageProcessor = new MessageProcessor($subscriberRepository, $subscriptionManager, $eventDispatcher, [new BatchArgumentResolver($batchManager)], new NullLogger());
 
         $runner = new SubscriptionRunner($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
 

@@ -44,6 +44,7 @@ final class SubscriptionRunner
                 continue;
             }
 
+            $this->messageProcessor->reset($subscription);
             $surviving[] = $subscription;
         }
 
@@ -126,7 +127,25 @@ final class SubscriptionRunner
             $this->finishMembers($members, $boot);
         }
 
-        return new ProcessedResult($messageCounter, !$limitReached, $errors);
+        return new ProcessedResult(
+            $messageCounter,
+            !$limitReached && !$this->hasDiscoveredPartitions($members),
+            $errors,
+        );
+    }
+
+    /**
+     * Newly discovered partitions have not processed anything yet, so the work is not finished.
+     */
+    private function hasDiscoveredPartitions(SubscriptionCollection $members): bool
+    {
+        foreach ($members as $member) {
+            if ($this->messageProcessor->hasDiscoveredPartitions($member)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function finishMembers(SubscriptionCollection $members, bool $boot): void

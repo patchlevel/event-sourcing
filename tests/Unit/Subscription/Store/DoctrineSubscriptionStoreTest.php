@@ -61,6 +61,10 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                 'retry_attempt' => 0,
                 'last_saved_at' => '2024-01-01 10:00:00',
                 'cleanup_tasks' => null,
+                'subscriber_id' => 'foo',
+                'type' => 'main',
+                'partition_key' => null,
+                'shard' => null,
             ]);
 
         $store = new DoctrineSubscriptionStore($connection);
@@ -111,6 +115,10 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                 'retry_attempt' => 2,
                 'last_saved_at' => '2024-01-01 10:00:00',
                 'cleanup_tasks' => serialize([$task]),
+                'subscriber_id' => 'foo',
+                'type' => 'main',
+                'partition_key' => null,
+                'shard' => null,
             ]);
 
         $store = new DoctrineSubscriptionStore($connection);
@@ -187,6 +195,10 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                     'retry_attempt' => 0,
                     'last_saved_at' => '2024-01-01 10:00:00',
                     'cleanup_tasks' => null,
+                    'subscriber_id' => 'foo',
+                    'type' => 'main',
+                    'partition_key' => null,
+                    'shard' => null,
                 ],
             ]);
         $connection
@@ -269,6 +281,10 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                 'retry_attempt' => 0,
                 'last_saved_at' => '2024-01-01 10:00:00',
                 'cleanup_tasks' => null,
+                'subscriber_id' => 'foo',
+                'type' => 'main',
+                'partition_key' => null,
+                'shard' => null,
             ]);
         $connection
             ->expects($this->once())
@@ -347,6 +363,10 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                     'retry_attempt' => 0,
                     'last_saved_at' => $now,
                     'cleanup_tasks' => null,
+                    'subscriber_id' => 'foo',
+                    'type' => 'main',
+                    'partition_key' => null,
+                    'shard' => null,
                 ],
                 ['last_saved_at' => Types::DATETIME_IMMUTABLE],
             );
@@ -384,6 +404,10 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                     'retry_attempt' => 0,
                     'last_saved_at' => $now,
                     'cleanup_tasks' => null,
+                    'subscriber_id' => 'foo',
+                    'type' => 'main',
+                    'partition_key' => null,
+                    'shard' => null,
                 ],
                 ['last_saved_at' => Types::DATETIME_IMMUTABLE],
             );
@@ -574,10 +598,22 @@ final class DoctrineSubscriptionStoreTest extends TestCase
             ->setNotnull(true);
         $table->addColumn('cleanup_tasks', Types::TEXT)
             ->setNotnull(false);
+        $table->addColumn('subscriber_id', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $table->addColumn('type', Types::STRING)
+            ->setLength(16)
+            ->setNotnull(true);
+        $table->addColumn('partition_key', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(false);
+        $table->addColumn('shard', Types::INTEGER)
+            ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
         $table->addIndex(['status']);
+        $table->addIndex(['subscriber_id']);
 
         $schema = new Schema();
         $store->configureSchema($schema, $connection);

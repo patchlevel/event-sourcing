@@ -36,8 +36,8 @@ final class ReactivateHandler implements Handler
     {
         $results = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
-                ids: $command->ids,
                 groups: $command->groups,
+                subscriberIds: $command->ids,
                 status: [
                     Status::Error,
                     Status::Failed,

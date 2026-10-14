@@ -476,6 +476,34 @@ Subscriptions are processed independently, so there is no global ordering of mes
 different subscriptions anymore (the per-subscription order is of course preserved). This was never
 guaranteed before either.
 
+### Subscription partitions
+
+Subscribers can now be split into partitions with `#[Partition]`, see the subscription docs.
+For this, the subscription table has new columns:
+
+* `subscriber_id`: the id of the subscriber, the same as `id` for all subscriptions that are not a partition
+* `type`: `main` for the subscription of a subscriber or `partition` for one of its partitions
+* `partition_key`: the partition key of a partition
+* `shard`: the shard of a partition
+
+Generate a new migration or run `event-sourcing:schema:update` to add them.
+`subscriber_id` and `type` are not nullable, so existing rows have to be filled first:
+
+```sql
+UPDATE subscriptions SET subscriber_id = id, type = 'main';
+```
+If you have your own `SubscriptionStore`, it has to persist the new fields of the `Subscription`
+and support the new `subscriberIds`, `types` and `shards` filters of the `SubscriptionCriteria`.
+Subscriptions without a shard always match the `shards` filter.
+
+The `ids` of the engine commands and of `SubscriptionEngineCriteria` now match the subscriber id,
+so a command for a partitioned subscriber also applies to its partitions.
+For subscribers without partitions nothing changes, because the subscription id is the subscriber id.
+
+A subscriber id must no longer contain `#`, because it separates the subscriber id from the partition key
+in the id of a partition. Such a subscriber now throws an `InvalidSubscriberId` exception,
+rename it to an id without `#`.
+
 ## Store
 
 ### StreamStore

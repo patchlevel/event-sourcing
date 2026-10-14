@@ -52,8 +52,8 @@ final class RetrySubscriber implements EventSubscriberInterface
 
         $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
-                ids: $command->ids,
                 groups: $command->groups,
+                subscriberIds: $command->ids,
                 status: [Status::Error],
             ),
             function (Subscription $subscription) use ($status): void {
@@ -102,6 +102,10 @@ final class RetrySubscriber implements EventSubscriberInterface
 
     public function onSuccessHandleMessage(OnHandleMessageSuccess $event): void
     {
+        if ($event->skipped) {
+            return;
+        }
+
         $event->subscription->resetRetry();
     }
 

@@ -23,6 +23,7 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use Patchlevel\EventSourcing\Subscription\SubscriptionType;
 use Patchlevel\EventSourcing\Tests\Unit\Subscription\DummySubscriptionStore;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -210,7 +211,7 @@ final class DiscoverSubscriberTest extends TestCase
         $subscriptionStore
             ->expects($this->once())
             ->method('find')
-            ->with(new SubscriptionCriteria())
+            ->with(new SubscriptionCriteria(types: [SubscriptionType::Main]))
             ->willReturn([new Subscription('id1')]);
 
         $subscriptionStore

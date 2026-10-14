@@ -34,8 +34,8 @@ final class PauseHandler implements Handler
     {
         $results = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
-                ids: $command->ids,
                 groups: $command->groups,
+                subscriberIds: $command->ids,
                 status: [
                     Status::Active,
                     Status::Booting,

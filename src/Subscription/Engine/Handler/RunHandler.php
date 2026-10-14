@@ -33,9 +33,10 @@ final class RunHandler implements Handler
         /** @var list<ProcessedResult> $results */
         $results = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(
-                ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Active],
+                subscriberIds: $command->ids,
+                shards: $command->shards,
             ),
             fn (Subscription $subscription): ProcessedResult => $this->runner->process(
                 [$subscription],

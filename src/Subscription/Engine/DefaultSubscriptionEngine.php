@@ -31,6 +31,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Listener\BatchSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DetachListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DiscoverSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailSubscriber;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\PartitionSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
@@ -89,6 +90,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         $messageProcessor = new MessageProcessor(
             $this->subscriberRepository,
+            $this->subscriptionManager,
             $this->eventDispatcher,
             [new BatchArgumentResolver($batchManager), ...$argumentResolvers],
             $this->logger,
@@ -107,6 +109,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             Boot::class => new BootHandler(
                 $this->subscriptionManager,
                 $runner,
+                $this->subscriberRepository,
             ),
             Pause::class => new PauseHandler(
                 $this->subscriptionManager,
@@ -163,6 +166,14 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
                 $this->subscriptionManager,
                 $this->subscriberRepository,
                 $this->retryStrategyRepository,
+                $this->logger,
+            ),
+        );
+
+        $this->eventDispatcher->addSubscriber(
+            new PartitionSubscriber(
+                $this->subscriptionManager,
+                $this->eventDispatcher,
                 $this->logger,
             ),
         );
@@ -248,8 +259,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
 
         return $this->subscriptionManager->find(
             new SubscriptionCriteria(
-                ids: $criteria->ids,
                 groups: $criteria->groups,
+                subscriberIds: $criteria->ids,
             ),
         );
     }

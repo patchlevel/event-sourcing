@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Subscription\SubscriptionType;
 use Psr\Log\LoggerInterface;
 
 use function array_values;
@@ -33,8 +34,8 @@ final class RefreshHandler implements Handler
     public function __invoke(Command $command): Result
     {
         $subscriptions = $this->subscriptionManager->find(new SubscriptionCriteria(
-            ids: $command->ids,
             groups: $command->groups,
+            subscriberIds: $command->ids,
         ));
 
         foreach ($subscriptions as $subscription) {
@@ -76,7 +77,8 @@ final class RefreshHandler implements Handler
                 );
             }
 
-            $cleanupTasks = $this->cleanupTasks($subscriber);
+            // cleanup tasks belong to the subscriber as a whole and are only stored on its main subscription
+            $cleanupTasks = $subscription->type() === SubscriptionType::Partition ? null : $this->cleanupTasks($subscriber);
 
             if ($subscription->cleanupTasks() !== $cleanupTasks) {
                 $changed = true;

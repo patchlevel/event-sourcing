@@ -62,11 +62,11 @@ final class BootHandlerTest extends TestCase
         $eventDispatcher->addSubscriber(new RetrySubscriber($subscriptionManager, $subscriberRepository, $retryStrategyRepository, new NullLogger()));
         $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
 
-        $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [], new NullLogger());
+        $messageProcessor = new MessageProcessor($subscriberRepository, $subscriptionManager, $eventDispatcher, [], new NullLogger());
 
         $runner = new SubscriptionRunner($messageLoader, $subscriptionManager, $subscriberRepository, $messageProcessor, $eventDispatcher, new NullLogger());
 
-        return new BootHandler($subscriptionManager, $runner);
+        return new BootHandler($subscriptionManager, $runner, $subscriberRepository);
     }
 
     public function testNothingToBoot(): void
@@ -261,7 +261,7 @@ final class BootHandlerTest extends TestCase
         $result = $handler(new BootCommand());
 
         self::assertEquals(1, $result->processedMessages);
-        self::assertEquals(true, $result->finished);
+        self::assertEquals(false, $result->finished, 'the recovered subscription is still booting');
         self::assertCount(1, $result->errors);
 
         $error = $result->errors[0];

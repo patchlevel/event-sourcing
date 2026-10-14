@@ -163,4 +163,23 @@ final class InputHelper
             ),
         );
     }
+
+    /** @return list<positive-int|0>|null */
+    public static function nullablePositiveIntOrZeroList(mixed $value): array|null
+    {
+        if (!$value) {
+            return null;
+        }
+
+        if (!is_array($value)) {
+            throw new InvalidArgumentGiven($value, 'list<positive-int|0>|null');
+        }
+
+        return array_values(
+            array_map(
+                static fn (mixed $int): int => self::positiveIntOrZero($int),
+                $value,
+            ),
+        );
+    }
 }

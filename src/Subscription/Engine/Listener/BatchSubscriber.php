@@ -39,12 +39,13 @@ final class BatchSubscriber implements EventSubscriberInterface
 
     public function onHandleMessage(OnHandleMessage $event): void
     {
-        $subscriberId = $event->subscription->id();
+        $subscriptionId = $event->subscription->id();
 
-        if ($this->batchManager->has($subscriberId)) {
+        if ($this->batchManager->has($subscriptionId)) {
             return;
         }
 
+        $subscriberId = $event->subscription->subscriberId();
         $subscriber = $this->subscriberRepository->get($subscriberId);
         $batchMetadata = $subscriber?->metadata()->batch;
 
@@ -92,6 +93,12 @@ final class BatchSubscriber implements EventSubscriberInterface
         $subscriberId = $event->subscription->id();
 
         if (!$this->batchManager->has($subscriberId)) {
+            return;
+        }
+
+        if ($event->skipped) {
+            $event->shouldChangePosition = false;
+
             return;
         }
 

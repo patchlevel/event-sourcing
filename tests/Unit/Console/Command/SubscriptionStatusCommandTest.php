@@ -137,4 +137,74 @@ final class SubscriptionStatusCommandTest extends TestCase
 
         $commandTester->execute(['id' => 'bar']);
     }
+
+    public function testStatusListWithPartitions(): void
+    {
+        $root = new Subscription('foo', status: Status::Active, position: 10);
+        $failed = Subscription::partition($root, 'tenant-a', 1, 5);
+        $failed->error('broken');
+
+        $engine = $this->createMock(SubscriptionEngine::class);
+        $engine
+            ->expects($this->exactly(2))
+            ->method('subscriptions')
+            ->willReturn([
+                $root,
+                Subscription::partition($root, 'tenant-b', 0, 10),
+                $failed,
+            ]);
+
+        $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
+        $commandTester->execute([]);
+
+        $display = $commandTester->getDisplay();
+
+        self::assertStringContainsString('2 (error: 1)', $display);
+        self::assertStringNotContainsString('tenant-a', $display);
+
+        $commandTester->execute(['--partitions' => true]);
+
+        $display = $commandTester->getDisplay();
+
+        self::assertStringContainsString('└ tenant-a', $display);
+        self::assertStringContainsString('└ tenant-b', $display);
+        self::assertStringContainsString('shard 1', $display);
+        self::assertStringContainsString('broken', $display);
+    }
+
+    public function testStatusDetailOfPartition(): void
+    {
+        $root = new Subscription('foo', status: Status::Active, position: 10);
+        $partition = Subscription::partition($root, 'tenant-a', null, 5);
+        $partition->error('broken');
+
+        $engine = $this->createMock(SubscriptionEngine::class);
+        $engine
+            ->expects($this->once())
+            ->method('subscriptions')
+            ->with(new SubscriptionEngineCriteria(['foo']))
+            ->willReturn([$root, $partition]);
+
+        $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
+        $commandTester->execute(['id' => 'foo', '--partition' => 'tenant-a']);
+
+        $display = $commandTester->getDisplay();
+
+        self::assertStringContainsString('foo#tenant-a', $display);
+        self::assertStringContainsString('broken', $display);
+    }
+
+    public function testStatusDetailOfUnknownPartition(): void
+    {
+        $root = new Subscription('foo', status: Status::Active, position: 10);
+
+        $engine = $this->createMock(SubscriptionEngine::class);
+        $engine->method('subscriptions')->willReturn([$root]);
+
+        $this->expectException(SubscriptionNotFound::class);
+        $this->expectExceptionMessage('Partition "tenant-a" of the subscription with the id "foo" not found.');
+
+        $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
+        $commandTester->execute(['id' => 'foo', '--partition' => 'tenant-a']);
+    }
 }

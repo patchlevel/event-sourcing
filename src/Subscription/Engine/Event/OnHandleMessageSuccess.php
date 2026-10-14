@@ -14,6 +14,8 @@ final class OnHandleMessageSuccess
         public readonly Message $message,
         public readonly int $index,
         public bool $shouldChangePosition = true,
+        /** The message belongs to another partition and was not handled by the subscriber. */
+        public readonly bool $skipped = false,
     ) {
     }
 }
