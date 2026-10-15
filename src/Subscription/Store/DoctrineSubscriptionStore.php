@@ -44,6 +44,7 @@ use function in_array;
 use function json_decode;
 use function json_encode;
 use function serialize;
+use function sort;
 use function sprintf;
 use function unserialize;
 
@@ -85,6 +86,9 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
 {
     /** How many inbox rows or conditions go into one statement, far below the parameter limits of the databases. */
     private const INBOX_CHUNK = 500;
+
+    /** How many partitions are read with one union, SQLite allows at most 500 parts. */
+    private const INBOX_UNION_CHUNK = 100;
 
     /** How many subscriptions go into one insert or update, 100 rows stay below 3000 parameters. */
     private const ROW_CHUNK = 100;
@@ -634,46 +638,82 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
     public function inbox(array $afterIndex, int $limit): array
     {
         $inbox = [];
+        $isPostgres = $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform;
 
-        foreach (array_chunk($afterIndex, self::INBOX_CHUNK, true) as $chunk) {
-            $conditions = [];
+        foreach (array_chunk($afterIndex, self::INBOX_UNION_CHUNK, true) as $chunk) {
             $parameters = [];
             $types = [];
 
             foreach ($chunk as $subscriptionId => $index) {
-                $conditions[] = '(subscription_id = ? AND message_index > ?)';
                 $parameters[] = (string)$subscriptionId;
                 $parameters[] = $index;
                 $types[] = ParameterType::STRING;
                 $types[] = ParameterType::INTEGER;
             }
 
-            // sqlite compares the untyped row number with a string parameter as text, so the types are explicit
-            $parameters[] = $limit;
-            $types[] = ParameterType::INTEGER;
+            // every partition reads only up to its limit, no matter how many messages wait in its inbox
+            $sql = $isPostgres ? $this->lateralInboxQuery(count($chunk), $limit) : $this->unionInboxQuery(count($chunk), $limit);
 
-            // the row number limits the messages per subscription, so one query serves a whole group of partitions
             /** @var list<array{0: string, 1: int|string}> $rows */
-            $rows = $this->connection->fetchAllNumeric(
-                sprintf(
-                    'SELECT subscription_id, message_index FROM (
-                        SELECT subscription_id, message_index, ROW_NUMBER() OVER (PARTITION BY subscription_id ORDER BY message_index) AS inbox_position
-                        FROM %s
-                        WHERE %s
-                    ) inbox WHERE inbox_position <= ? ORDER BY subscription_id, message_index',
-                    $this->inboxTableName,
-                    implode(' OR ', $conditions),
-                ),
-                $parameters,
-                $types,
-            );
+            $rows = $this->connection->fetchAllNumeric($sql, $parameters, $types);
 
             foreach ($rows as [$subscriptionId, $messageIndex]) {
                 $inbox[(string)$subscriptionId][] = (int)$messageIndex;
             }
         }
 
+        // the order of the rows across the partitions is not guaranteed
+        foreach ($inbox as &$indices) {
+            sort($indices);
+        }
+
+        unset($indices);
+
         return $inbox;
+    }
+
+    /**
+     * PostgreSQL plans a lateral join once, a union of many queries would cost more than reading the inbox.
+     *
+     * @param positive-int $partitions
+     * @param positive-int $limit
+     */
+    private function lateralInboxQuery(int $partitions, int $limit): string
+    {
+        return sprintf(
+            'SELECT waiting.id, inbox.message_index FROM (VALUES %s) AS waiting(id, after_index)
+            CROSS JOIN LATERAL (
+                SELECT message_index FROM %s
+                WHERE subscription_id = waiting.id AND message_index > waiting.after_index
+                ORDER BY message_index LIMIT %d
+            ) inbox',
+            implode(', ', array_fill(0, $partitions, '(CAST(? AS VARCHAR), CAST(? AS INTEGER))')),
+            $this->inboxTableName,
+            $limit,
+        );
+    }
+
+    /**
+     * MySQL and MariaDB do not limit a lateral join early enough or do not support it, neither does SQLite.
+     *
+     * @param positive-int $partitions
+     * @param positive-int $limit
+     */
+    private function unionInboxQuery(int $partitions, int $limit): string
+    {
+        $selects = [];
+
+        for ($i = 0; $i < $partitions; $i++) {
+            // the derived table allows the limit in every part of the union
+            $selects[] = sprintf(
+                'SELECT subscription_id, message_index FROM (SELECT subscription_id, message_index FROM %s WHERE subscription_id = ? AND message_index > ? ORDER BY message_index LIMIT %d) inbox_%d',
+                $this->inboxTableName,
+                $limit,
+                $i,
+            );
+        }
+
+        return implode(' UNION ALL ', $selects);
     }
 
     /** @param array<string, int> $toIndex */

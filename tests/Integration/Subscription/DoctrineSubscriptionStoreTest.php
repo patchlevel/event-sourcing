@@ -1162,6 +1162,23 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         );
     }
 
+    public function testInboxOfManyPartitions(): void
+    {
+        $store = $this->createStore();
+
+        $afterIndex = [];
+        $expected = [];
+
+        for ($i = 0; $i < 150; $i++) {
+            $id = Subscription::partitionId('profile', 'k' . $i);
+            $store->addToInbox([$id => [1000 + $i, $i + 1]]);
+            $afterIndex[$id] = 0;
+            $expected[$id] = [$i + 1];
+        }
+
+        self::assertEquals($expected, $store->inbox($afterIndex, 1), 'more partitions than one query reads');
+    }
+
     public function testPendingPartitionsOnly(): void
     {
         $store = $this->createStore();
