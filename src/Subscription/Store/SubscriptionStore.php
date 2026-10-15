@@ -19,6 +19,9 @@ interface SubscriptionStore
      */
     public function find(SubscriptionCriteria|null $criteria = null): array;
 
+    /** Counts the matching subscriptions per status, without loading them. */
+    public function stats(SubscriptionCriteria $criteria): SubscriptionStats;
+
     /**
      * Claims the subscriptions via row locks (SKIP LOCKED), leaving out the ones that are held by another worker or no
      * longer match the criteria.

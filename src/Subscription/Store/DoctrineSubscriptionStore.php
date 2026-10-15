@@ -251,6 +251,27 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
         );
     }
 
+    public function stats(SubscriptionCriteria $criteria): SubscriptionStats
+    {
+        $qb = $this->connection->createQueryBuilder()
+            ->select('status', 'COUNT(*) AS number')
+            ->from($this->tableName)
+            ->groupBy('status');
+
+        $this->applyCriteria($qb, $criteria);
+
+        $status = [];
+
+        /** @var list<array{status: string, number: int|string}> $rows */
+        $rows = $qb->fetchAllAssociative();
+
+        foreach ($rows as $row) {
+            $status[Status::from($row['status'])->value] = (int)$row['number'];
+        }
+
+        return new SubscriptionStats($status);
+    }
+
     /**
      * @param non-empty-list<string> $ids
      *

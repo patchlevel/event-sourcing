@@ -62,6 +62,17 @@ final class InMemorySubscriptionStore implements PartitionInboxStore
         );
     }
 
+    public function stats(SubscriptionCriteria $criteria): SubscriptionStats
+    {
+        $status = [];
+
+        foreach ($this->find($criteria) as $subscription) {
+            $status[$subscription->status()->value] = ($status[$subscription->status()->value] ?? 0) + 1;
+        }
+
+        return new SubscriptionStats($status);
+    }
+
     /**
      * @param non-empty-list<string> $ids
      *

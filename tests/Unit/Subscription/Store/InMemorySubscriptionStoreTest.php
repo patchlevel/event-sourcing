@@ -97,6 +97,28 @@ final class InMemorySubscriptionStoreTest extends TestCase
         self::assertEquals([], $store->find());
     }
 
+    public function testStats(): void
+    {
+        $main = new Subscription('profile', status: Status::Active, position: 10);
+        $broken = Subscription::partition($main, 'broken', 3);
+        $broken->error('database down');
+
+        $store = new InMemorySubscriptionStore([
+            $main,
+            Subscription::partition($main, 'a', 5),
+            $broken,
+            new Subscription('other', status: Status::Paused),
+        ]);
+
+        $stats = $store->stats(new SubscriptionCriteria(ids: ['profile'], partitions: true));
+
+        self::assertSame(['active' => 1, 'error' => 1], $stats->status);
+        self::assertSame(2, $stats->total());
+        self::assertSame(1, $stats->count(Status::Error));
+        self::assertSame(0, $stats->count(Status::Failed));
+        self::assertSame(['active' => 2, 'error' => 1, 'paused' => 1], $store->stats(new SubscriptionCriteria())->status);
+    }
+
     public function testFind(): void
     {
         $subscription1 = new Subscription('1');

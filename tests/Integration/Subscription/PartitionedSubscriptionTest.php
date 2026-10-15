@@ -27,6 +27,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\Partitioner\BucketPartitioner;
 use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepository;
@@ -112,6 +113,10 @@ final class PartitionedSubscriptionTest extends TestCase
         }
 
         self::assertSame(3, $projection->handled, 'only the partitions call the subscriber, every message once');
+        self::assertSame(
+            ['active' => 3],
+            $engine->stats(new SubscriptionEngineCriteria([self::MAIN], partitions: true))->status,
+        );
 
         foreach ($this->partitions() as $partition) {
             self::assertSame([], $this->subscriptionStore->inbox([$partition->id() => -1], 10), 'processed messages leave the inbox');

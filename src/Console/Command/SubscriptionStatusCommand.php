@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -17,9 +18,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use function count;
 use function implode;
-use function in_array;
 use function is_array;
 use function sprintf;
 
@@ -30,16 +29,6 @@ use function sprintf;
 )]
 final class SubscriptionStatusCommand extends SubscriptionCommand
 {
-    /** Partitions in these states are shown by default, active and finished ones only with --partitions. */
-    private const ATTENTION = [
-        Status::New,
-        Status::Booting,
-        Status::Paused,
-        Status::Detached,
-        Status::Error,
-        Status::Failed,
-    ];
-
     protected function configure(): void
     {
         parent::configure();
@@ -72,13 +61,12 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
                 new SubscriptionEngineCriteria($criteria->ids, $criteria->groups, partitions: false),
             );
 
-            // a subscriber can have many partitions, without the option only the ones that need attention are loaded
-            $partitionList = $subscriptions === [] ? [] : $this->engine->subscriptions(new SubscriptionEngineCriteria(
-                $criteria->ids,
-                $criteria->groups,
-                partitions: true,
-                status: $showPartitions ? null : self::ATTENTION,
-            ));
+            // a subscriber can have many partitions, they are only loaded to list them
+            $partitionList = $showPartitions && $subscriptions !== []
+                ? $this->engine->subscriptions(
+                    new SubscriptionEngineCriteria($criteria->ids, $criteria->groups, partitions: true),
+                )
+                : [];
 
             /** @var array<string, list<Subscription>> $partitions */
             $partitions = [];
@@ -96,7 +84,9 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
                     $subscription->runMode()->value,
                     $subscription->position(),
                     $subscription->status()->value,
-                    self::partitionSummary($partitions[$subscription->id()] ?? [], $showPartitions),
+                    self::partitionSummary($this->engine->stats(
+                        new SubscriptionEngineCriteria([$subscription->id()], partitions: true),
+                    )),
                     $subscription->subscriptionError()?->errorMessage,
                 ];
 
@@ -182,44 +172,30 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
         }
     }
 
-    /**
-     * With all partitions their number and how many of them need attention, e.g. "12 (error: 1)".
-     * Otherwise only the ones that need attention, e.g. "error: 1".
-     *
-     * @param list<Subscription> $partitions
-     */
-    private static function partitionSummary(array $partitions, bool $all): string|null
+    /** The number of partitions and how many of them are not active, e.g. "1204 (error: 2, booting: 5)". */
+    private static function partitionSummary(SubscriptionStats $stats): string|null
     {
-        $attention = [];
+        $total = $stats->total();
 
-        foreach ($partitions as $partition) {
-            if (!in_array($partition->status(), self::ATTENTION, true)) {
-                continue;
-            }
-
-            $status = $partition->status()->value;
-            $attention[$status] = ($attention[$status] ?? 0) + 1;
+        if ($total === 0) {
+            return null;
         }
 
         $parts = [];
 
-        foreach ($attention as $status => $count) {
+        foreach ($stats->status as $status => $count) {
+            if ($status === Status::Active->value) {
+                continue;
+            }
+
             $parts[] = sprintf('%s: %d', $status, $count);
         }
 
-        if (!$all) {
-            return $parts === [] ? null : implode(', ', $parts);
-        }
-
-        if ($partitions === []) {
-            return null;
-        }
-
         if ($parts === []) {
-            return (string)count($partitions);
+            return (string)$total;
         }
 
-        return sprintf('%d (%s)', count($partitions), implode(', ', $parts));
+        return sprintf('%d (%s)', $total, implode(', ', $parts));
     }
 
     /** @param list<Subscription> $subscriptions */

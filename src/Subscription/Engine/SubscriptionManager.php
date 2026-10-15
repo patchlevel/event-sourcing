@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 use Closure;
 use Patchlevel\EventSourcing\Subscription\Store\PartitionInboxStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\TransactionCommitNotPossible;
 use Patchlevel\EventSourcing\Subscription\Subscription;
@@ -299,6 +300,11 @@ final class SubscriptionManager
     public function find(SubscriptionCriteria $criteria): array
     {
         return $this->subscriptionStore->find($criteria);
+    }
+
+    public function stats(SubscriptionCriteria $criteria): SubscriptionStats
+    {
+        return $this->subscriptionStore->stats($criteria);
     }
 
     public function add(Subscription ...$subscriptions): void

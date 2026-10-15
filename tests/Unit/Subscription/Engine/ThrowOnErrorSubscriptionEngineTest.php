@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\Engine\ThrowOnErrorSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -51,6 +52,19 @@ final class ThrowOnErrorSubscriptionEngineTest extends TestCase
 
         $parent->expects($this->once())->method('execute')->with($command)->willReturn($expectedResult);
         $engine->execute($command);
+    }
+
+    public function testStats(): void
+    {
+        $parent = $this->createMock(SubscriptionEngine::class);
+
+        $engine = new ThrowOnErrorSubscriptionEngine($parent);
+        $criteria = new SubscriptionEngineCriteria(['foo']);
+        $stats = new SubscriptionStats(['active' => 2]);
+
+        $parent->expects($this->once())->method('stats')->with($criteria)->willReturn($stats);
+
+        self::assertSame($stats, $engine->stats($criteria));
     }
 
     public function testSubscriptions(): void

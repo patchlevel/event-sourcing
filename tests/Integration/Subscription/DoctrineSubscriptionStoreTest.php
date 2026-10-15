@@ -1259,6 +1259,30 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         self::assertSame(0, $store->removeIdlePartitions('profile', 60, 10), 'nothing left to remove');
     }
 
+    public function testStats(): void
+    {
+        $store = $this->createStore();
+
+        $main = new Subscription('profile', status: Status::Active, position: 10);
+        $broken = Subscription::partition($main, 'broken', 3);
+        $broken->error('database down');
+
+        $store->add(
+            $main,
+            Subscription::partition($main, 'a', 5),
+            Subscription::partition($main, 'b', 6),
+            $broken,
+            new Subscription('other', status: Status::Paused),
+        );
+
+        $stats = $store->stats(new SubscriptionCriteria(ids: ['profile'], partitions: true));
+
+        self::assertEquals(['active' => 2, 'error' => 1], $stats->status);
+        self::assertSame(3, $stats->total());
+        self::assertSame([], $store->stats(new SubscriptionCriteria(ids: ['unknown']))->status);
+        self::assertSame(1, $store->stats(new SubscriptionCriteria(status: [Status::Paused]))->total());
+    }
+
     public function testClaimAll(): void
     {
         $store = $this->createStore();

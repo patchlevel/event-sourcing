@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\PartitionInboxStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Assert;
 use Psr\Clock\ClockInterface;
@@ -43,6 +44,11 @@ final class DummySubscriptionStore implements PartitionInboxStore
     public function get(string $subscriptionId): Subscription
     {
         return $this->parentStore->get($subscriptionId);
+    }
+
+    public function stats(SubscriptionCriteria $criteria): SubscriptionStats
+    {
+        return $this->parentStore->stats($criteria);
     }
 
     /** @return list<Subscription> */

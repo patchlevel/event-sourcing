@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -58,6 +59,11 @@ final class RemovePartitionsListenerTest extends TestCase
             public function find(SubscriptionCriteria|null $criteria = null): array
             {
                 return $this->inner->find(new SubscriptionCriteria(ids: $criteria?->ids));
+            }
+
+            public function stats(SubscriptionCriteria $criteria): SubscriptionStats
+            {
+                return $this->inner->stats($criteria);
             }
 
             /**

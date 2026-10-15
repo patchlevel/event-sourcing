@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
 use function array_filter;
@@ -37,6 +38,29 @@ final class FakeSubscriptionEngine implements SubscriptionEngine
         $criteria ??= new SubscriptionEngineCriteria();
         $this->criteria[] = $criteria;
 
+        return $this->filter($criteria);
+    }
+
+    /** @var list<SubscriptionEngineCriteria> */
+    public array $statsCriteria = [];
+
+    public function stats(SubscriptionEngineCriteria|null $criteria = null): SubscriptionStats
+    {
+        $criteria ??= new SubscriptionEngineCriteria();
+        $this->statsCriteria[] = $criteria;
+
+        $status = [];
+
+        foreach ($this->filter($criteria) as $subscription) {
+            $status[$subscription->status()->value] = ($status[$subscription->status()->value] ?? 0) + 1;
+        }
+
+        return new SubscriptionStats($status);
+    }
+
+    /** @return list<Subscription> */
+    private function filter(SubscriptionEngineCriteria $criteria): array
+    {
         return array_values(array_filter(
             $this->subscriptions,
             static fn (Subscription $subscription): bool => ($criteria->ids === null

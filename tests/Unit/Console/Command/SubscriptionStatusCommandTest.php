@@ -63,7 +63,7 @@ final class SubscriptionStatusCommandTest extends TestCase
         );
     }
 
-    public function testOnlyPartitionsThatNeedAttentionAreLoaded(): void
+    public function testPartitionSummaryWithoutLoadingThePartitions(): void
     {
         $main = new Subscription('profile', status: Status::Active, position: 10);
         $broken = Subscription::partition($main, 'broken', 3);
@@ -74,6 +74,7 @@ final class SubscriptionStatusCommandTest extends TestCase
             Subscription::partition($main, 'a', 5),
             Subscription::partition($main, 'b', 6),
             $broken,
+            new Subscription('plain', status: Status::Active, position: 3),
         ]);
 
         $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
@@ -81,10 +82,13 @@ final class SubscriptionStatusCommandTest extends TestCase
 
         $display = $commandTester->getDisplay();
 
-        self::assertStringContainsString('error: 1', $display);
-        self::assertStringNotContainsString('3 (error: 1)', $display, 'the total needs every partition');
-        self::assertFalse($engine->criteria[1]->status === null, 'active partitions are not loaded');
-        self::assertNotContains(Status::Active, $engine->criteria[1]->status ?? []);
+        self::assertStringContainsString('3 (error: 1)', $display);
+        self::assertStringNotContainsString('└', $display, 'the partitions are only listed with --partitions');
+        self::assertEquals(
+            [new SubscriptionEngineCriteria(partitions: false)],
+            $engine->criteria,
+            'only the main subscriptions are loaded',
+        );
     }
 
     public function testListAllPartitions(): void
@@ -108,7 +112,6 @@ final class SubscriptionStatusCommandTest extends TestCase
         self::assertStringContainsString('3 (error: 1)', $display);
         self::assertStringContainsString('└ a', $display);
         self::assertStringContainsString('└ broken', $display);
-        self::assertNull($engine->criteria[1]->status);
     }
 
     public function testStatusDetail(): void

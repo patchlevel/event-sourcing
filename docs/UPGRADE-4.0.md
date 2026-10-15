@@ -432,11 +432,15 @@ several subscriptions at once. Every custom store has to implement:
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
 interface SubscriptionStore
 {
     // ... get/find ...
+
+    /** Count the matching subscriptions per status, without loading them. */
+    public function stats(SubscriptionCriteria $criteria): SubscriptionStats;
 
     /**
      * Claim the subscriptions via row locks (SKIP LOCKED). Leave out the ones that are held
@@ -466,6 +470,8 @@ interface SubscriptionStore
 ```
 `find()` no longer locks the matched rows: it is now a plain, unlocked snapshot read. The locking
 happens per subscription inside `claim()`.
+
+The `SubscriptionEngine` interface has the new method `stats()` as well, a custom engine or decorator passes it on.
 
 The `DoctrineSubscriptionStore` loads the error context and the cleanup tasks of the subscriptions from `find()`
 lazily. Subscriptions that have one of them are native lazy objects, which `var_dump()` and `assertEquals()` show

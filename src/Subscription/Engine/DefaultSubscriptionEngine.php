@@ -38,6 +38,7 @@ use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\BatchArgumentResolver;
@@ -267,6 +268,20 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         $this->eventDispatcher->dispatch(new OnSubscriptions($criteria));
 
         return $this->subscriptionManager->find(
+            new SubscriptionCriteria(
+                ids: $criteria->ids,
+                groups: $criteria->groups,
+                status: $criteria->status,
+                partitions: $criteria->partitions,
+            ),
+        );
+    }
+
+    public function stats(SubscriptionEngineCriteria|null $criteria = null): SubscriptionStats
+    {
+        $criteria ??= new SubscriptionEngineCriteria();
+
+        return $this->subscriptionManager->stats(
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,

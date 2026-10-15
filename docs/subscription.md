@@ -1872,6 +1872,20 @@ foreach ($subscriptions as $subscription) {
 The ids of the criteria match the subscription id or the subscriber id,
 so a partitioned subscriber includes all its partitions.
 
+To count the subscriptions per status without loading them, use the `stats` method.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+use Patchlevel\EventSourcing\Subscription\Status;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$stats = $subscriptionEngine->stats(new SubscriptionEngineCriteria(['profile_1'], partitions: true));
+
+echo $stats->total();
+echo $stats->count(Status::Error);
+```
+
 ## Learn more
 
 * [How to use CLI commands](cli.md)

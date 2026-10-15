@@ -240,9 +240,9 @@ If the subscription has an error, the command also prints the error message and 
 ```bash
 bin/console event-sourcing:subscription:status profile_1
 ```
-For a partitioned subscriber, the table shows the partitions that need attention, e.g. `error: 1`.
-Active and finished partitions are not loaded, a subscriber can have many of them.
-Use `--partitions` to load and list all of them, and pass the id of a partition to show its details.
+For a partitioned subscriber, the table shows the number of partitions and how many are not active,
+e.g. `1204 (error: 2, booting: 5)`. The partitions are counted, not loaded.
+Use `--partitions` to list them, and pass the id of a partition to show its details.
 
 ```bash
 bin/console event-sourcing:subscription:status --partitions

@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription;
 
 use Closure;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
@@ -20,6 +21,11 @@ final class PlainSubscriptionStore implements SubscriptionStore
     public function get(string $subscriptionId): Subscription
     {
         return $this->store->get($subscriptionId);
+    }
+
+    public function stats(SubscriptionCriteria $criteria): SubscriptionStats
+    {
+        return $this->store->stats($criteria);
     }
 
     /** @return list<Subscription> */
