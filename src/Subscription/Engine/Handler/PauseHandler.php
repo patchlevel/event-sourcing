@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine\Handler;
 
+use Patchlevel\EventSourcing\Subscription\Engine\ClaimGroups;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Pause;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
@@ -15,6 +16,7 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
+use function array_map;
 use function sprintf;
 
 /**
@@ -24,6 +26,8 @@ use function sprintf;
  */
 final class PauseHandler implements Handler
 {
+    private const PARTITIONS_PER_CLAIM = 100;
+
     public function __construct(
         private readonly SubscriptionManager $subscriptionManager,
         private readonly LoggerInterface|null $logger = null,
@@ -32,7 +36,8 @@ final class PauseHandler implements Handler
 
     public function __invoke(Command $command): Result
     {
-        $results = $this->subscriptionManager->forEachClaimed(
+        // partitions are claimed in groups, a subscriber can have many of them
+        $results = $this->subscriptionManager->forEachClaimedGroup(
             new SubscriptionCriteria(
                 ids: $command->ids,
                 groups: $command->groups,
@@ -42,20 +47,24 @@ final class PauseHandler implements Handler
                     Status::Error,
                 ],
             ),
-            function (Subscription $subscription): Result {
-                $subscription->pause();
-                $this->subscriptionManager->update($subscription);
+            new ClaimGroups(partitions: self::PARTITIONS_PER_CLAIM),
+            function (array $subscriptions): Result {
+                foreach ($subscriptions as $subscription) {
+                    $subscription->pause();
+                    $this->subscriptionManager->update($subscription);
 
-                $this->logger?->info(sprintf(
-                    'Subscription Engine: Subscription "%s" is paused.',
-                    $subscription->id(),
-                ));
+                    $this->logger?->info(sprintf(
+                        'Subscription Engine: Subscription "%s" is paused.',
+                        $subscription->id(),
+                    ));
+                }
 
                 return new Result();
             },
-            static fn (Subscription $subscription, Throwable $e): Result => new Result(
-                [new Error($subscription->id(), $e->getMessage(), $e)],
-            ),
+            static fn (array $subscriptions, Throwable $e): Result => new Result(array_map(
+                static fn (Subscription $subscription): Error => new Error($subscription->id(), $e->getMessage(), $e),
+                $subscriptions,
+            )),
         );
 
         return Result::merge($results);
