@@ -936,6 +936,11 @@ Changing the partition method is safe: messages that were already routed stay in
 Only the order between the old and the new partition of the same aggregate is not guaranteed during the change.
 :::
 
+:::note
+A partition stays booting until it processed the messages routed while booting, new messages it processes until then
+do not emit events. Use `#[EnableEventEmittingDuringBoot]` or the run mode `FromNow` if they have to.
+:::
+
 #### Circuit breaker
 
 A failure that hits every partition, like a database that is down, would put every partition into the error status
