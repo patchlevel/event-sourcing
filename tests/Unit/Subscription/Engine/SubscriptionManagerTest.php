@@ -208,7 +208,7 @@ final class SubscriptionManagerTest extends TestCase
             ),
         );
 
-        self::assertSame([['a#1', 'a#2'], ['a', 'b'], ['a#3'], ['c']], $groups);
+        self::assertSame([['a', 'b'], ['c'], ['a#1', 'a#2'], ['a#3']], $groups);
     }
 
     public function testForEachClaimedGroupPutsTheWholeGroupIntoError(): void
@@ -231,5 +231,50 @@ final class SubscriptionManagerTest extends TestCase
         self::assertSame([2], $results);
         self::assertSame(Status::Error, $store->get('a')->status());
         self::assertSame(Status::Error, $store->get('b')->status());
+    }
+
+    public function testForEachClaimedGroupOnlyGroupsSubscriptionsWithClosePositions(): void
+    {
+        $store = new InMemorySubscriptionStore([
+            new Subscription('rebuild', position: 0),
+            new Subscription('far', position: 50_000),
+            new Subscription('current-1', position: 2_003),
+            new Subscription('almost-rebuild', position: 5),
+            new Subscription('current-2', position: 2_000),
+            new Subscription('new'),
+        ]);
+
+        $manager = new SubscriptionManager($store);
+
+        $groups = $manager->forEachClaimedGroup(
+            new SubscriptionCriteria(),
+            1,
+            10,
+            static fn (array $subscriptions): array => array_map(
+                static fn (Subscription $subscription): string => $subscription->id(),
+                $subscriptions,
+            ),
+            positionWindow: 1000,
+        );
+
+        self::assertSame(
+            [['new', 'rebuild', 'almost-rebuild'], ['current-2', 'current-1'], ['far']],
+            $groups,
+        );
+    }
+
+    public function testForEachClaimedKeepsTheOrderOfTheSnapshot(): void
+    {
+        $store = new InMemorySubscriptionStore([
+            new Subscription('b', position: 100),
+            new Subscription('a', position: 0),
+        ]);
+
+        $manager = new SubscriptionManager($store);
+
+        self::assertSame(
+            ['b', 'a'],
+            $manager->forEachClaimed(new SubscriptionCriteria(), static fn (Subscription $subscription): string => $subscription->id()),
+        );
     }
 }

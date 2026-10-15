@@ -18,10 +18,14 @@ use function count;
 use function implode;
 use function max;
 use function sprintf;
+use function usort;
 
 /** @internal */
 final class SubscriptionManager
 {
+    /** Subscriptions further apart than that are not processed together, if there is no message limit. */
+    public const DEFAULT_POSITION_WINDOW = 1000;
+
     /** @var SplObjectStorage<Subscription, null> */
     private SplObjectStorage $forAdd;
 
@@ -83,8 +87,12 @@ final class SubscriptionManager
      * inbox. A subscription that is locked by another worker is left out of its group.
      * If the closure throws, every subscription of the group goes into the error status.
      *
+     * Subscriptions are only grouped if their positions are at most $positionWindow apart, the group reads the stream
+     * from its lowest position and a subscription far behind would hold back the others.
+     *
      * @param positive-int                                       $partitionsPerClaim
      * @param positive-int                                       $subscriptionsPerClaim
+     * @param positive-int                                       $positionWindow
      * @param Closure(non-empty-list<Subscription>):T            $closure
      * @param Closure(non-empty-list<Subscription>, Throwable):T $onError
      *
@@ -98,9 +106,15 @@ final class SubscriptionManager
         int $subscriptionsPerClaim,
         Closure $closure,
         Closure|null $onError = null,
+        int $positionWindow = self::DEFAULT_POSITION_WINDOW,
     ): array {
         $results = [];
-        $groups = $this->groups($this->subscriptionStore->find($criteria), $partitionsPerClaim, $subscriptionsPerClaim);
+        $groups = $this->groups(
+            $this->subscriptionStore->find($criteria),
+            $partitionsPerClaim,
+            $subscriptionsPerClaim,
+            $positionWindow,
+        );
 
         foreach ($groups as $candidates) {
             $skipped = false;
@@ -189,38 +203,88 @@ final class SubscriptionManager
     }
 
     /**
-     * Keeps the order of the snapshot as far as possible, a group is closed as soon as it is full.
+     * Partitions are grouped in the order of the snapshot. Other subscriptions are grouped by position, so that only
+     * subscriptions close to each other read the stream together. Without grouping, the order of the snapshot is kept.
      *
      * @param list<Subscription> $subscriptions
      * @param positive-int       $partitionsPerClaim
      * @param positive-int       $subscriptionsPerClaim
+     * @param positive-int       $positionWindow
      *
      * @return list<non-empty-list<Subscription>>
      */
-    private function groups(array $subscriptions, int $partitionsPerClaim, int $subscriptionsPerClaim): array
-    {
+    private function groups(
+        array $subscriptions,
+        int $partitionsPerClaim,
+        int $subscriptionsPerClaim,
+        int $positionWindow,
+    ): array {
         $groups = [];
-        $open = ['partitions' => [], 'subscriptions' => []];
+        $partitions = [];
+        $others = [];
 
         foreach ($subscriptions as $subscription) {
-            $kind = $subscription->isPartition() ? 'partitions' : 'subscriptions';
-            $size = $subscription->isPartition() ? $partitionsPerClaim : $subscriptionsPerClaim;
+            if (!$subscription->isPartition()) {
+                if ($subscriptionsPerClaim === 1) {
+                    $groups[] = [$subscription];
+                } else {
+                    $others[] = $subscription;
+                }
 
-            $open[$kind][] = $subscription;
-
-            if (count($open[$kind]) < $size) {
                 continue;
             }
 
-            $groups[] = $open[$kind];
-            $open[$kind] = [];
+            $partitions[] = $subscription;
+
+            if (count($partitions) < $partitionsPerClaim) {
+                continue;
+            }
+
+            $groups[] = $partitions;
+            $partitions = [];
         }
 
-        foreach ($open as $group) {
-            if ($group === []) {
-                continue;
+        if ($partitions !== []) {
+            $groups[] = $partitions;
+        }
+
+        return [...$this->groupByPosition($others, $subscriptionsPerClaim, $positionWindow), ...$groups];
+    }
+
+    /**
+     * @param list<Subscription> $subscriptions
+     * @param positive-int       $size
+     * @param positive-int       $window
+     *
+     * @return list<non-empty-list<Subscription>>
+     */
+    private function groupByPosition(array $subscriptions, int $size, int $window): array
+    {
+        usort(
+            $subscriptions,
+            static fn (Subscription $a, Subscription $b): int => ($a->position() ?? -1) <=> ($b->position() ?? -1),
+        );
+
+        $groups = [];
+        $group = [];
+        $lowest = null;
+
+        foreach ($subscriptions as $subscription) {
+            $position = $subscription->position() ?? -1;
+
+            if ($group !== [] && (count($group) >= $size || $position - (int)$lowest > $window)) {
+                $groups[] = $group;
+                $group = [];
             }
 
+            if ($group === []) {
+                $lowest = $position;
+            }
+
+            $group[] = $subscription;
+        }
+
+        if ($group !== []) {
             $groups[] = $group;
         }
 

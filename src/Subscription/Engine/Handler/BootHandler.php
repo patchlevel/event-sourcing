@@ -54,6 +54,8 @@ final class BootHandler implements Handler
                     $subscriptions,
                 ),
             ),
+            // the group reads the stream from its lowest position, a larger gap would use up the limit of the others
+            $command->limit ?? SubscriptionManager::DEFAULT_POSITION_WINDOW,
         );
 
         return ProcessedResult::merge($results);

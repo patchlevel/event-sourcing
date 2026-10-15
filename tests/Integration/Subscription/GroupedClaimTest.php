@@ -251,4 +251,131 @@ final class GroupedClaimTest extends TestCase
         );
         self::assertSame(Status::Active, $subscriptionStore->get('healthy_batch')->status());
     }
+
+    public function testSubscriptionFarBehindDoesNotHoldBackTheGroup(): void
+    {
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $subscriptionStore = new DoctrineSubscriptionStore($this->connection);
+
+        (new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([$store, $subscriptionStore]),
+        ))->create();
+
+        $current = new #[Projector('current')]
+        class {
+            public int $handled = 0;
+
+            #[Subscribe(ProfileCreated::class)]
+            public function onProfileCreated(ProfileCreated $event): void
+            {
+                $this->handled++;
+            }
+        };
+
+        $lagging = new #[Projector('lagging')]
+        class {
+            public int $handled = 0;
+
+            #[Subscribe(ProfileCreated::class)]
+            public function onProfileCreated(ProfileCreated $event): void
+            {
+                $this->handled++;
+            }
+        };
+
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([$current, $lagging]);
+
+        $engine = new DefaultSubscriptionEngine(
+            new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+
+        $repository = (new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        ))->get(Profile::class);
+
+        $engine->execute(new SetupCommand(skipBooting: true));
+
+        for ($i = 0; $i < 50; $i++) {
+            $repository->save(Profile::create(ProfileId::generate(), 'name-' . $i));
+        }
+
+        // current is up to date, lagging is still at the beginning like during a rebuild
+        $engine->execute(new Run(ids: ['current']));
+
+        $repository->save(Profile::create(ProfileId::generate(), 'new'));
+
+        $engine->execute(new Run(limit: 10, subscriptionsPerClaim: 10));
+
+        self::assertSame(51, $subscriptionStore->get('current')->position(), 'the new event is not held back by the rebuild');
+        self::assertSame(51, $current->handled);
+        self::assertSame(10, $subscriptionStore->get('lagging')->position());
+        self::assertSame(10, $lagging->handled);
+    }
+
+    public function testSubscriptionsWithClosePositionsReadTheStreamOnce(): void
+    {
+        $store = new StreamDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
+        );
+
+        $subscriptionStore = new DoctrineSubscriptionStore($this->connection);
+
+        (new DoctrineSchemaDirector(
+            $this->connection,
+            new ChainDoctrineSchemaConfigurator([$store, $subscriptionStore]),
+        ))->create();
+
+        $first = new #[Projector('first')]
+        class {
+            #[Subscribe(ProfileCreated::class)]
+            public function onProfileCreated(ProfileCreated $event): void
+            {
+            }
+        };
+
+        $second = new #[Projector('second')]
+        class {
+            #[Subscribe(ProfileCreated::class)]
+            public function onProfileCreated(ProfileCreated $event): void
+            {
+            }
+        };
+
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([$first, $second]);
+
+        $engine = new DefaultSubscriptionEngine(
+            new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
+            $subscriptionStore,
+            $subscriberRepository,
+        );
+
+        $repository = (new DefaultRepositoryManager(
+            new AggregateRootRegistry(['profile' => Profile::class]),
+            $store,
+        ))->get(Profile::class);
+
+        $engine->execute(new SetupCommand(skipBooting: true));
+
+        for ($i = 0; $i < 5; $i++) {
+            $repository->save(Profile::create(ProfileId::generate(), 'name-' . $i));
+        }
+
+        $engine->execute(new Run(ids: ['first'], limit: 2));
+
+        $result = $engine->execute(new Run(limit: 10, subscriptionsPerClaim: 10));
+
+        self::assertInstanceOf(ProcessedResult::class, $result);
+        self::assertSame(5, $result->processedMessages, 'positions 2 and 0 are close, so the stream is read once from 0');
+        self::assertSame(5, $subscriptionStore->get('first')->position());
+        self::assertSame(5, $subscriptionStore->get('second')->position());
+    }
 }

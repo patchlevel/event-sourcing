@@ -1624,6 +1624,8 @@ To process a single subscriber in parallel, split it into [partitions](#partitio
 By default every subscription is claimed and processed in its own transaction.
 With `subscriptionsPerClaim`, several subscriptions are processed together: the stream is read once from the lowest
 position, and the group is committed in one transaction.
+Only subscriptions whose positions are at most `limit` apart (1000 without a limit) form a group,
+so a subscription that is rebuilt does not hold back the ones that are up to date.
 Partitions are claimed in groups of 100 by default, because they only read their inbox and are often many.
 
 ```php
