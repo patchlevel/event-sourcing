@@ -15,6 +15,8 @@ use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
@@ -54,6 +56,7 @@ final class PartitionedSubscriptionTest extends TestCase
     private Connection $connection;
     private FrozenClock $clock;
     private DoctrineSubscriptionStore $subscriptionStore;
+    private StreamDoctrineDbalStore $store;
 
     /** @var Repository<Profile> */
     private Repository $repository;
@@ -313,10 +316,44 @@ final class PartitionedSubscriptionTest extends TestCase
         }
     }
 
+    /** A routed message whose stream was removed before the partition processed it must not block the partition. */
+    public function testRemovedMessagesDoNotBlockThePartition(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        [$removedId, $keptId] = $this->createProfiles(2);
+        $this->runUntilFinished($engine);
+
+        $this->changeName(ProfileId::fromString($removedId), 'removed');
+        $this->changeName(ProfileId::fromString($keptId), 'kept');
+
+        $engine->execute(new Run()); // the main subscription routes both messages
+
+        $this->store->remove(new Criteria(new StreamCriterion('profile-' . $removedId)));
+
+        $this->runUntilFinished($engine);
+
+        self::assertSame(['name-1', 'kept'], $projection->processed[$keptId]);
+        self::assertSame(['name-0'], $projection->processed[$removedId]);
+
+        $partitionId = Subscription::partitionId(self::MAIN, 'profile-' . $removedId);
+
+        self::assertSame(Status::Active, $this->subscriptionStore->get($partitionId)->status());
+        self::assertSame([], $this->subscriptionStore->inbox([$partitionId => -1], 10), 'the removed message left the inbox');
+        self::assertSame(
+            [],
+            $this->subscriptionStore->find(new SubscriptionCriteria(status: [Status::Active], pendingPartitionsOnly: true, partitions: true)),
+            'no partition waits for a message that does not exist anymore',
+        );
+    }
+
     /** @param 'index'|'plain'|'unsupported' $messageLoader */
     private function engine(object $subscriber, string $messageLoader = 'index', bool $inboxStore = true): SubscriptionEngine
     {
-        $store = new StreamDoctrineDbalStore(
+        $store = $this->store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
         );

@@ -91,6 +91,8 @@ final class SubscriptionRunner
         $stream = null;
         $messageCounter = 0;
         $lastIndex = null;
+        /** @var array<int, true> $loaded */
+        $loaded = [];
         $limitReached = false;
 
         if (count($working) > 0) {
@@ -119,6 +121,7 @@ final class SubscriptionRunner
 
                     $messageCounter++;
                     $lastIndex = $index;
+                    $loaded[$index] = true;
 
                     foreach ($working as $member) {
                         if ($member->position() >= $index) {
@@ -167,14 +170,17 @@ final class SubscriptionRunner
                 $this->eventDispatcher->dispatch($event);
                 $errors = array_merge($errors, $event->errors);
             }
+        }
 
-            foreach ($working as $member) {
-                if ($member->isPartition()) {
-                    $this->finishInbox($member, $inboxes[$member->id()]);
-                }
-
-                $this->subscriptionManager->update($member);
+        foreach ($working as $member) {
+            if ($member->isPartition()) {
+                // also without any loaded message, then every message of the inbox was removed from the store
+                $this->finishInbox($member, $inboxes[$member->id()], $loaded);
+            } elseif ($lastIndex === null) {
+                continue;
             }
+
+            $this->subscriptionManager->update($member);
         }
 
         $inboxFull = $this->hasFullInbox($members, $inboxes, $inboxLimit);
@@ -462,14 +468,38 @@ final class SubscriptionRunner
     /**
      * A partition never moves past its inbox, otherwise it would skip messages the main subscription routes later.
      * The store clears the inbox up to the position when the partition is updated, a failed one included.
+     *
+     * Messages of the inbox that were not loaded no longer exist in the store, e.g. because their stream was removed.
+     * If the partition processed every loaded message, it moves past them, otherwise it would wait for them forever.
+     *
+     * @param array<int, true> $loaded indices of the loaded messages
      */
-    private function finishInbox(Subscription $partition, PartitionInbox $inbox): void
+    private function finishInbox(Subscription $partition, PartitionInbox $inbox, array $loaded): void
     {
-        $position = $partition->position();
+        $position = $partition->position() ?? -1;
 
-        if ($position === null || $position <= $inbox->last()) {
+        if ($position >= $inbox->last()) {
+            $partition->changePosition($inbox->last());
+
             return;
         }
+
+        if ($partition->isError() || $partition->isFailed()) {
+            return;
+        }
+
+        foreach ($inbox->indices() as $index) {
+            // a loaded message that was not processed, e.g. skipped, has to stay in the inbox
+            if ($index > $position && isset($loaded[$index])) {
+                return;
+            }
+        }
+
+        $this->logger?->warning(sprintf(
+            'Subscription Engine: Partition "%s" skips messages of its inbox up to %d, they no longer exist.',
+            $partition->id(),
+            $inbox->last(),
+        ));
 
         $partition->changePosition($inbox->last());
     }
