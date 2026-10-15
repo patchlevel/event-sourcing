@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
+use Generator;
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Store\UnsupportedCriterion;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionProcessed;
@@ -15,8 +17,10 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+use function array_chunk;
 use function array_keys;
 use function array_merge;
+use function array_slice;
 use function array_values;
 use function count;
 use function ksort;
@@ -29,6 +33,9 @@ final class SubscriptionRunner
 {
     /** How many messages of its inbox a partition processes at most in one run without a limit. */
     private const INBOX_LIMIT = 1000;
+
+    /** How many indices are loaded with one query, far below the parameter limits of the databases. */
+    private const INDEX_CHUNK = 1000;
 
     public function __construct(
         private readonly MessageLoader $messageLoader,
@@ -383,10 +390,42 @@ final class SubscriptionRunner
 
         $this->logger?->debug(sprintf('Subscription Engine: %d messages of the inbox are processed.', count($indices)));
 
+        // the inboxes of a whole group can hold far more indices than a query may have parameters
+        $chunks = array_chunk($indices, self::INDEX_CHUNK);
+
         try {
-            return $this->messageLoader->loadIndices($indices);
+            $first = $this->messageLoader->loadIndices($chunks[0]);
         } catch (UnsupportedCriterion) {
             return null;
+        }
+
+        if (count($chunks) === 1) {
+            return $first;
+        }
+
+        return new Stream($this->loadChunks($this->messageLoader, $first, array_slice($chunks, 1)));
+    }
+
+    /**
+     * Loads the next chunk only when the previous one is consumed, so the messages stay in ascending order.
+     *
+     * @param list<non-empty-list<int>> $chunks
+     *
+     * @return Generator<int, Message>
+     */
+    private function loadChunks(IndexMessageLoader $messageLoader, Stream $stream, array $chunks): Generator
+    {
+        try {
+            yield from $stream;
+
+            foreach ($chunks as $chunk) {
+                $stream->close();
+                $stream = $messageLoader->loadIndices($chunk);
+
+                yield from $stream;
+            }
+        } finally {
+            $stream->close();
         }
     }
 

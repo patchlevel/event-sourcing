@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
+use Patchlevel\EventSourcing\Subscription\Engine\IndexMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
@@ -14,6 +15,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionRunner;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
+use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberAccessorRepository;
@@ -23,6 +25,8 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+
+use function range;
 
 #[CoversClass(SubscriptionRunner::class)]
 final class SubscriptionRunnerTest extends TestCase
@@ -165,15 +169,64 @@ final class SubscriptionRunnerTest extends TestCase
         self::assertSame(Status::Active, $subscription->status());
     }
 
+    public function testPartitionsLoadTheirInboxesInChunks(): void
+    {
+        $main = new Subscription('foo', status: Status::Active, position: 3000);
+        $partitions = [
+            Subscription::partition($main, 'a', 0),
+            Subscription::partition($main, 'b', 0),
+            Subscription::partition($main, 'c', 0),
+        ];
+
+        $store = new InMemorySubscriptionStore([$main, ...$partitions]);
+
+        foreach ($partitions as $offset => $partition) {
+            $store->addToInbox([$partition->id() => range($offset + 1, 3000, 3)]);
+        }
+
+        $message = Message::create(new ProfileVisited(ProfileId::fromString('1')));
+
+        /** @var list<list<int>> $loadedChunks */
+        $loadedChunks = [];
+
+        $loader = $this->createMock(IndexMessageLoader::class);
+        $loader
+            ->expects($this->exactly(3))
+            ->method('loadIndices')
+            ->willReturnCallback(static function (array $indices) use ($message, &$loadedChunks): Stream {
+                $loadedChunks[] = $indices;
+                $messages = [];
+
+                foreach ($indices as $index) {
+                    self::assertIsInt($index);
+                    $messages[$index] = $message;
+                }
+
+                return new Stream($messages);
+            });
+
+        $runner = $this->runner($loader, $this->subscriberRepository(), $store);
+
+        $result = $runner->process($partitions, null);
+
+        self::assertSame([], $result->errors);
+        self::assertSame(3000, $result->processedMessages);
+        self::assertSame([range(1, 1000), range(1001, 2000), range(2001, 3000)], $loadedChunks);
+        self::assertSame(2998, $partitions[0]->position());
+        self::assertSame(2999, $partitions[1]->position());
+        self::assertSame(3000, $partitions[2]->position());
+    }
+
     private function runner(
         MessageLoader $loader,
         SubscriberAccessorRepository $subscriberRepository,
+        SubscriptionStore|null $store = null,
     ): SubscriptionRunner {
         $eventDispatcher = new EventDispatcher();
 
         return new SubscriptionRunner(
             $loader,
-            new SubscriptionManager($this->createMock(SubscriptionStore::class)),
+            new SubscriptionManager($store ?? $this->createMock(SubscriptionStore::class)),
             $subscriberRepository,
             new MessageProcessor($subscriberRepository, $eventDispatcher),
             $eventDispatcher,
