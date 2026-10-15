@@ -38,6 +38,7 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\EphemeralPartitionProjection;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\OncePartitionedProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedBatchProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedTransactionalBatchProjection;
@@ -516,6 +517,27 @@ final class PartitionedSubscriptionTest extends TestCase
         sort($ids);
 
         return $ids;
+    }
+
+    /** A partition that processed its inbox before its main subscription finished, finishes afterwards as well. */
+    public function testPartitionsOfARunOnceSubscriberFinish(): void
+    {
+        $projection = new OncePartitionedProjection();
+        $engine = $this->engine($projection);
+        $subscriberId = OncePartitionedProjection::SUBSCRIBER_ID;
+
+        $engine->execute(new Setup(skipBooting: true));
+        $this->createProfiles(3);
+
+        // one message per run, so the first partitions are done long before the main subscription
+        $this->runUntilFinished($engine, 1);
+
+        self::assertSame(3, $projection->handled);
+        self::assertSame(Status::Finished, $this->subscriptionStore->get($subscriberId)->status());
+
+        foreach ($this->partitions($subscriberId) as $partition) {
+            self::assertSame(Status::Finished, $partition->status(), $partition->id());
+        }
     }
 
     /** @param 'index'|'plain'|'unsupported' $messageLoader */

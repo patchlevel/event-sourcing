@@ -76,7 +76,39 @@ final class RunHandler implements Handler
             ),
         ];
 
-        return ProcessedResult::merge($results);
+        return ProcessedResult::merge([...$results, ...$this->finishPartitions($command, $claimGroups)]);
+    }
+
+    /**
+     * A partition of a subscriber with run mode once can process its inbox before its main subscription finished.
+     * Once the main subscription finished, its partitions that are still active are processed one last time, so that
+     * they finish as well, even if their inbox is already empty.
+     *
+     * @return list<ProcessedResult>
+     */
+    private function finishPartitions(Run $command, ClaimGroups $claimGroups): array
+    {
+        $subscriberIds = [];
+
+        $mains = $this->subscriptionManager->find(new SubscriptionCriteria(
+            ids: $command->ids,
+            groups: $command->groups,
+            status: [Status::Finished],
+            partitions: false,
+        ));
+
+        foreach ($mains as $main) {
+            $subscriberIds[] = $main->id();
+        }
+
+        if ($subscriberIds === []) {
+            return [];
+        }
+
+        $criteria = new SubscriptionCriteria(ids: $subscriberIds, status: [Status::Active], partitions: true);
+
+        // a partition held by another worker is not claimed, every run checks again
+        return $this->process($criteria, $claimGroups, $command);
     }
 
     /** @return list<ProcessedResult> */
