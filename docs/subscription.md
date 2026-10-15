@@ -329,7 +329,8 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 final class ProfileProjector
 {
     #[Subscribe(ProfileCreated::class)]
-    public function onProfileCreated(ProfileCreated $event, #[PartitionKey] string $tenant): void
+    public function onProfileCreated(ProfileCreated $event, #[PartitionKey]
+    string $tenant,): void
     {
         // write into the database of the tenant
     }
@@ -1870,6 +1871,7 @@ foreach ($subscriptions as $subscription) {
 ```
 The ids of the criteria match the subscription id or the subscriber id,
 so a partitioned subscriber includes all its partitions.
+
 ## Learn more
 
 * [How to use CLI commands](cli.md)
