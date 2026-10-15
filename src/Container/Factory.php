@@ -50,9 +50,9 @@ use Patchlevel\EventSourcing\Console\Command\SubscriptionTeardownCommand;
 use Patchlevel\EventSourcing\Console\Command\WatchCommand;
 use Patchlevel\EventSourcing\Console\DoctrineHelper;
 use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
-use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
+use Patchlevel\EventSourcing\DecisionModel\DecisionFactory;
+use Patchlevel\EventSourcing\DecisionModel\DecisionParameterResolver;
 use Patchlevel\EventSourcing\DecisionModel\EventAppender;
-use Patchlevel\EventSourcing\DecisionModel\StoreDecisionModelBuilder;
 use Patchlevel\EventSourcing\DecisionModel\StoreEventAppender;
 use Patchlevel\EventSourcing\EventBus\AttributeListenerProvider;
 use Patchlevel\EventSourcing\EventBus\Consumer;
@@ -205,7 +205,7 @@ final class Factory
         SnapshotStore::class,
         SubscriptionEngine::class,
         SubscriptionStore::class,
-        DecisionModelBuilder::class,
+        DecisionFactory::class,
         EventAppender::class,
         ProjectionBuilder::class,
         SchemaDirector::class,
@@ -592,7 +592,10 @@ final class Factory
                     ),
                 ] :
             [],
-                new CommandServiceHandlerProvider(self::resolveObjects($container, $commandBus['handlers'])),
+                new CommandServiceHandlerProvider(
+                    self::resolveObjects($container, $commandBus['handlers']),
+                    $config['dcb']['enabled'] ? new DecisionParameterResolver($container->get(DecisionFactory::class)) : null,
+                ),
                 ...self::resolveServices($container, $commandBus['handler_providers'], HandlerProvider::class),
             ]),
         );
@@ -812,14 +815,6 @@ final class Factory
             return;
         }
 
-        $container->bind(
-            StoreDecisionModelBuilder::class,
-            static fn (Container $container): StoreDecisionModelBuilder => new StoreDecisionModelBuilder(
-                self::resolveService($container, Store::class, AppendStore::class),
-            ),
-        );
-        $container->alias(DecisionModelBuilder::class, StoreDecisionModelBuilder::class);
-
         /** @var string $defaultStreamName the store is responsible for its options */
         $defaultStreamName = $config['store']['options']['default_stream_name'] ?? 'main';
 
@@ -832,6 +827,14 @@ final class Factory
             ),
         );
         $container->alias(EventAppender::class, StoreEventAppender::class);
+
+        $container->bind(
+            DecisionFactory::class,
+            static fn (Container $container): DecisionFactory => new DecisionFactory(
+                self::resolveService($container, Store::class, AppendStore::class),
+                $container->get(EventAppender::class),
+            ),
+        );
 
         $container->bind(
             StoreProjectionBuilder::class,

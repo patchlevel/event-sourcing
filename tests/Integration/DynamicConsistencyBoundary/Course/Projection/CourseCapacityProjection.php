@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Event\CourseCapacityChanged;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Event\CourseDefined;
 
+/** @extends BasicProjection<int> */
 final class CourseCapacityProjection extends BasicProjection
 {
     public function __construct(

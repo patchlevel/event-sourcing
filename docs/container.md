@@ -193,8 +193,7 @@ so your service can use the event sourcing services.
 ```php
 use Patchlevel\EventSourcing\Container\Container;
 use Patchlevel\EventSourcing\Container\Factory;
-use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DecisionModel\EventAppender;
+use Psr\Clock\ClockInterface;
 
 $container = Factory::create([
     'connection' => ['url' => 'pdo-pgsql://user:secret@localhost/app'],
@@ -205,12 +204,13 @@ $container = Factory::create([
     ],
     'services' => [
         CreateHotelHandler::class => static fn (Container $container): CreateHotelHandler => new CreateHotelHandler(
-            $container->get(DecisionModelBuilder::class),
-            $container->get(EventAppender::class),
+            $container->get(ClockInterface::class),
         ),
     ],
 ]);
 ```
+With `dcb` enabled, command handlers also get a new `Decision` as argument,
+see [Dynamic Consistency Boundary](dynamic-consistency-boundary.md).
 Your services are registered last, so a service with the id of a built-in service replaces it.
 `parameters` are plain values, for example for the `#[Inject]` attribute of [aggregate handlers](command-bus.md).
 

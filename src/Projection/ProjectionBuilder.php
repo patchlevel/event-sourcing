@@ -8,9 +8,11 @@ namespace Patchlevel\EventSourcing\Projection;
 interface ProjectionBuilder
 {
     /**
-     * @param array<string, Projection> $projections
+     * @param array<K, Projection> $projections
      *
-     * @return array<string, mixed>
+     * @return array<K, mixed>
+     *
+     * @template K of array-key
      */
     public function build(
         array $projections,

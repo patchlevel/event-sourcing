@@ -22,4 +22,11 @@ interface AppendStore
      * @param positive-int|0 $from
      */
     public function query(Query $query, int $from = 0): Stream;
+
+    /**
+     * Returns the highest index in the store, or 0 if the store is empty.
+     *
+     * @return positive-int|0
+     */
+    public function head(): int;
 }

@@ -8,17 +8,15 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\CommandBus\CommandBus;
 use Patchlevel\EventSourcing\CommandBus\ServiceHandlerProvider;
 use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
-use Patchlevel\EventSourcing\Container\Container;
 use Patchlevel\EventSourcing\Container\Factory;
-use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DecisionModel\EventAppender;
-use Patchlevel\EventSourcing\DecisionModel\StoreDecisionModelBuilder;
-use Patchlevel\EventSourcing\DecisionModel\StoreEventAppender;
+use Patchlevel\EventSourcing\DecisionModel\DecisionFactory;
+use Patchlevel\EventSourcing\DecisionModel\DecisionParameterResolver;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Schema\SchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Store\AppendConditionNotMet;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Store\TaggableDoctrineDbalStore;
@@ -33,6 +31,8 @@ use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Handler\ChangeCourseCapacityHandler;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Handler\DefineCourseHandler;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Handler\SubscribeStudentToCourseHandler;
+use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Projection\CourseStudentsProjection;
+use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Projection\StudentCoursesProjection;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\StudentId;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Command\CreateInvoice;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Event\InvoiceCreated;
@@ -60,29 +60,18 @@ final class DynamicConsistencyBoundaryTest extends TestCase
 
     public function testCourse(): void
     {
-        $store = new TaggableDoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Course/Event']),
-            (new AttributeEventRegistryFactory())->create([__DIR__ . '/Course/Event']),
-        );
-
-        $decisionModelBuilder = new StoreDecisionModelBuilder($store);
-        $eventAppender = new StoreEventAppender($store);
+        $store = $this->createStore(__DIR__ . '/Course/Event');
 
         $commandBus = new SyncCommandBus(
-            new ServiceHandlerProvider([
-                new DefineCourseHandler($decisionModelBuilder, $eventAppender),
-                new ChangeCourseCapacityHandler($decisionModelBuilder, $eventAppender),
-                new SubscribeStudentToCourseHandler($decisionModelBuilder, $eventAppender),
-            ]),
+            new ServiceHandlerProvider(
+                [
+                    new DefineCourseHandler(),
+                    new ChangeCourseCapacityHandler(),
+                    new SubscribeStudentToCourseHandler(),
+                ],
+                new DecisionParameterResolver(new DecisionFactory($store)),
+            ),
         );
-
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            $store,
-        );
-
-        $schemaDirector->create();
 
         $courseId = CourseId::generate();
         $student1Id = StudentId::generate();
@@ -105,29 +94,82 @@ final class DynamicConsistencyBoundaryTest extends TestCase
         ], $store->load());
     }
 
+    public function testChainedReads(): void
+    {
+        $store = $this->createStore(__DIR__ . '/Course/Event');
+        $decisionFactory = new DecisionFactory($store);
+        $commandBus = $this->courseCommandBus($decisionFactory);
+
+        $course1Id = CourseId::generate();
+        $course2Id = CourseId::generate();
+        $studentId = StudentId::generate();
+
+        $commandBus->dispatch(new DefineCourse($course1Id, 10));
+        $commandBus->dispatch(new DefineCourse($course2Id, 10));
+        $commandBus->dispatch(new SubscribeStudentToCourse($studentId, $course1Id));
+        $commandBus->dispatch(new SubscribeStudentToCourse($studentId, $course2Id));
+
+        $decision = $decisionFactory->begin();
+
+        $studentIds = $decision->read(new CourseStudentsProjection($course1Id));
+        self::assertEquals([$studentId], $studentIds);
+
+        $courseIds = $decision->read(new StudentCoursesProjection($studentId));
+        self::assertEquals([$course1Id, $course2Id], $courseIds);
+
+        // the newest event only matches the second read, it must not block the append
+        $decision->append([new CourseCapacityChanged($course1Id, 5)]);
+
+        self::assertSame(5, $store->head());
+    }
+
+    public function testChainedReadsDetectConcurrentChangeOfFirstRead(): void
+    {
+        $store = $this->createStore(__DIR__ . '/Course/Event');
+        $decisionFactory = new DecisionFactory($store);
+        $commandBus = $this->courseCommandBus($decisionFactory);
+
+        $course1Id = CourseId::generate();
+        $course2Id = CourseId::generate();
+        $course3Id = CourseId::generate();
+        $student1Id = StudentId::generate();
+        $student2Id = StudentId::generate();
+
+        $commandBus->dispatch(new DefineCourse($course1Id, 10));
+        $commandBus->dispatch(new DefineCourse($course2Id, 10));
+        $commandBus->dispatch(new DefineCourse($course3Id, 10));
+        $commandBus->dispatch(new SubscribeStudentToCourse($student1Id, $course1Id));
+        $commandBus->dispatch(new SubscribeStudentToCourse($student1Id, $course2Id));
+
+        $decision = $decisionFactory->begin();
+
+        $studentIds = $decision->read(new CourseStudentsProjection($course1Id));
+        self::assertEquals([$student1Id], $studentIds);
+
+        // matches only the first read: student 2 is never looked at
+        $commandBus->dispatch(new SubscribeStudentToCourse($student2Id, $course1Id));
+        // matches only the second read and moves the head past the event above
+        $commandBus->dispatch(new SubscribeStudentToCourse($student1Id, $course3Id));
+
+        foreach ($studentIds as $studentId) {
+            $decision->read(new StudentCoursesProjection($studentId));
+        }
+
+        $this->expectException(AppendConditionNotMet::class);
+
+        $decision->append([new CourseCapacityChanged($course1Id, 5)]);
+    }
+
     public function testInvoice(): void
     {
-        $store = new TaggableDoctrineDbalStore(
-            $this->connection,
-            DefaultEventSerializer::createFromPaths([__DIR__ . '/Invoice/Event']),
-            (new AttributeEventRegistryFactory())->create([__DIR__ . '/Invoice/Event']),
-        );
-
-        $decisionModelBuilder = new StoreDecisionModelBuilder($store);
-        $eventAppender = new StoreEventAppender($store);
+        $store = $this->createStore(__DIR__ . '/Invoice/Event');
 
         $commandBus = new SyncCommandBus(
-            new ServiceHandlerProvider([
-                new CreateInvoiceHandler($decisionModelBuilder, $eventAppender),
-            ]),
+            new ServiceHandlerProvider(
+                [new CreateInvoiceHandler()],
+                new DecisionParameterResolver(new DecisionFactory($store)),
+            ),
         );
-
-        $schemaDirector = new DoctrineSchemaDirector(
-            $this->connection,
-            $store,
-        );
-
-        $schemaDirector->create();
 
         $commandBus->dispatch(new CreateInvoice(10));
         $commandBus->dispatch(new CreateInvoice(10));
@@ -165,18 +207,9 @@ final class DynamicConsistencyBoundaryTest extends TestCase
             ],
             'services' => [
                 'app.connection' => $this->connection,
-                DefineCourseHandler::class => static fn (Container $container): DefineCourseHandler => new DefineCourseHandler(
-                    $container->get(DecisionModelBuilder::class),
-                    $container->get(EventAppender::class),
-                ),
-                ChangeCourseCapacityHandler::class => static fn (Container $container): ChangeCourseCapacityHandler => new ChangeCourseCapacityHandler(
-                    $container->get(DecisionModelBuilder::class),
-                    $container->get(EventAppender::class),
-                ),
-                SubscribeStudentToCourseHandler::class => static fn (Container $container): SubscribeStudentToCourseHandler => new SubscribeStudentToCourseHandler(
-                    $container->get(DecisionModelBuilder::class),
-                    $container->get(EventAppender::class),
-                ),
+                DefineCourseHandler::class => static fn (): DefineCourseHandler => new DefineCourseHandler(),
+                ChangeCourseCapacityHandler::class => static fn (): ChangeCourseCapacityHandler => new ChangeCourseCapacityHandler(),
+                SubscribeStudentToCourseHandler::class => static fn (): SubscribeStudentToCourseHandler => new SubscribeStudentToCourseHandler(),
             ],
         ];
         $container = Factory::create($configuration);
@@ -204,5 +237,31 @@ final class DynamicConsistencyBoundaryTest extends TestCase
             Message::create(new StudentSubscribedToCourse($student2Id, $courseId))
                 ->withHeader(new StreamNameHeader('course')),
         ], $container->get(Store::class)->load());
+    }
+
+    private function createStore(string $eventPath): TaggableDoctrineDbalStore
+    {
+        $store = new TaggableDoctrineDbalStore(
+            $this->connection,
+            DefaultEventSerializer::createFromPaths([$eventPath]),
+            (new AttributeEventRegistryFactory())->create([$eventPath]),
+        );
+
+        (new DoctrineSchemaDirector($this->connection, $store))->create();
+
+        return $store;
+    }
+
+    private function courseCommandBus(DecisionFactory $decisionFactory): CommandBus
+    {
+        return new SyncCommandBus(
+            new ServiceHandlerProvider(
+                [
+                    new DefineCourseHandler(),
+                    new SubscribeStudentToCourseHandler(),
+                ],
+                new DecisionParameterResolver($decisionFactory),
+            ),
+        );
     }
 }

@@ -28,6 +28,11 @@ final class ServiceNotResolvable extends RuntimeException
         return new self('Container is not configured');
     }
 
+    public static function unsupportedParameter(string $class, string $method, string $parameter): self
+    {
+        return new self(sprintf('Parameter "%s" in "%s::%s" can not be resolved', $parameter, $class, $method));
+    }
+
     public static function missingService(string $class, string $method, string $parameter, Throwable $exception): self
     {
         return new self(

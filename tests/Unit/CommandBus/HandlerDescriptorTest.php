@@ -43,6 +43,16 @@ final class HandlerDescriptorTest extends TestCase
         self::assertEquals('Closure', $descriptor->name());
     }
 
+    public function testExplicitName(): void
+    {
+        $handler = static function (): void {
+        };
+
+        $descriptor = new HandlerDescriptor($handler(...), 'Foo::bar');
+
+        self::assertEquals('Foo::bar', $descriptor->name());
+    }
+
     public function testAnonymousClass(): void
     {
         $handler = new class {

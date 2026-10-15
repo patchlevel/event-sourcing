@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Projection\BasicProjection;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\CourseId;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Event\StudentSubscribedToCourse;
 
+/** @extends BasicProjection<int> */
 final class NumberOfCourseSubscriptionsProjection extends BasicProjection
 {
     public function __construct(

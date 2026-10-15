@@ -631,6 +631,24 @@ final class TaggableDoctrineDbalStoreTest extends TestCase
         self::assertStreamEquals($messages, $this->store->load());
     }
 
+    public function testHeadEmpty(): void
+    {
+        self::assertSame(0, $this->store->head());
+    }
+
+    public function testHead(): void
+    {
+        $profileId = ProfileId::generate();
+
+        $this->store->append([
+            Message::create(new ProfileCreated($profileId, 'test'))
+                ->withHeader(new TagsHeader(['profile:' . $profileId->toString()])),
+            Message::create(new ExternEvent('test message')),
+        ]);
+
+        self::assertSame(2, $this->store->head());
+    }
+
     public function testQueryTags(): void
     {
         $profileId1 = ProfileId::generate();

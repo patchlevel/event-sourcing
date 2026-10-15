@@ -34,9 +34,8 @@ use Patchlevel\EventSourcing\Container\Container;
 use Patchlevel\EventSourcing\Container\Factory;
 use Patchlevel\EventSourcing\Container\InvalidConfiguration;
 use Patchlevel\EventSourcing\Cryptography\DoctrineCipherKeyStore;
-use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
+use Patchlevel\EventSourcing\DecisionModel\DecisionFactory;
 use Patchlevel\EventSourcing\DecisionModel\EventAppender;
-use Patchlevel\EventSourcing\DecisionModel\StoreDecisionModelBuilder;
 use Patchlevel\EventSourcing\DecisionModel\StoreEventAppender;
 use Patchlevel\EventSourcing\EventBus\AttributeListenerProvider;
 use Patchlevel\EventSourcing\EventBus\Consumer;
@@ -930,7 +929,8 @@ final class FactoryTest extends TestCase
         $container = Factory::create($configuration);
 
         self::assertInstanceOf(TaggableDoctrineDbalStore::class, $container->get(Store::class));
-        self::assertInstanceOf(StoreDecisionModelBuilder::class, $container->get(DecisionModelBuilder::class));
+        self::assertTrue($container->has(DecisionFactory::class));
+        $container->get(DecisionFactory::class);
         self::assertInstanceOf(StoreEventAppender::class, $container->get(EventAppender::class));
         self::assertInstanceOf(AttributeEventTagExtractor::class, $container->get(EventTagExtractor::class));
     }
@@ -977,7 +977,7 @@ final class FactoryTest extends TestCase
         $message = $container->get(MessageDecorator::class)(Message::create($event));
 
         self::assertFalse($message->hasHeader(TagsHeader::class));
-        self::assertFalse($container->has(DecisionModelBuilder::class));
+        self::assertFalse($container->has(DecisionFactory::class));
         self::assertFalse($container->has(EventAppender::class));
     }
 
@@ -990,7 +990,8 @@ final class FactoryTest extends TestCase
         ];
         $container = Factory::create($configuration);
 
-        self::assertInstanceOf(StoreDecisionModelBuilder::class, $container->get(DecisionModelBuilder::class));
+        self::assertTrue($container->has(DecisionFactory::class));
+        $container->get(DecisionFactory::class);
         self::assertInstanceOf(StoreEventAppender::class, $container->get(EventAppender::class));
     }
 

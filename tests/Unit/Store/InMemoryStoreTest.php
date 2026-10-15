@@ -807,6 +807,24 @@ final class InMemoryStoreTest extends TestCase
         self::assertSame([], $stream->toList());
     }
 
+    public function testHeadEmpty(): void
+    {
+        $store = new InMemoryStore();
+
+        self::assertSame(0, $store->head());
+    }
+
+    public function testHead(): void
+    {
+        $store = new InMemoryStore();
+        $store->save(
+            new Message(new ProfileVisited(ProfileId::fromString('1'))),
+            new Message(new ProfileVisited(ProfileId::fromString('2'))),
+        );
+
+        self::assertSame(2, $store->head());
+    }
+
     public function testAppendAssignsIndex(): void
     {
         $store = new InMemoryStore();

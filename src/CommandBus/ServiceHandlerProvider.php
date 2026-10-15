@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\CommandBus;
 
+use Closure;
+use Patchlevel\EventSourcing\CommandBus\Handler\ParameterResolver;
+use ReflectionMethod;
+
 use function class_implements;
 use function class_parents;
 
@@ -14,9 +18,14 @@ final class ServiceHandlerProvider implements HandlerProvider
     /** @var array<class-string, list<HandlerDescriptor>> */
     private array $handlers = [];
 
-    /** @param iterable<object> $services */
+    /**
+     * Without a parameter resolver, handlers are called with the command only.
+     *
+     * @param iterable<object> $services
+     */
     public function __construct(
         private readonly iterable $services,
+        private readonly ParameterResolver|null $parameterResolver = null,
     ) {
     }
 
@@ -40,21 +49,32 @@ final class ServiceHandlerProvider implements HandlerProvider
     {
         foreach ($this->services as $service) {
             foreach (HandlerFinder::findInClass($service::class) as $handler) {
-                if ($handler->static) {
-                    $this->handlers[$handler->commandClass][] = new HandlerDescriptor(
-                        $service::{$handler->method}(...),
-                    );
+                $callable = $handler->static
+                    ? $service::{$handler->method}(...)
+                    : $service->{$handler->method}(...);
 
-                    continue;
-                }
-
-                $this->handlers[$handler->commandClass][] = new HandlerDescriptor(
-                    $service->{$handler->method}(...),
+                $this->handlers[$handler->commandClass][] = $this->descriptor(
+                    $callable,
+                    new ReflectionMethod($service, $handler->method),
                 );
             }
         }
 
         $this->initialized = true;
+    }
+
+    private function descriptor(Closure $callable, ReflectionMethod $method): HandlerDescriptor
+    {
+        $parameterResolver = $this->parameterResolver;
+
+        if ($parameterResolver === null || $method->getNumberOfParameters() <= 1) {
+            return new HandlerDescriptor($callable);
+        }
+
+        return new HandlerDescriptor(
+            static fn (object $command): mixed => $callable(...$parameterResolver->resolve($method, $command)),
+            $method->getDeclaringClass()->getName() . '::' . $method->getName(),
+        );
     }
 
     /**

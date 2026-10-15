@@ -122,6 +122,12 @@ final class InMemoryStore implements Store, AppendStore
         ));
     }
 
+    /** @return positive-int|0 */
+    public function head(): int
+    {
+        return array_key_last($this->messages) ?? 0;
+    }
+
     /** @param iterable<Message> $messages */
     public function append(iterable $messages, AppendCondition|null $appendCondition = null): void
     {
