@@ -965,7 +965,8 @@ final class ProfileProjector
 }
 ```
 :::note
-A partition that already used up its retries before the outage may still call its `#[OnFailed]` method.
+A partition without retries left only fails and calls its `#[OnFailed]` method at the end of the run,
+if the circuit breaker did not trip.
 :::
 
 ## Subscription Engine
