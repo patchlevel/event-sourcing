@@ -89,7 +89,7 @@ final class MessageProcessor
             return null;
         }
 
-        if (!$subscription->isPartition() && $subscriber->metadata()->partitionMethod !== null) {
+        if (!$subscription->isPartition() && $subscriber->metadata()->partition !== null) {
             if ($router === null) {
                 throw new UnexpectedError(sprintf('The partitioned subscription "%s" needs a router.', $subscription->id()));
             }
@@ -112,6 +112,16 @@ final class MessageProcessor
             );
 
             $this->eventDispatcher->dispatch($event);
+
+            if ($event->skip) {
+                $this->logger?->debug(sprintf(
+                    'Subscription Engine: Subscription "%s" skipped the event "%s".',
+                    $subscription->id(),
+                    $message->event()::class,
+                ));
+
+                return null;
+            }
 
             $context = new ArgumentResolverContext($message, $subscription, $subscriber->metadata());
 

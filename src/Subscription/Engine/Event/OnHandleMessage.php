@@ -12,6 +12,8 @@ final class OnHandleMessage
     public function __construct(
         public readonly Subscription $subscription,
         public readonly Message $message,
+        /** A listener can skip the message: no subscribe method is called and the position does not move. */
+        public bool $skip = false,
     ) {
     }
 }

@@ -891,6 +891,7 @@ The built-in message loaders load exactly these messages. A custom message loade
 
 Setup, teardown and cleanup belong to the subscriber as a whole and only run on the main subscription.
 Removing the main subscription removes its partitions as well.
+If the main subscription is in error, the whole subscriber waits until it is retried.
 
 :::warning
 The order of messages is only guaranteed within a partition, never across partitions.
@@ -905,6 +906,38 @@ The id of a partitioned subscriber must not contain `#`.
 :::tip
 Changing the partition method is safe: messages that were already routed stay in their partition.
 Only the order between the old and the new partition of the same aggregate is not guaranteed during the change.
+:::
+
+#### Circuit breaker
+
+A failure that hits every partition, like a database that is down, would put every partition into the error status
+and let each of them use up its retries. To prevent that, the engine counts the failing partitions of a subscriber.
+If a number of them fail in a row, without any success in between, the failure counts as systemic:
+the main subscription goes into the error status, the partitions that failed are set back,
+and no other partition is processed until the main subscription is retried.
+After that, the partitions continue where they were, without having used up any retries.
+
+The default is 5 failures in a row, you can change it on the attribute.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Message\Message;
+
+#[Projector('profile_1')]
+final class ProfileProjector
+{
+    #[Partition(maxConsecutiveFailures: 20)]
+    public function partition(Message $message): string
+    {
+        return $message->header(TenantHeader::class)->tenant;
+    }
+
+    // ...
+}
+```
+:::note
+A partition that already used up its retries before the outage may still call its `#[OnFailed]` method.
 :::
 
 ## Subscription Engine

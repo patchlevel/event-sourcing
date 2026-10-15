@@ -169,11 +169,13 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 $setupMethod = $method->getName();
             }
 
-            if ($method->getAttributes(Partition::class)) {
+            $partitionAttributes = $method->getAttributes(Partition::class);
+
+            if ($partitionAttributes !== []) {
                 if ($partitionMethod !== null) {
                     throw new DuplicatePartitionMethod(
                         $subscriber,
-                        $partitionMethod,
+                        $partitionMethod->method,
                         $method->getName(),
                     );
                 }
@@ -182,7 +184,10 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                     throw InvalidPartitionMethod::invalidSignature($subscriber, $method->getName());
                 }
 
-                $partitionMethod = $method->getName();
+                $partitionMethod = new PartitionMetadata(
+                    $method->getName(),
+                    $partitionAttributes[0]->newInstance()->maxConsecutiveFailures,
+                );
             }
 
             if ($method->getAttributes(Cleanup::class)) {

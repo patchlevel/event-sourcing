@@ -39,6 +39,11 @@ final class BatchSubscriber implements EventSubscriberInterface
 
     public function onHandleMessage(OnHandleMessage $event): void
     {
+        // a skipped message must not open a batch, it may hold a transaction until the flush
+        if ($event->skip) {
+            return;
+        }
+
         $subscriberId = $event->subscription->id();
 
         if ($this->batchManager->has($subscriberId)) {

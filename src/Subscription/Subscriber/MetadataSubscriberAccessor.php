@@ -87,7 +87,7 @@ final class MetadataSubscriberAccessor
     /** @return Closure(Message):mixed|null */
     public function partitionMethod(): Closure|null
     {
-        $method = $this->metadata->partitionMethod;
+        $method = $this->metadata->partition?->method;
 
         if ($method === null) {
             return null;

@@ -40,6 +40,7 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateTeardownMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\IncompleteBatchMethods;
 use Patchlevel\EventSourcing\Metadata\Subscriber\InvalidPartitionMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\MixedTeardownAndCleanupMethods;
+use Patchlevel\EventSourcing\Metadata\Subscriber\PartitionMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
@@ -820,7 +821,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $metadataFactory = new AttributeSubscriberMetadataFactory();
         $metadata = $metadataFactory->metadata($subscriber::class);
 
-        self::assertSame('partition', $metadata->partitionMethod);
+        self::assertEquals(new PartitionMetadata('partition', 5), $metadata->partition);
     }
 
     public function testNoPartitionMethod(): void
@@ -832,7 +833,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $metadataFactory = new AttributeSubscriberMetadataFactory();
         $metadata = $metadataFactory->metadata($subscriber::class);
 
-        self::assertNull($metadata->partitionMethod);
+        self::assertNull($metadata->partition);
     }
 
     public function testDuplicatePartitionMethodException(): void
@@ -907,5 +908,21 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
         $metadataFactory = new AttributeSubscriberMetadataFactory();
         $metadataFactory->metadata($subscriber::class);
+    }
+
+    public function testPartitionMethodWithMaxConsecutiveFailures(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+            #[Partition(maxConsecutiveFailures: 20)]
+            public function partition(Message $message): string
+            {
+                return 'key';
+            }
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+
+        self::assertEquals(new PartitionMetadata('partition', 20), $metadataFactory->metadata($subscriber::class)->partition);
     }
 }

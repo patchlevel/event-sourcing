@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
@@ -140,5 +141,39 @@ final class MessageProcessorTest extends TestCase
 
         self::assertNotNull($error);
         self::assertInstanceOf(NoSuitableResolver::class, $error->throwable);
+    }
+
+    public function testListenerCanSkipAMessage(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public bool $called = false;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(ProfileVisited $event): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(OnHandleMessage::class, static function (OnHandleMessage $event): void {
+            $event->skip = true;
+        });
+
+        $processor = new MessageProcessor(
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            $eventDispatcher,
+            [],
+            new NullLogger(),
+        );
+
+        $subscription = new Subscription('test', status: Status::Active, position: 0);
+
+        $error = $processor->process(1, Message::create(new ProfileVisited(ProfileId::fromString('1'))), $subscription);
+
+        self::assertNull($error);
+        self::assertFalse($subscriber->called);
+        self::assertSame(0, $subscription->position(), 'a skipped message does not move the position');
     }
 }

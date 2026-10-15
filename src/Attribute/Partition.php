@@ -12,4 +12,15 @@ use Attribute;
 #[Attribute(Attribute::TARGET_METHOD)]
 final class Partition
 {
+    public function __construct(
+        /**
+         * After that many partitions of the subscriber failed in a row, without any success in between, the failure is
+         * treated as systemic (e.g. the database is down): the main subscription goes into the error status instead of
+         * every single partition, and the partitions wait until it is retried.
+         *
+         * @var positive-int
+         */
+        public readonly int $maxConsecutiveFailures = 5,
+    ) {
+    }
 }

@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
+use function array_keys;
 use function array_merge;
 use function array_values;
 use function count;
@@ -56,6 +57,8 @@ final class SubscriptionRunner
 
             $surviving[] = $subscription;
         }
+
+        $surviving = $this->withoutStoppedSubscribers($surviving);
 
         if (count($surviving) > 1) {
             $separated = $this->processBatchesSeparately($surviving, $limit, $boot);
@@ -178,6 +181,65 @@ final class SubscriptionRunner
             !$limitReached && !$inboxFull && !$router->hasRouted(),
             $errors,
         );
+    }
+
+    /**
+     * A main subscription in error stops its whole subscriber, e.g. after the circuit breaker detected a systemic
+     * failure. Its partitions wait without being touched until the main subscription is retried.
+     *
+     * @param list<Subscription> $subscriptions
+     *
+     * @return list<Subscription>
+     */
+    private function withoutStoppedSubscribers(array $subscriptions): array
+    {
+        $subscriberIds = [];
+
+        foreach ($subscriptions as $subscription) {
+            if (!$subscription->isPartition()) {
+                continue;
+            }
+
+            $subscriberIds[$subscription->subscriberId()] = true;
+        }
+
+        if ($subscriberIds === []) {
+            return $subscriptions;
+        }
+
+        $stopped = [];
+        $mains = $this->subscriptionManager->find(
+            new SubscriptionCriteria(ids: array_keys($subscriberIds), partitions: false),
+        );
+
+        foreach ($mains as $main) {
+            if (!$main->isError() && !$main->isFailed()) {
+                continue;
+            }
+
+            $stopped[$main->id()] = true;
+        }
+
+        if ($stopped === []) {
+            return $subscriptions;
+        }
+
+        $running = [];
+
+        foreach ($subscriptions as $subscription) {
+            if ($subscription->isPartition() && isset($stopped[$subscription->subscriberId()])) {
+                $this->logger?->debug(sprintf(
+                    'Subscription Engine: Partition "%s" waits, its main subscription is in error.',
+                    $subscription->id(),
+                ));
+
+                continue;
+            }
+
+            $running[] = $subscription;
+        }
+
+        return $running;
     }
 
     /**

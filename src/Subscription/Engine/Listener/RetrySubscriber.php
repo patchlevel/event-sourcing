@@ -106,6 +106,12 @@ final class RetrySubscriber implements EventSubscriberInterface
 
     public function onSuccessHandleMessage(OnHandleMessageSuccess $event): void
     {
+        // the main subscription of a partitioned subscriber only routes, that works even if the partitions fail.
+        // its retries are reset by the circuit breaker once its partitions succeed again.
+        if (!$event->subscription->isPartition() && $this->subscriberRepository->get($event->subscription->subscriberId())?->metadata()->partition !== null) {
+            return;
+        }
+
         $event->subscription->resetRetry();
     }
 

@@ -41,6 +41,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function array_keys;
+use function array_map;
 use function gc_collect_cycles;
 use function random_int;
 use function sort;
@@ -572,5 +573,106 @@ final class PartitionedSubscriptionTest extends TestCase
         self::assertNotNull($error);
         self::assertStringContainsString('does not support partitions', $error->errorMessage);
         self::assertSame([], $this->partitions());
+    }
+
+    /** Every handler fails, like when the database of the projection is down. */
+    public function testCircuitBreakerStopsTheSubscriberOnASystemicFailure(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        $ids = $this->createProfiles(20);
+        $projection->failingNames = array_map(static fn (int $i): string => 'name-' . $i, array_keys($ids));
+
+        $this->runUntilFinished($engine);
+        $this->runUntilFinished($engine);
+
+        $main = $this->subscriptionStore->get(self::MAIN);
+        $error = $main->subscriptionError();
+        self::assertSame(Status::Error, $main->status(), 'one visible error for the whole subscriber');
+        self::assertNotNull($error);
+        self::assertStringContainsString('Forced failure', $error->errorMessage);
+
+        $partitions = $this->partitions();
+        self::assertCount(20, $partitions);
+
+        foreach ($partitions as $partition) {
+            self::assertSame(Status::Active, $partition->status(), $partition->id());
+            self::assertNull($partition->subscriptionError(), $partition->id());
+            self::assertSame(0, $partition->retryAttempt(), $partition->id());
+            self::assertCount(1, $this->subscriptionStore->inbox([$partition->id() => -1], 10)[$partition->id()] ?? [], 'the message is still in the inbox');
+        }
+
+        self::assertSame(5, $projection->handled, 'only partitions up to the threshold were tried');
+
+        // the database is back
+        $projection->failingNames = [];
+        $this->clock->sleep(10);
+        $this->runUntilFinished($engine);
+
+        self::assertSame(Status::Active, $this->subscriptionStore->get(self::MAIN)->status());
+        self::assertSame(0, $this->subscriptionStore->get(self::MAIN)->retryAttempt(), 'successful partitions reset the retries of the main subscription');
+
+        foreach ($ids as $i => $id) {
+            self::assertSame(['name-' . $i], $projection->processed[$id]);
+        }
+    }
+
+    public function testSparseFailuresDoNotTripTheCircuitBreaker(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $projection->failingNames = ['name-3', 'name-11'];
+        $engine = $this->engine($projection);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        $ids = $this->createProfiles(20);
+        $this->runUntilFinished($engine);
+
+        self::assertSame(Status::Active, $this->subscriptionStore->get(self::MAIN)->status());
+
+        $failed = [];
+
+        foreach ($this->partitions() as $partition) {
+            if (!$partition->isError()) {
+                continue;
+            }
+
+            $failed[] = $partition->id();
+        }
+
+        self::assertCount(2, $failed);
+        self::assertCount(18, $projection->processed);
+        self::assertArrayNotHasKey($ids[3], $projection->processed);
+    }
+
+    public function testPersistentOutageEventuallyFailsTheSubscriber(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        $ids = $this->createProfiles(10);
+        $projection->failingNames = array_map(static fn (int $i): string => 'name-' . $i, array_keys($ids));
+
+        for ($i = 0; $i < 10; $i++) {
+            // new events keep coming in during the outage, the main subscription routes them successfully
+            $projection->failingNames[] = 'outage-' . $i;
+            $this->repository->save(Profile::create(ProfileId::generate(), 'outage-' . $i));
+
+            $engine->execute(new Run());
+            $engine->execute(new Run());
+            $this->clock->sleep(1000);
+        }
+
+        self::assertSame(Status::Failed, $this->subscriptionStore->get(self::MAIN)->status(), 'the retries of the main subscription are used up');
+
+        foreach ($this->partitions() as $partition) {
+            self::assertSame(Status::Active, $partition->status(), 'the partitions did not use up their retries');
+            self::assertSame(0, $partition->retryAttempt());
+        }
     }
 }
