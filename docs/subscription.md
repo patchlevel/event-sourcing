@@ -349,6 +349,7 @@ projection that, after it has been updated, wants a notification subscription to
 
 If you type-hint an `EventEmitter` argument in a subscribe method, it is injected automatically.
 By default the emitted events are written into a dedicated stream named `subscription_<subscription-id>`.
+The [partitions](#partitioning) of a subscriber share the stream of their subscriber.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;

@@ -71,6 +71,25 @@ final class EventEmitterResolverTest extends TestCase
         self::assertSame(['subscription_foo'], $store->streams());
     }
 
+    public function testPartitionEmitsToTheStreamOfItsSubscriber(): void
+    {
+        $store = new InMemoryStore();
+        $resolver = new EventEmitterResolver($store);
+
+        $emitter = $resolver->resolve(
+            new ArgumentMetadata('emitter', Type::object(EventEmitter::class)),
+            new ArgumentResolverContext(
+                new Message(new stdClass()),
+                Subscription::partition(new Subscription('foo', status: Status::Active), 'tenant-a', 0),
+                new SubscriberMetadata('foo'),
+            ),
+        );
+
+        $emitter->emit([new stdClass()]);
+
+        self::assertSame(['subscription_foo'], $store->streams());
+    }
+
     public function testResolveDuringBootReturnsNoopByDefault(): void
     {
         $resolver = new EventEmitterResolver($this->createMock(Store::class));

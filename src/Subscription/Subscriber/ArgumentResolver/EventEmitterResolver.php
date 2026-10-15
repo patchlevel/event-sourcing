@@ -32,9 +32,10 @@ final class EventEmitterResolver implements ArgumentResolver
             return new NoopEventEmitter();
         }
 
+        // the partitions of a subscriber share its stream
         return new StoreEventEmitter(
             $this->store,
-            'subscription_' . $context->subscription->id(),
+            'subscription_' . $context->subscription->subscriberId(),
         );
     }
 
