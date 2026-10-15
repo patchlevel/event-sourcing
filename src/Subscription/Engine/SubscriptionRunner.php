@@ -195,7 +195,7 @@ final class SubscriptionRunner
 
         return new ProcessedResult(
             $messageCounter,
-            !$limitReached && !$inboxFull && !$router->hasRouted(),
+            !$limitReached && !$inboxFull,
             $errors,
         );
     }

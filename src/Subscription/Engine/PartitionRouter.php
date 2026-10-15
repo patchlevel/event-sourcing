@@ -41,8 +41,6 @@ final class PartitionRouter
     /** @var array<string, array{Subscription, string, int}> partition id => main subscription, key and first routed index */
     private array $unknownPartitions = [];
 
-    private bool $routed = false;
-
     public function __construct(
         private readonly SubscriptionManager $subscriptionManager,
         private readonly LoggerInterface|null $logger = null,
@@ -58,11 +56,11 @@ final class PartitionRouter
         // fails first if the store has no inbox, so no partition is created that could never be processed
         $this->subscriptionManager->addToInbox($partitionId, $index);
 
-        if (!isset($this->knownPartitions[$partitionId]) && !isset($this->unknownPartitions[$partitionId])) {
-            $this->unknownPartitions[$partitionId] = [$main, $partitionKey, $index];
+        if (isset($this->knownPartitions[$partitionId]) || isset($this->unknownPartitions[$partitionId])) {
+            return;
         }
 
-        $this->routed = true;
+        $this->unknownPartitions[$partitionId] = [$main, $partitionKey, $index];
     }
 
     /**
@@ -98,12 +96,6 @@ final class PartitionRouter
         }
 
         $this->unknownPartitions = [];
-    }
-
-    /** Whether messages were routed, then the partitions have new work. */
-    public function hasRouted(): bool
-    {
-        return $this->routed;
     }
 
     /** @param MetadataSubscriberAccessor<object> $subscriber */

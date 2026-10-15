@@ -27,6 +27,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepository;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\Status;
@@ -86,28 +87,22 @@ final class PartitionedSubscriptionTest extends TestCase
 
         $result = $engine->execute(new Run());
         self::assertInstanceOf(ProcessedResult::class, $result);
-        self::assertFalse($result->finished, 'the routed messages still have to be processed by the partitions');
-
-        self::assertSame(0, $projection->handled, 'the main subscription never calls the subscriber');
+        self::assertTrue($result->finished, 'the partitions process the routed messages in the same run');
 
         $partitions = $this->partitions();
         self::assertCount(3, $partitions);
 
-        foreach ($ids as $id) {
+        foreach ($ids as $i => $id) {
             $partition = $partitions[Subscription::partitionId(self::MAIN, 'profile-' . $id)];
 
             self::assertSame(self::MAIN, $partition->subscriberId());
             self::assertSame('profile-' . $id, $partition->partitionKey());
             self::assertSame(Status::Active, $partition->status());
-            self::assertCount(1, $this->subscriptionStore->inbox([$partition->id() => -1], 10)[$partition->id()] ?? []);
-        }
-
-        $this->runUntilFinished($engine);
-
-        foreach ($ids as $i => $id) {
             self::assertSame(['name-' . $i], $projection->processed[$id]);
             self::assertSame('profile-' . $id, $projection->partitionKeys[$id], 'the handler gets the key of its partition');
         }
+
+        self::assertSame(3, $projection->handled, 'only the partitions call the subscriber, every message once');
 
         foreach ($this->partitions() as $partition) {
             self::assertSame([], $this->subscriptionStore->inbox([$partition->id() => -1], 10), 'processed messages leave the inbox');
@@ -328,13 +323,16 @@ final class PartitionedSubscriptionTest extends TestCase
         [$removedId, $keptId] = $this->createProfiles(2);
         $this->runUntilFinished($engine);
 
+        // the partition fails, so the message is still in its inbox when its stream is removed
+        $projection->failingNames = ['removed'];
         $this->changeName(ProfileId::fromString($removedId), 'removed');
         $this->changeName(ProfileId::fromString($keptId), 'kept');
-
-        $engine->execute(new Run()); // the main subscription routes both messages
+        $this->runUntilFinished($engine);
 
         $this->store->remove(new Criteria(new StreamCriterion('profile-' . $removedId)));
 
+        $projection->failingNames = [];
+        $this->clock->sleep(10);
         $this->runUntilFinished($engine);
 
         self::assertSame(['name-1', 'kept'], $projection->processed[$keptId]);
@@ -407,6 +405,22 @@ final class PartitionedSubscriptionTest extends TestCase
             ],
             array_keys($this->partitions()),
         );
+    }
+
+    /** The repository that runs the engine after every save, e.g. to read your own writes. */
+    public function testProjectionIsUpToDateAfterASynchronousRun(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        $repository = new RunSubscriptionEngineRepository($this->repository, $engine);
+
+        $id = ProfileId::generate();
+        $repository->save(Profile::create($id, 'name'));
+
+        self::assertSame(['name'], $projection->processed[$id->toString()]);
     }
 
     /** @param 'index'|'plain'|'unsupported' $messageLoader */

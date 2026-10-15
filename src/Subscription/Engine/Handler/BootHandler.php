@@ -41,25 +41,43 @@ final class BootHandler implements Handler
             $command->limit ?? ClaimGroups::DEFAULT_POSITION_WINDOW,
         );
 
-        /** @var list<ProcessedResult> $results */
-        $results = $this->subscriptionManager->forEachClaimedGroup(
+        if (!$supportsPartitions) {
+            return ProcessedResult::merge($this->claim(
+                new SubscriptionCriteria(ids: $command->ids, groups: $command->groups, status: [Status::Booting]),
+                $claimGroups,
+                $command,
+            ));
+        }
+
+        $results = $this->claim(
             new SubscriptionCriteria(
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Booting],
-                // partitions without messages in their inbox have nothing to do while their main subscription boots
-                pendingPartitionsOnly: $supportsPartitions,
+                partitions: false,
             ),
             $claimGroups,
-            fn (array $subscriptions): ProcessedResult => $this->process($subscriptions, $command),
-            $this->onError(...),
+            $command,
         );
 
-        if ($supportsPartitions) {
-            $results = [...$results, ...$this->finishPartitions($command, $claimGroups)];
-        }
+        // the partitions are found after the main subscriptions routed, so they process the new messages right away.
+        // partitions without messages in their inbox have nothing to do while their main subscription boots.
+        $results = [
+            ...$results,
+            ...$this->claim(
+                new SubscriptionCriteria(
+                    ids: $command->ids,
+                    groups: $command->groups,
+                    status: [Status::Booting],
+                    partitions: true,
+                    pendingPartitionsOnly: true,
+                ),
+                $claimGroups,
+                $command,
+            ),
+        ];
 
-        return ProcessedResult::merge($results);
+        return ProcessedResult::merge([...$results, ...$this->finishPartitions($command, $claimGroups)]);
     }
 
     /**
@@ -94,15 +112,28 @@ final class BootHandler implements Handler
         }
 
         return [
-            ...$this->subscriptionManager->forEachClaimedGroup(
+            ...$this->claim(
                 $criteria,
                 $claimGroups,
-                fn (array $subscriptions): ProcessedResult => $this->process($subscriptions, $command),
-                $this->onError(...),
+                $command,
             ),
             // a partition held by another worker is not claimed, the next boot run checks again
             new ProcessedResult(0, false),
         ];
+    }
+
+    /** @return list<ProcessedResult> */
+    private function claim(SubscriptionCriteria $criteria, ClaimGroups $claimGroups, Boot $command): array
+    {
+        /** @var list<ProcessedResult> $results */
+        $results = $this->subscriptionManager->forEachClaimedGroup(
+            $criteria,
+            $claimGroups,
+            fn (array $subscriptions): ProcessedResult => $this->process($subscriptions, $command),
+            $this->onError(...),
+        );
+
+        return $results;
     }
 
     /** @param non-empty-list<Subscription> $subscriptions */
