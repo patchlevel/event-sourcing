@@ -10,6 +10,8 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 
+use function array_chunk;
+use function array_keys;
 use function is_string;
 use function sprintf;
 use function strlen;
@@ -21,6 +23,7 @@ use function strlen;
  * non-deterministic key method can not make a message disappear.
  *
  * A router lives for one run of the claimed main subscription, so the known partitions never go stale.
+ * The partitions of new keys are created by createPartitions() at the end of the run.
  *
  * @internal
  */
@@ -29,17 +32,14 @@ final class PartitionRouter
     /** Maximum length of a subscription id in bytes, the id of a partition has to fit into it. */
     public const MAX_ID_LENGTH = 255;
 
-    /** After that many lookups of single partitions, all partitions of the subscriber are loaded at once. */
-    private const SINGLE_LOOKUPS = 50;
+    /** How many partition ids are looked up with one query. */
+    private const LOOKUP_CHUNK = 500;
 
     /** @var array<string, true> partition ids known to exist */
     private array $knownPartitions = [];
 
-    /** @var array<string, int> main subscription id => single lookups so far */
-    private array $lookups = [];
-
-    /** @var array<string, true> main subscriptions whose partitions are all loaded */
-    private array $loaded = [];
+    /** @var array<string, array{Subscription, string, int}> partition id => main subscription, key and first routed index */
+    private array $unknownPartitions = [];
 
     private bool $routed = false;
 
@@ -58,18 +58,46 @@ final class PartitionRouter
         // fails first if the store has no inbox, so no partition is created that could never be processed
         $this->subscriptionManager->addToInbox($partitionId, $index);
 
-        if (!$this->exists($main, $partitionId)) {
-            $this->subscriptionManager->add(Subscription::partition($main, $partitionKey, $index - 1));
-            $this->knownPartitions[$partitionId] = true;
-
-            $this->logger?->info(sprintf(
-                'Subscription Engine: Partition "%s" of subscriber "%s" created.',
-                $partitionKey,
-                $main->id(),
-            ));
+        if (!isset($this->knownPartitions[$partitionId]) && !isset($this->unknownPartitions[$partitionId])) {
+            $this->unknownPartitions[$partitionId] = [$main, $partitionKey, $index];
         }
 
         $this->routed = true;
+    }
+
+    /**
+     * Creates the partitions of the routed messages that do not exist yet. The partitions are looked up together
+     * with one query per chunk, so routing stays cheap no matter how many partitions the subscriber has.
+     * Has to be called before the routed messages are flushed, otherwise their inbox has no partition.
+     */
+    public function createPartitions(): void
+    {
+        foreach (array_chunk($this->unknownPartitions, self::LOOKUP_CHUNK, true) as $chunk) {
+            $existing = $this->subscriptionManager->find(
+                new SubscriptionCriteria(ids: array_keys($chunk), partitions: true),
+            );
+
+            foreach ($existing as $partition) {
+                $this->knownPartitions[$partition->id()] = true;
+            }
+
+            foreach ($chunk as $partitionId => [$main, $partitionKey, $firstIndex]) {
+                if (isset($this->knownPartitions[$partitionId])) {
+                    continue;
+                }
+
+                $this->subscriptionManager->add(Subscription::partition($main, $partitionKey, $firstIndex - 1));
+                $this->knownPartitions[$partitionId] = true;
+
+                $this->logger?->info(sprintf(
+                    'Subscription Engine: Partition "%s" of subscriber "%s" created.',
+                    $partitionKey,
+                    $main->id(),
+                ));
+            }
+        }
+
+        $this->unknownPartitions = [];
     }
 
     /** Whether messages were routed, then the partitions have new work. */
@@ -102,39 +130,5 @@ final class PartitionRouter
         }
 
         return $partitionKey;
-    }
-
-    /**
-     * Looks up only the partitions the routed messages belong to, so routing a few messages stays cheap no matter how
-     * many partitions the subscriber has. When many messages are routed, e.g. while catching up, all partitions are
-     * loaded with one query instead.
-     */
-    private function exists(Subscription $main, string $partitionId): bool
-    {
-        if (isset($this->knownPartitions[$partitionId])) {
-            return true;
-        }
-
-        if (isset($this->loaded[$main->id()])) {
-            return false;
-        }
-
-        $this->lookups[$main->id()] = ($this->lookups[$main->id()] ?? 0) + 1;
-
-        if ($this->lookups[$main->id()] > self::SINGLE_LOOKUPS) {
-            foreach ($this->subscriptionManager->find(new SubscriptionCriteria(ids: [$main->id()], partitions: true)) as $partition) {
-                $this->knownPartitions[$partition->id()] = true;
-            }
-
-            $this->loaded[$main->id()] = true;
-
-            return isset($this->knownPartitions[$partitionId]);
-        }
-
-        if ($this->subscriptionManager->find(new SubscriptionCriteria(ids: [$partitionId], partitions: true)) === []) {
-            return false;
-        }
-
-        return $this->knownPartitions[$partitionId] = true;
     }
 }

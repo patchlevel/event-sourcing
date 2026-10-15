@@ -41,6 +41,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\Partition
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 
 use function array_keys;
 use function array_map;
@@ -347,6 +348,64 @@ final class PartitionedSubscriptionTest extends TestCase
             [],
             $this->subscriptionStore->find(new SubscriptionCriteria(status: [Status::Active], pendingPartitionsOnly: true, partitions: true)),
             'no partition waits for a message that does not exist anymore',
+        );
+    }
+
+    /** More new keys than one lookup query covers, then messages for the existing partitions. */
+    public function testManyPartitionsAreLookedUpInChunks(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        $ids = $this->createProfiles(600);
+        $this->runUntilFinished($engine);
+
+        self::assertCount(600, $this->partitions());
+
+        foreach ($ids as $id) {
+            $this->changeName(ProfileId::fromString($id), 'changed-' . $id);
+        }
+
+        $this->runUntilFinished($engine);
+
+        self::assertCount(600, $this->partitions());
+
+        foreach ($ids as $i => $id) {
+            self::assertSame(['name-' . $i, 'changed-' . $id], $projection->processed[$id]);
+        }
+    }
+
+    /** The messages routed before an error of the main subscription keep their partitions. */
+    public function testPartitionsOfMessagesRoutedBeforeAnErrorAreCreated(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        [$firstId, $secondId, $brokenId] = $this->createProfiles(3);
+
+        $projection->partitionKey = static function (Message $message) use ($brokenId): string {
+            $streamName = $message->header(StreamNameHeader::class)->streamName;
+
+            if ($streamName === 'profile-' . $brokenId) {
+                throw new RuntimeException('no key');
+            }
+
+            return $streamName;
+        };
+
+        $engine->execute(new Run());
+
+        self::assertSame(Status::Error, $this->subscriptionStore->get(self::MAIN)->status());
+        self::assertSame(
+            [
+                Subscription::partitionId(self::MAIN, 'profile-' . $firstId),
+                Subscription::partitionId(self::MAIN, 'profile-' . $secondId),
+            ],
+            array_keys($this->partitions()),
         );
     }
 

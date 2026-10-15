@@ -163,6 +163,8 @@ final class SubscriptionRunner
                 }
             } finally {
                 $stream?->close();
+                // the routed messages are flushed in any case, so their partitions have to exist as well
+                $router->createPartitions();
             }
         }
 
