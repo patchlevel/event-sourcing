@@ -941,6 +941,11 @@ A partition stays booting until it processed the messages routed while booting, 
 do not emit events. Use `#[EnableEventEmittingDuringBoot]` or the run mode `FromNow` if they have to.
 :::
 
+:::note
+With [batching](#batching), every partition has its own batch and the partitions are processed one after another.
+Many small partitions therefore mean many small batches.
+:::
+
 #### Circuit breaker
 
 A failure that hits every partition, like a database that is down, would put every partition into the error status
