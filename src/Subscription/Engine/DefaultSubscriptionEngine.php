@@ -270,6 +270,8 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
+                status: $criteria->status,
+                partitions: $criteria->partitions,
             ),
         );
     }
