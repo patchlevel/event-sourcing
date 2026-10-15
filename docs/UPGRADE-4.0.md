@@ -3,6 +3,10 @@ searchable: false
 ---
 # Upgrade 4.0
 
+## PHP
+
+The minimum PHP version is now 8.4.
+
 ## Aggregates
 
 ### Aggregate Root

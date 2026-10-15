@@ -31,7 +31,7 @@
     }
   ],
   "require": {
-    "php": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+    "php": "~8.4.0 || ~8.5.0",
     "doctrine/dbal": "^4.4.0",
     "doctrine/migrations": "^3.3.2",
     "patchlevel/hydrator": "^2.0.2",
@@ -48,7 +48,7 @@
     "symfony/type-info": "^7.2.0 || ^8.0.0"
   },
   "require-dev": {
-    "ext-pdo_sqlite": "~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
+    "ext-pdo_sqlite": "~8.4.0 || ~8.5.0",
     "doctrine/orm": "^2.18.0 || ^3.0.0",
     "infection/infection": "^0.32.0",
     "league/commonmark": "^2.6.1",
