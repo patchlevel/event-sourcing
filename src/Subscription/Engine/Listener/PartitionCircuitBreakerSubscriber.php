@@ -7,8 +7,8 @@ namespace Patchlevel\EventSourcing\Subscription\Engine\Listener;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnBeforeHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
-use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnResult;
@@ -76,7 +76,7 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
         $this->heldBackFailures = [];
     }
 
-    public function onHandleMessage(OnHandleMessage $event): void
+    public function onBeforeHandleMessage(OnBeforeHandleMessage $event): void
     {
         if (!$event->subscription->isPartition() || !isset($this->tripped[$event->subscription->subscriberId()])) {
             return;
@@ -349,8 +349,7 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
     {
         return [
             OnCommand::class => 'onCommand',
-            // before the batch subscriber, a skipped message must not open a batch
-            OnHandleMessage::class => ['onHandleMessage', 32],
+            OnBeforeHandleMessage::class => 'onBeforeHandleMessage',
             OnHandleMessageSuccess::class => 'onHandleMessageSuccess',
             OnHandleMessageError::class => [
                 ['onHandleMessageError', 0],

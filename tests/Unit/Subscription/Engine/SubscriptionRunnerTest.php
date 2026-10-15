@@ -10,7 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
-use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnBeforeHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\IndexMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\BatchSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageLoader;
@@ -275,7 +275,7 @@ final class SubscriptionRunnerTest extends TestCase
 
         $handled = 0;
         $eventDispatcher = new EventDispatcher();
-        $eventDispatcher->addListener(OnHandleMessage::class, static function (OnHandleMessage $event) use (&$handled): void {
+        $eventDispatcher->addListener(OnBeforeHandleMessage::class, static function (OnBeforeHandleMessage $event) use (&$handled): void {
             $handled++;
 
             if ($handled !== 2) {

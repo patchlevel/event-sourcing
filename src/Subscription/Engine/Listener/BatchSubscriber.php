@@ -39,11 +39,6 @@ final class BatchSubscriber implements EventSubscriberInterface
 
     public function onHandleMessage(OnHandleMessage $event): void
     {
-        // a stopped subscription must not open a batch, it may hold a transaction until the flush
-        if ($event->stop) {
-            return;
-        }
-
         $subscriberId = $event->subscription->id();
 
         if ($this->batchManager->has($subscriberId)) {

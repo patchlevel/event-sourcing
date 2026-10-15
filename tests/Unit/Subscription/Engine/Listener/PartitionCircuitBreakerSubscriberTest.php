@@ -11,8 +11,8 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnBeforeHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
-use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnResult;
@@ -339,10 +339,10 @@ final class PartitionCircuitBreakerSubscriberTest extends TestCase
         return new OnHandleMessageError($partition, new RuntimeException('database down'), $this->message(), 1);
     }
 
-    private function handle(PartitionCircuitBreakerSubscriber $breaker, Subscription $partition): OnHandleMessage
+    private function handle(PartitionCircuitBreakerSubscriber $breaker, Subscription $partition): OnBeforeHandleMessage
     {
-        $event = new OnHandleMessage($partition, $this->message());
-        $breaker->onHandleMessage($event);
+        $event = new OnBeforeHandleMessage($partition, $this->message());
+        $breaker->onBeforeHandleMessage($event);
 
         return $event;
     }

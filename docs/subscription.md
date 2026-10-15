@@ -1572,11 +1572,16 @@ You can register your own listeners to hook into the engine, for example for log
 |--------------------------|----------------------------------------------------------------------|
 | `OnCommand`              | A command was passed to the engine for execution                     |
 | `OnSubscriptions`        | The engine determined the subscriptions for the current command      |
+| `OnBeforeHandleMessage`  | Before `OnHandleMessage`, a listener can stop the subscription here  |
 | `OnHandleMessage`        | A message is about to be passed to a subscriber                      |
 | `OnHandleMessageSuccess` | A message was successfully handled by a subscriber                   |
 | `OnHandleMessageError`   | An error occurred while a subscriber was handling a message          |
 | `OnSubscriptionProcessed`| A subscription finished its stream (ended or limit reached)          |
 | `OnResult`               | The engine finished the command and returns the result               |
+
+Every `OnHandleMessage` is followed by exactly one `OnHandleMessageSuccess` or `OnHandleMessageError`.
+With `OnBeforeHandleMessage::$stop` a listener stops the subscription for the rest of the run,
+the message and the following ones are processed in a later run and `OnHandleMessage` is not dispatched.
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;

@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnBeforeHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessingStopped;
@@ -161,9 +162,13 @@ final class MessageProcessorTest extends TestCase
             }
         };
 
+        $handled = 0;
         $eventDispatcher = new EventDispatcher();
-        $eventDispatcher->addListener(OnHandleMessage::class, static function (OnHandleMessage $event): void {
+        $eventDispatcher->addListener(OnBeforeHandleMessage::class, static function (OnBeforeHandleMessage $event): void {
             $event->stop = true;
+        });
+        $eventDispatcher->addListener(OnHandleMessage::class, static function () use (&$handled): void {
+            $handled++;
         });
 
         $processor = new MessageProcessor(
@@ -179,6 +184,7 @@ final class MessageProcessorTest extends TestCase
 
         self::assertInstanceOf(ProcessingStopped::class, $error);
         self::assertFalse($subscriber->called);
+        self::assertSame(0, $handled, 'OnHandleMessage is not dispatched, it would have no success or error');
         self::assertSame(0, $subscription->position(), 'a stopped subscription does not move the position');
     }
 

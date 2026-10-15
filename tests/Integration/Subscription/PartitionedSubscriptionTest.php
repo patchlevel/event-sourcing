@@ -24,6 +24,9 @@ use Patchlevel\EventSourcing\Subscription\Engine\Command\Remove;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
@@ -49,6 +52,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 use function array_keys;
 use function array_map;
@@ -675,8 +679,12 @@ final class PartitionedSubscriptionTest extends TestCase
     }
 
     /** @param 'index'|'plain'|'unsupported' $messageLoader */
-    private function engine(object $subscriber, string $messageLoader = 'index', bool $inboxStore = true): SubscriptionEngine
-    {
+    private function engine(
+        object $subscriber,
+        string $messageLoader = 'index',
+        bool $inboxStore = true,
+        EventDispatcher $eventDispatcher = new EventDispatcher(),
+    ): SubscriptionEngine {
         $store = $this->store = new StreamDoctrineDbalStore(
             $this->connection,
             DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']),
@@ -709,6 +717,7 @@ final class PartitionedSubscriptionTest extends TestCase
             new RetryStrategyRepository([
                 RetryStrategyRepository::DEFAULT_STRATEGY_NAME => new ClockBasedRetryStrategy($this->clock),
             ]),
+            eventDispatcher: $eventDispatcher,
         );
     }
 
@@ -940,8 +949,22 @@ final class PartitionedSubscriptionTest extends TestCase
     /** Every handler fails, like when the database of the projection is down. */
     public function testCircuitBreakerStopsTheSubscriberOnASystemicFailure(): void
     {
+        // paired listeners like a message context rely on a success or an error after every OnHandleMessage,
+        // only the partitions call the subscriber, the main subscription reports a routed message as success only
+        $open = 0;
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(OnHandleMessage::class, static function (OnHandleMessage $event) use (&$open): void {
+            $open += $event->subscription->isPartition() ? 1 : 0;
+        });
+        $eventDispatcher->addListener(OnHandleMessageSuccess::class, static function (OnHandleMessageSuccess $event) use (&$open): void {
+            $open -= $event->subscription->isPartition() ? 1 : 0;
+        });
+        $eventDispatcher->addListener(OnHandleMessageError::class, static function (OnHandleMessageError $event) use (&$open): void {
+            $open -= $event->subscription->isPartition() ? 1 : 0;
+        });
+
         $projection = new PartitionedProfileProjection();
-        $engine = $this->engine($projection);
+        $engine = $this->engine($projection, eventDispatcher: $eventDispatcher);
 
         $engine->execute(new Setup(skipBooting: true));
 
@@ -968,6 +991,7 @@ final class PartitionedSubscriptionTest extends TestCase
         }
 
         self::assertSame(5, $projection->handled, 'only partitions up to the threshold were tried');
+        self::assertSame(0, $open, 'every OnHandleMessage got its success or error, also for the stopped partitions');
 
         // the database is back
         $projection->failingNames = [];

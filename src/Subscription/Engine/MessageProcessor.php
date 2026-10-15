@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Subscription\Engine;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\ArgumentMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnBeforeHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
@@ -104,14 +105,11 @@ final class MessageProcessor
         }
 
         try {
-            $event = new OnHandleMessage(
-                $subscription,
-                $message,
-            );
+            // decided before OnHandleMessage, which is always followed by a success or an error
+            $before = new OnBeforeHandleMessage($subscription, $message);
+            $this->eventDispatcher->dispatch($before);
 
-            $this->eventDispatcher->dispatch($event);
-
-            if ($event->stop) {
+            if ($before->stop) {
                 $this->logger?->debug(sprintf(
                     'Subscription Engine: Subscription "%s" stopped before the event "%s".',
                     $subscription->id(),
@@ -120,6 +118,8 @@ final class MessageProcessor
 
                 return new ProcessingStopped();
             }
+
+            $this->eventDispatcher->dispatch(new OnHandleMessage($subscription, $message));
 
             $context = new ArgumentResolverContext($message, $subscription, $subscriber->metadata());
 
