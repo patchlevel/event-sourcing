@@ -29,6 +29,9 @@ final class DummySubscriptionStore implements SubscriptionStore
     /** @var list<Subscription> */
     public array $removedSubscriptions = [];
 
+    /** @var list<string> */
+    public array $claimedIds = [];
+
     /** @param list<Subscription> $subscriptions */
     public function __construct(
         array $subscriptions = [],
@@ -48,8 +51,16 @@ final class DummySubscriptionStore implements SubscriptionStore
         return $this->parentStore->find($criteria);
     }
 
+    /** @return list<Subscription> */
+    public function findLazy(SubscriptionCriteria $criteria): array
+    {
+        return $this->find($criteria);
+    }
+
     public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null
     {
+        $this->claimedIds[] = $id;
+
         return $this->parentStore->claim($id, $criteria);
     }
 
@@ -129,6 +140,10 @@ final class DummySubscriptionStore implements SubscriptionStore
      */
     public function claimAll(array $ids, SubscriptionCriteria $criteria): array
     {
+        foreach ($ids as $id) {
+            $this->claimedIds[] = $id;
+        }
+
         return $this->parentStore->claimAll($ids, $criteria);
     }
 

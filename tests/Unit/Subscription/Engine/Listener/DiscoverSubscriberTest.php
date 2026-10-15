@@ -209,7 +209,7 @@ final class DiscoverSubscriberTest extends TestCase
 
         $subscriptionStore
             ->expects($this->once())
-            ->method('find')
+            ->method('findLazy')
             ->with(new SubscriptionCriteria())
             ->willReturn([new Subscription('id1')]);
 

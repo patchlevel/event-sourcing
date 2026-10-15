@@ -32,7 +32,7 @@ final class RefreshHandler implements Handler
 
     public function __invoke(Command $command): Result
     {
-        $subscriptions = $this->subscriptionManager->find(new SubscriptionCriteria(
+        $subscriptions = $this->subscriptionManager->findLazy(new SubscriptionCriteria(
             ids: $command->ids,
             groups: $command->groups,
         ));
@@ -76,10 +76,11 @@ final class RefreshHandler implements Handler
                 );
             }
 
-            // cleanup tasks belong to the subscriber as a whole and are only stored on its main subscription
+            // cleanup tasks belong to the subscriber as a whole and are only stored on its main subscription,
+            // so the lazily loaded tasks of a partition are not touched at all
             $cleanupTasks = $subscription->isPartition() ? null : $this->cleanupTasks($subscriber);
 
-            if ($subscription->cleanupTasks() !== $cleanupTasks) {
+            if (!$subscription->isPartition() && $subscription->cleanupTasks() !== $cleanupTasks) {
                 $changed = true;
                 $subscription->replaceCleanupTasks($cleanupTasks);
 

@@ -57,17 +57,8 @@ final class RetrySubscriber implements EventSubscriberInterface
                 status: [Status::Error],
             ),
             function (Subscription $subscription) use ($status): void {
-                $error = $subscription->subscriptionError();
-
-                if ($error === null) {
-                    return;
-                }
-
-                if ($error->previousStatus !== $status) {
-                    return;
-                }
-
-                if (!$this->retryStrategy($subscription)->shouldRetry($subscription)) {
+                // checked again, another worker may have retried it since the snapshot
+                if (!$this->isDue($subscription, $status)) {
                     return;
                 }
 
@@ -83,7 +74,20 @@ final class RetrySubscriber implements EventSubscriberInterface
                     ),
                 );
             },
+            // only subscriptions whose retry is due are claimed, with many errored partitions most of them wait
+            filter: fn (Subscription $subscription): bool => $this->isDue($subscription, $status),
         );
+    }
+
+    private function isDue(Subscription $subscription, Status $status): bool
+    {
+        $error = $subscription->subscriptionError();
+
+        if ($error === null || $error->previousStatus !== $status) {
+            return false;
+        }
+
+        return $this->retryStrategy($subscription)->shouldRetry($subscription);
     }
 
     public function onHandleMessageError(OnHandleMessageError $event): void

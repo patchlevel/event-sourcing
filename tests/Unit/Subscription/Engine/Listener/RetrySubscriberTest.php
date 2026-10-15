@@ -147,4 +147,29 @@ final class RetrySubscriberTest extends TestCase
 
         $store->assertNoChanges();
     }
+
+    public function testOnlyDueSubscriptionsAreClaimed(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+        };
+
+        $due = new Subscription('test', status: Status::Error, position: 0, error: new SubscriptionError('ERROR', Status::Active));
+        $waiting = Subscription::partition(new Subscription('test'), 'a', 0);
+        $waiting->error('ERROR');
+
+        $store = new DummySubscriptionStore([$due, $waiting]);
+
+        $retryStrategy = $this->createMock(RetryStrategy::class);
+        $retryStrategy->method('shouldRetry')->willReturnCallback(
+            static fn (Subscription $subscription): bool => $subscription->id() === 'test',
+        );
+
+        $listener = $this->createListener($store, [$subscriber], $retryStrategy);
+        $listener->onCommand(new OnCommand(new Run()));
+
+        self::assertSame(['test'], $store->claimedIds, 'a subscription whose retry is not due is not claimed');
+        self::assertSame(Status::Active, $store->get('test')->status());
+        self::assertSame(Status::Error, $store->get('test#a')->status());
+    }
 }

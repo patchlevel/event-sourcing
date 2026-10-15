@@ -51,7 +51,7 @@ final class DetachListener
                 $subscription->detached();
                 $this->subscriptionManager->update($subscription);
 
-                $partitions = $this->subscriptionManager->find(new SubscriptionCriteria(
+                $partitions = $this->subscriptionManager->findLazy(new SubscriptionCriteria(
                     ids: [$subscription->id()],
                     status: [Status::Active, Status::Paused, Status::Finished],
                     partitions: true,

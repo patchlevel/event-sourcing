@@ -13,7 +13,9 @@ use Psr\Log\LoggerInterface;
 use SplObjectStorage;
 use Throwable;
 
+use function array_filter;
 use function array_map;
+use function array_values;
 use function count;
 use function implode;
 use function max;
@@ -53,13 +55,18 @@ final class SubscriptionManager
     /**
      * @param Closure(Subscription):T            $closure
      * @param Closure(Subscription, Throwable):T $onError
+     * @param Closure(Subscription):bool         $filter  decides on the unclaimed snapshot whether to claim at all
      *
      * @return list<T>
      *
      * @template T
      */
-    public function forEachClaimed(SubscriptionCriteria $criteria, Closure $closure, Closure|null $onError = null): array
-    {
+    public function forEachClaimed(
+        SubscriptionCriteria $criteria,
+        Closure $closure,
+        Closure|null $onError = null,
+        Closure|null $filter = null,
+    ): array {
         $groupOnError = null;
 
         if ($onError !== null) {
@@ -78,6 +85,7 @@ final class SubscriptionManager
                 return $closure($subscriptions[0]);
             },
             $groupOnError,
+            filter: $filter,
         );
     }
 
@@ -93,6 +101,8 @@ final class SubscriptionManager
      * @param positive-int                                       $partitionsPerClaim
      * @param positive-int                                       $subscriptionsPerClaim
      * @param positive-int                                       $positionWindow
+     * @param Closure(Subscription):bool                         $filter                decides on the unclaimed snapshot whether to
+     *                                                                                  claim at all, the closure checks again
      * @param Closure(non-empty-list<Subscription>):T            $closure
      * @param Closure(non-empty-list<Subscription>, Throwable):T $onError
      *
@@ -107,10 +117,17 @@ final class SubscriptionManager
         Closure $closure,
         Closure|null $onError = null,
         int $positionWindow = self::DEFAULT_POSITION_WINDOW,
+        Closure|null $filter = null,
     ): array {
         $results = [];
+        $snapshot = $this->subscriptionStore->findLazy($criteria);
+
+        if ($filter !== null) {
+            $snapshot = array_values(array_filter($snapshot, $filter));
+        }
+
         $groups = $this->groups(
-            $this->subscriptionStore->find($criteria),
+            $snapshot,
             $partitionsPerClaim,
             $subscriptionsPerClaim,
             $positionWindow,
@@ -295,6 +312,16 @@ final class SubscriptionManager
     public function find(SubscriptionCriteria $criteria): array
     {
         return $this->subscriptionStore->find($criteria);
+    }
+
+    /**
+     * For lookups that only need the cheap fields, the error context and the cleanup tasks may be loaded on access.
+     *
+     * @return list<Subscription>
+     */
+    public function findLazy(SubscriptionCriteria $criteria): array
+    {
+        return $this->subscriptionStore->findLazy($criteria);
     }
 
     public function add(Subscription ...$subscriptions): void

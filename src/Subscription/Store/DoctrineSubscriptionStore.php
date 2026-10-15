@@ -28,6 +28,7 @@ use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Psr\Clock\ClockInterface;
+use ReflectionClass;
 
 use function array_chunk;
 use function array_fill;
@@ -61,6 +62,20 @@ use const JSON_THROW_ON_ERROR;
  *     subscriber_id: string,
  *     partition_key: string|null,
  * }
+ * @phpstan-type LightData = array{
+ *     id: string,
+ *     group_name: string,
+ *     run_mode: string,
+ *     position: int|string|null,
+ *     status: string,
+ *     error_message: string|null,
+ *     error_previous_status: string|null,
+ *     retry_attempt: int|string,
+ *     last_saved_at: string,
+ *     subscriber_id: string,
+ *     partition_key: string|null,
+ * }
+ * @phpstan-import-type Context from SubscriptionError
  */
 final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSchemaConfigurator
 {
@@ -69,6 +84,21 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
 
     /** How many subscriptions go into one insert or update, 100 rows stay below 3000 parameters. */
     private const ROW_CHUNK = 100;
+
+    /** findLazy() leaves out error_context and cleanup_tasks, see createLazySubscription(). */
+    private const LAZY_LOADED_FIND_COLUMNS = [
+        'id',
+        'group_name',
+        'run_mode',
+        'position',
+        'status',
+        'error_message',
+        'error_previous_status',
+        'retry_attempt',
+        'last_saved_at',
+        'subscriber_id',
+        'partition_key',
+    ];
 
     /** In the order of the insert. */
     private const COLUMN_TYPES = [
@@ -150,12 +180,28 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
      */
     public function find(SubscriptionCriteria|null $criteria = null): array
     {
+        return $this->findBy($criteria, false);
+    }
+
+    /**
+     * The error context and the cleanup tasks are loaded with one query on first access, see createLazySubscription().
+     *
+     * @return list<Subscription>
+     */
+    public function findLazy(SubscriptionCriteria $criteria): array
+    {
+        return $this->findBy($criteria, true);
+    }
+
+    /** @return list<Subscription> */
+    private function findBy(SubscriptionCriteria|null $criteria, bool $lazy): array
+    {
         if ($criteria === null || !$criteria->pendingPartitionsOnly) {
-            return $this->fetch($criteria);
+            return $this->fetch($criteria, $lazy);
         }
 
-        $mains = $criteria->partitions !== true ? $this->fetch($criteria, false) : [];
-        $partitions = $criteria->partitions !== false ? $this->fetch($criteria, true) : [];
+        $mains = $criteria->partitions !== true ? $this->fetch($criteria, $lazy, false) : [];
+        $partitions = $criteria->partitions !== false ? $this->fetch($criteria, $lazy, true) : [];
 
         return [...$mains, ...$partitions];
     }
@@ -166,10 +212,19 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
      *
      * @return list<Subscription>
      */
-    private function fetch(SubscriptionCriteria|null $criteria, bool|null $pendingPartitions = null): array
+    private function fetch(SubscriptionCriteria|null $criteria, bool $lazy, bool|null $pendingPartitions = null): array
     {
+        if ($lazy) {
+            // the error context and the cleanup tasks can be large, they are loaded on first access
+            $columns = $pendingPartitions === true
+                ? array_map(fn (string $column): string => $this->tableName . '.' . $column, self::LAZY_LOADED_FIND_COLUMNS)
+                : self::LAZY_LOADED_FIND_COLUMNS;
+        } else {
+            $columns = [$pendingPartitions === true ? $this->tableName . '.*' : '*'];
+        }
+
         $qb = $this->connection->createQueryBuilder()
-            ->select($pendingPartitions === true ? $this->tableName . '.*' : '*')
+            ->select(...$columns)
             ->from($this->tableName)
             ->orderBy($pendingPartitions === true ? $this->tableName . '.id' : 'id');
 
@@ -201,7 +256,7 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         $result = $qb->fetchAllAssociative();
 
         return array_map(
-            fn (array $data) => $this->createSubscription($data),
+            fn (array $data) => $lazy ? $this->createLazySubscription($data) : $this->createSubscription($data),
             $result,
         );
     }
@@ -743,6 +798,91 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
             $row['cleanup_tasks'] !== null ? unserialize($row['cleanup_tasks']) : null,
             $row['partition_key'],
         );
+    }
+
+    /**
+     * Creates a lazy ghost: everything but the error context and the cleanup tasks is set right away, those two are loaded
+     * with one query when one of them is accessed. Saving the subscription reads them as well, so nothing gets lost.
+     *
+     * @param LightData $row
+     */
+    private function createLazySubscription(array $row): Subscription
+    {
+        $details = $this->detailsLoader($row['id']);
+
+        $error = null;
+
+        if ($row['error_message'] !== null) {
+            $errorReflector = new ReflectionClass(SubscriptionError::class);
+            $error = $errorReflector->newLazyGhost(static function (SubscriptionError $ghost) use ($errorReflector, $details): void {
+                $errorReflector->getProperty('errorContext')->setValue($ghost, $details()['error_context']);
+            });
+
+            $errorReflector->getProperty('errorMessage')->setRawValueWithoutLazyInitialization($error, $row['error_message']);
+            $errorReflector->getProperty('previousStatus')->setRawValueWithoutLazyInitialization(
+                $error,
+                $row['error_previous_status'] !== null ? Status::from($row['error_previous_status']) : Status::New,
+            );
+        }
+
+        $reflector = new ReflectionClass(Subscription::class);
+        $subscription = $reflector->newLazyGhost(static function (Subscription $ghost) use ($reflector, $details): void {
+            $reflector->getProperty('cleanupTasks')->setValue($ghost, $details()['cleanup_tasks']);
+        });
+
+        $values = [
+            'id' => $row['id'],
+            'group' => $row['group_name'],
+            'runMode' => RunMode::from($row['run_mode']),
+            'status' => Status::from($row['status']),
+            'position' => $row['position'] !== null ? (int)$row['position'] : null,
+            'error' => $error,
+            'retryAttempt' => (int)$row['retry_attempt'],
+            'lastSavedAt' => self::normalizeDateTime($row['last_saved_at'], $this->connection->getDatabasePlatform()),
+            'partitionKey' => $row['partition_key'],
+        ];
+
+        foreach ($values as $property => $value) {
+            $reflector->getProperty($property)->setRawValueWithoutLazyInitialization($subscription, $value);
+        }
+
+        return $subscription;
+    }
+
+    /** @return Closure(): array{error_context: list<Context>|null, cleanup_tasks: list<object>|null} */
+    private function detailsLoader(string $id): Closure
+    {
+        /** @var array{error_context: list<Context>|null, cleanup_tasks: list<object>|null}|null $details */
+        $details = null;
+
+        return function () use ($id, &$details): array {
+            if ($details !== null) {
+                /** @var array{error_context: list<Context>|null, cleanup_tasks: list<object>|null} $loaded */
+                $loaded = $details;
+
+                return $loaded;
+            }
+
+            /** @var array{error_context: string|null, cleanup_tasks: string|null}|false $row */
+            $row = $this->connection->fetchAssociative(
+                sprintf('SELECT error_context, cleanup_tasks FROM %s WHERE id = ?', $this->tableName),
+                [$id],
+            );
+
+            if ($row === false) {
+                throw new SubscriptionNotFound($id);
+            }
+
+            /** @var list<Context>|null $context */
+            $context = $row['error_context'] !== null
+                ? json_decode($row['error_context'], true, 512, JSON_THROW_ON_ERROR)
+                : null;
+
+            /** @var list<object>|null $cleanupTasks */
+            $cleanupTasks = $row['cleanup_tasks'] !== null ? unserialize($row['cleanup_tasks']) : null;
+
+            return $details = ['error_context' => $context, 'cleanup_tasks' => $cleanupTasks];
+        };
     }
 
     private static function normalizeDateTime(mixed $value, AbstractPlatform $platform): DateTimeImmutable

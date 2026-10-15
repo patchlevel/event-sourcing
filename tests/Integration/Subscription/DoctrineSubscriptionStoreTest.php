@@ -21,10 +21,12 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionAlreadyExists;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use RuntimeException;
 
 use function array_map;
@@ -1321,5 +1323,63 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         self::assertCount(250, $store->find());
         self::assertSame(1, $store->get('s0')->position());
         self::assertSame(250, $store->get('s249')->position());
+    }
+
+    public function testFindLazyLoadsErrorContextAndCleanupTasksOnAccess(): void
+    {
+        $store = $this->createStore();
+
+        $subscription = new Subscription('foo', status: Status::Active, position: 3, cleanupTasks: [new DropTableTask('baz')]);
+        $subscription->error(new RuntimeException('error message'));
+        $store->add($subscription);
+
+        [$lazy] = $store->findLazy(new SubscriptionCriteria(ids: ['foo']));
+
+        $reflector = new ReflectionClass(Subscription::class);
+        $errorReflector = new ReflectionClass(SubscriptionError::class);
+        $error = $lazy->subscriptionError();
+
+        self::assertNotNull($error);
+        self::assertSame('error message', $error->errorMessage);
+        self::assertSame(Status::Active, $error->previousStatus);
+        self::assertSame(3, $lazy->position());
+        self::assertTrue($reflector->isUninitializedLazyObject($lazy), 'cheap fields do not load anything');
+        self::assertTrue($errorReflector->isUninitializedLazyObject($error));
+
+        self::assertSame(RuntimeException::class, $error->errorContext[0]['class'] ?? null);
+        self::assertEquals([new DropTableTask('baz')], $lazy->cleanupTasks());
+        self::assertEquals($store->get('foo'), $lazy);
+    }
+
+    public function testUpdateOfALazySubscriptionKeepsErrorContextAndCleanupTasks(): void
+    {
+        $store = $this->createStore();
+
+        $subscription = new Subscription('foo', status: Status::Active, position: 3, cleanupTasks: [new DropTableTask('baz')]);
+        $subscription->error(new RuntimeException('error message'));
+        $store->add($subscription);
+
+        [$lazy] = $store->findLazy(new SubscriptionCriteria(ids: ['foo']));
+        $lazy->changePosition(10);
+        $store->update($lazy);
+
+        $loaded = $store->get('foo');
+
+        self::assertSame(10, $loaded->position());
+        self::assertEquals([new DropTableTask('baz')], $loaded->cleanupTasks());
+        self::assertSame(RuntimeException::class, $loaded->subscriptionError()?->errorContext[0]['class'] ?? null);
+    }
+
+    public function testLazySubscriptionThatWasRemoved(): void
+    {
+        $store = $this->createStore();
+        $store->add(new Subscription('foo'));
+
+        [$lazy] = $store->findLazy(new SubscriptionCriteria(ids: ['foo']));
+        $store->remove($store->get('foo'));
+
+        $this->expectException(SubscriptionNotFound::class);
+
+        self::assertNull($lazy->cleanupTasks());
     }
 }

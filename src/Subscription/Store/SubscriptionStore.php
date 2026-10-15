@@ -15,6 +15,14 @@ interface SubscriptionStore
     /** @return list<Subscription> */
     public function find(SubscriptionCriteria|null $criteria = null): array;
 
+    /**
+     * Like find(), but a store may load the error context and the cleanup tasks only when they are accessed.
+     * The engine uses it for snapshots it only needs to decide what to claim.
+     *
+     * @return list<Subscription>
+     */
+    public function findLazy(SubscriptionCriteria $criteria): array;
+
     /** Claims one subscription via a row lock (SKIP LOCKED); null if held by another worker or no match. */
     public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null;
 

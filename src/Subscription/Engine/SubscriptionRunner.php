@@ -464,7 +464,7 @@ final class SubscriptionRunner
 
     private function main(Subscription $partition): Subscription|null
     {
-        return $this->subscriptionManager->find(
+        return $this->subscriptionManager->findLazy(
             new SubscriptionCriteria(ids: [$partition->subscriberId()], partitions: false),
         )[0] ?? null;
     }

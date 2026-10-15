@@ -51,7 +51,7 @@ final class DiscoverSubscriber implements EventSubscriberInterface
 
     private function discover(): void
     {
-        $subscriptions = $this->subscriptionManager->find(new SubscriptionCriteria(partitions: false));
+        $subscriptions = $this->subscriptionManager->findLazy(new SubscriptionCriteria(partitions: false));
 
         $latestIndex = null;
 

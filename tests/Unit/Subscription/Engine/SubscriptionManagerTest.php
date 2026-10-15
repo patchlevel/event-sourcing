@@ -121,7 +121,7 @@ final class SubscriptionManagerTest extends TestCase
         $criteria = new SubscriptionCriteria();
 
         $store = $this->createMock(SubscriptionStore::class);
-        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
+        $store->expects($this->once())->method('findLazy')->with($criteria)->willReturn([$subscription]);
         $store->expects($this->once())->method('claim')->with('foo', $criteria)->willReturn($subscription);
         $store->expects($this->once())->method('update')->with($subscription);
         $store
@@ -146,7 +146,7 @@ final class SubscriptionManagerTest extends TestCase
         $criteria = new SubscriptionCriteria();
 
         $store = $this->createMock(SubscriptionStore::class);
-        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
+        $store->expects($this->once())->method('findLazy')->with($criteria)->willReturn([$subscription]);
         $store->expects($this->once())->method('claim')->with('foo', $criteria)->willReturn(null);
         $store->expects($this->never())->method('update');
         $store
@@ -166,7 +166,7 @@ final class SubscriptionManagerTest extends TestCase
         $criteria = new SubscriptionCriteria();
 
         $store = $this->createMock(SubscriptionStore::class);
-        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
+        $store->expects($this->once())->method('findLazy')->with($criteria)->willReturn([$subscription]);
         $store->expects($this->once())->method('claim')->with('foo', $criteria)->willReturn($subscription);
         $store
             ->expects($this->once())

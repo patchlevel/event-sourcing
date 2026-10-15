@@ -61,6 +61,12 @@ final class InMemorySubscriptionStore implements SubscriptionStore
         );
     }
 
+    /** @return list<Subscription> */
+    public function findLazy(SubscriptionCriteria $criteria): array
+    {
+        return $this->find($criteria);
+    }
+
     public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null
     {
         if (!array_key_exists($id, $this->subscriptions)) {
