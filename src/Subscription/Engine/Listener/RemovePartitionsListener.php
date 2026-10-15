@@ -7,10 +7,13 @@ namespace Patchlevel\EventSourcing\Subscription\Engine\Listener;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionRemoved;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Subscription;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
+use function array_filter;
+use function array_values;
 use function count;
 use function sprintf;
 
@@ -36,7 +39,11 @@ final class RemovePartitionsListener implements EventSubscriberInterface
             return;
         }
 
-        $partitions = $this->subscriptionManager->find(new SubscriptionCriteria(ids: [$main->id()], partitions: true));
+        $partitions = array_values(array_filter(
+            $this->subscriptionManager->find(new SubscriptionCriteria(ids: [$main->id()], partitions: true)),
+            // a store that does not know the partitions criteria would return the main subscription again
+            static fn (Subscription $subscription): bool => $subscription->isPartition(),
+        ));
 
         if ($partitions === []) {
             return;
