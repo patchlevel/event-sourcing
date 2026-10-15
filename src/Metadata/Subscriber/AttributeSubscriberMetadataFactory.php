@@ -244,7 +244,11 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             }
 
             $partition = $partitionAttributes[0]->newInstance();
-            $partitionMetadata = new PartitionMetadata($partition->maxConsecutiveFailures, $partition->removeIdleAfter);
+            $partitionMetadata = new PartitionMetadata(
+                $partition->partitioner,
+                $partition->maxConsecutiveFailures,
+                $partition->removeIdleAfter,
+            );
         }
 
         $metadata = new SubscriberMetadata(

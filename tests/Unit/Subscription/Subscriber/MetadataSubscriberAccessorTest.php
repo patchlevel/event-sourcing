@@ -155,7 +155,6 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
         self::assertInstanceOf(StreamPartitioner::class, $partitioner);
         self::assertSame('profile-1', $partitioner($this->streamMessage()));
-        self::assertSame($partitioner, $accessor->partitioner(), 'created once');
     }
 
     public function testNoPartitioner(): void

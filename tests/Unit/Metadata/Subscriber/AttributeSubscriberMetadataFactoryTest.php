@@ -50,6 +50,9 @@ use PHPUnit\Framework\TestCase;
 use stdClass;
 use Symfony\Component\TypeInfo\Type;
 
+use function serialize;
+use function unserialize;
+
 #[CoversClass(AttributeSubscriberMetadataFactory::class)]
 final class AttributeSubscriberMetadataFactoryTest extends TestCase
 {
@@ -817,7 +820,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $metadataFactory = new AttributeSubscriberMetadataFactory();
         $metadata = $metadataFactory->metadata($subscriber::class);
 
-        self::assertEquals(new PartitionMetadata(5, null), $metadata->partition);
+        self::assertEquals(new PartitionMetadata(new StreamPartitioner(), 5, null), $metadata->partition);
     }
 
     public function testPartitionWithOptions(): void
@@ -830,7 +833,8 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $metadataFactory = new AttributeSubscriberMetadataFactory();
         $metadata = $metadataFactory->metadata($subscriber::class);
 
-        self::assertEquals(new PartitionMetadata(3, 60), $metadata->partition);
+        self::assertEquals(new PartitionMetadata(new StreamPartitioner(), 3, 60), $metadata->partition);
+        self::assertEquals($metadata, unserialize(serialize($metadata)), 'the metadata caches serialize it');
     }
 
     public function testNoPartition(): void
