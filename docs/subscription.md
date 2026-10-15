@@ -976,7 +976,7 @@ Give all events of an aggregate the same key if your projection relies on their 
 
 :::note
 The partition key must be a non-empty string and the partition id must not exceed 255 bytes.
-The id of a partitioned subscriber must not contain `#`.
+The id of a partitioned subscriber `foo` must not contain `#`, and no other subscriber id may start with `foo#`.
 :::
 
 :::tip

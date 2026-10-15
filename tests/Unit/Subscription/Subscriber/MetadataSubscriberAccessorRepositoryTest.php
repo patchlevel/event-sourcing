@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber;
 
+use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\DuplicateSubscriberId;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Subscription\Subscriber\SubscriberIdCollidesWithPartition;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
@@ -67,5 +70,40 @@ final class MetadataSubscriberAccessorRepositoryTest extends TestCase
         );
 
         $repository->all();
+    }
+
+    public function testSubscriberIdCollidesWithPartition(): void
+    {
+        $this->expectException(SubscriberIdCollidesWithPartition::class);
+        $this->expectExceptionMessage('"foo#bar"');
+
+        $subscriber1 = new #[Subscriber('foo#bar', RunMode::FromBeginning)]
+        class {
+        };
+
+        $subscriber2 = new #[Subscriber('foo', RunMode::FromBeginning)]
+        #[Partition(new StreamPartitioner())]
+        class {
+        };
+
+        $repository = new MetadataSubscriberAccessorRepository([$subscriber1, $subscriber2]);
+
+        $repository->all();
+    }
+
+    public function testSimilarIdOfAPartitionedSubscriber(): void
+    {
+        $subscriber1 = new #[Subscriber('foobar', RunMode::FromBeginning)]
+        class {
+        };
+
+        $subscriber2 = new #[Subscriber('foo', RunMode::FromBeginning)]
+        #[Partition(new StreamPartitioner())]
+        class {
+        };
+
+        $repository = new MetadataSubscriberAccessorRepository([$subscriber1, $subscriber2]);
+
+        self::assertCount(2, $repository->all());
     }
 }
