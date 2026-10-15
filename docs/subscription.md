@@ -899,6 +899,33 @@ final class ProfileProjector
     }
 }
 ```
+#### Built-in partitioners
+
+* `StreamPartitioner`: one partition per stream, e.g. per aggregate.
+* `TagPartitioner`: the tag with a prefix is the key, e.g. `new TagPartitioner('course:')` for the tags of the
+  dynamic consistency boundary. A message needs exactly one tag with the prefix.
+* `BucketPartitioner`: spreads the keys of another partitioner over a fixed number of partitions,
+  e.g. `new BucketPartitioner(new StreamPartitioner(), 16)`. Everything with the same key stays in the same bucket.
+* `HashedPartitioner`: hashes the key of another partitioner, so it is always short and any characters are fine.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Subscription\Partitioner\BucketPartitioner;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
+
+#[Projector('profile_1')]
+#[Partition(new BucketPartitioner(new StreamPartitioner(), 16))]
+final class ProfileProjector
+{
+    // ...
+}
+```
+:::tip
+With one partition per aggregate the number of partitions grows with the aggregates.
+Use the `BucketPartitioner` for a fixed number, or remove idle partitions, see below.
+:::
+
 #### Custom partitioner
 
 For another key, implement the `Partitioner` interface.

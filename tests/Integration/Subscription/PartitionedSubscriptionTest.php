@@ -27,6 +27,8 @@ use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Partitioner\BucketPartitioner;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Subscription\Repository\RunSubscriptionEngineRepository;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
@@ -50,6 +52,7 @@ use RuntimeException;
 use function array_keys;
 use function array_map;
 use function array_values;
+use function count;
 use function gc_collect_cycles;
 use function random_int;
 use function sort;
@@ -539,6 +542,31 @@ final class PartitionedSubscriptionTest extends TestCase
 
         foreach ($this->partitions($subscriberId) as $partition) {
             self::assertSame(Status::Finished, $partition->status(), $partition->id());
+        }
+    }
+
+    /** A fixed number of partitions, every profile stays in its bucket. */
+    public function testBucketPartitioner(): void
+    {
+        $bucket = new BucketPartitioner(new StreamPartitioner(), 3);
+        ConfigurablePartitioner::$key = static fn (Message $message): string => $bucket($message);
+
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection);
+        $engine->execute(new Setup(skipBooting: true));
+
+        $ids = $this->createProfiles(10);
+
+        foreach ($ids as $id) {
+            $this->changeName(ProfileId::fromString($id), 'changed-' . $id);
+        }
+
+        $this->runUntilFinished($engine);
+
+        self::assertLessThanOrEqual(3, count($this->partitions()));
+
+        foreach ($ids as $i => $id) {
+            self::assertSame(['name-' . $i, 'changed-' . $id], $projection->processed[$id]);
         }
     }
 
