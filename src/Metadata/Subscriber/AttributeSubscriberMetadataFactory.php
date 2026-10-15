@@ -19,7 +19,6 @@ use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Subscription\Subscription;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
@@ -28,7 +27,6 @@ use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 use function array_key_exists;
 use function array_map;
 use function count;
-use function str_contains;
 
 final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFactory
 {
@@ -239,10 +237,6 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $partitionMetadata = null;
 
         if ($partitionAttributes !== []) {
-            if (str_contains($subscriberInfo->id, Subscription::PARTITION_SEPARATOR)) {
-                throw new InvalidPartitionedSubscriberId($subscriber, $subscriberInfo->id);
-            }
-
             $partition = $partitionAttributes[0]->newInstance();
             $partitionMetadata = new PartitionMetadata(
                 $partition->partitioner,

@@ -37,7 +37,6 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateShouldFlushMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSubscribeMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateTeardownMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\IncompleteBatchMethods;
-use Patchlevel\EventSourcing\Metadata\Subscriber\InvalidPartitionedSubscriberId;
 use Patchlevel\EventSourcing\Metadata\Subscriber\MixedTeardownAndCleanupMethods;
 use Patchlevel\EventSourcing\Metadata\Subscriber\PartitionMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
@@ -839,7 +838,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
 
     public function testNoPartition(): void
     {
-        $subscriber = new #[Subscriber('foo#bar', RunMode::FromBeginning)]
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
         class {
         };
 
@@ -847,17 +846,5 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $metadata = $metadataFactory->metadata($subscriber::class);
 
         self::assertNull($metadata->partition);
-    }
-
-    public function testPartitionedSubscriberIdWithSeparator(): void
-    {
-        $this->expectException(InvalidPartitionedSubscriberId::class);
-
-        $subscriber = new #[Subscriber('foo#bar', RunMode::FromBeginning)]
-        #[Partition(new StreamPartitioner())]
-        class {
-        };
-
-        (new AttributeSubscriberMetadataFactory())->metadata($subscriber::class);
     }
 }

@@ -6,11 +6,9 @@ namespace Patchlevel\EventSourcing\Subscription\Subscriber;
 
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadataFactory;
-use Patchlevel\EventSourcing\Subscription\Subscription;
 
 use function array_key_exists;
 use function array_values;
-use function str_starts_with;
 
 final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRepository
 {
@@ -57,24 +55,6 @@ final class MetadataSubscriberAccessorRepository implements SubscriberAccessorRe
             );
         }
 
-        $this->assertNoCollisionWithPartitions();
-
         return $this->subscribersMap;
-    }
-
-    /** A partition id is "{subscriber id}#{key}", so no other subscriber may have an id like that. */
-    private function assertNoCollisionWithPartitions(): void
-    {
-        foreach ($this->subscribersMap as $partitionedId => $partitioned) {
-            if ($partitioned->metadata()->partition === null) {
-                continue;
-            }
-
-            foreach ($this->subscribersMap as $id => $subscriber) {
-                if (str_starts_with($id, $partitionedId . Subscription::PARTITION_SEPARATOR)) {
-                    throw new SubscriberIdCollidesWithPartition($id, $partitionedId);
-                }
-            }
-        }
     }
 }

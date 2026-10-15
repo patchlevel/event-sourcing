@@ -500,6 +500,7 @@ subscriptions keep processing.
 #### Subscription partitions
 
 Subscribers can be split into partitions with `#[Partition]`, see the subscription docs.
+A subscriber id must no longer contain `#`, it is reserved for the ids of the partitions.
 The subscription table gets the columns `subscriber_id` and `partition_key`, and there is a new table
 `subscriptions_inbox` (or `{table name}_inbox`). Since `subscriber_id` is not nullable, fill it before
 making it `NOT NULL`, otherwise the migration fails on existing rows:
