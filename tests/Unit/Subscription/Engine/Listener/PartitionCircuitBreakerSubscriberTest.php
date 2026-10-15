@@ -252,6 +252,37 @@ final class PartitionCircuitBreakerSubscriberTest extends TestCase
         self::assertSame(Status::Active, $this->store->get($this->partitions[0]->id())->status());
     }
 
+    /** A main subscription that is not running can not be stopped, the held back failures are dropped anyway. */
+    public function testHeldBackFailureIsDroppedIfTheMainSubscriptionCanNotBeStopped(): void
+    {
+        $breaker = $this->breaker(3);
+        $breaker->onCommand(new OnCommand(new Run()));
+
+        $main = $this->store->get('profile');
+        $main->pause();
+        $this->store->update($main);
+
+        foreach ([0, 1, 2] as $i) {
+            $event = $this->error($this->partitions[$i]);
+            $event->transitionToFailed = true;
+
+            $breaker->onHandleMessageError($event);
+            $breaker->holdBackFailure($event);
+            $this->store->update($this->partitions[$i]);
+        }
+
+        $breaker->onResult(new OnResult(new Run(), new Result()));
+
+        self::assertSame(Status::Paused, $this->store->get('profile')->status());
+
+        foreach ([0, 1, 2] as $i) {
+            $partition = $this->store->get($this->partitions[$i]->id());
+
+            self::assertSame(Status::Active, $partition->status(), 'not failed during a systemic failure');
+            self::assertSame(0, $partition->position(), 'the message is not skipped');
+        }
+    }
+
     public function testOnlyRunAndBoot(): void
     {
         $breaker = $this->breaker(1);

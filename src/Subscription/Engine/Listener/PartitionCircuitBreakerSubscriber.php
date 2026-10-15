@@ -159,10 +159,10 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
         }
 
         foreach ($this->tripped as $subscriberId => $throwable) {
-            if ($this->stopSubscriber($subscriberId, $throwable)) {
-                // the partitions did not fail on their own, they are set back
-                unset($this->heldBackFailures[$subscriberId]);
+            // the partitions did not fail on their own, they stay active and try again in the next run
+            unset($this->heldBackFailures[$subscriberId]);
 
+            if ($this->stopSubscriber($subscriberId, $throwable)) {
                 continue;
             }
 
@@ -241,7 +241,7 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
 
         if ($stopped === [] && !$this->isStopped($subscriberId)) {
             $this->logger?->warning(sprintf(
-                'Subscription Engine: The main subscription of subscriber "%s" could not be stopped, it is held by another worker.',
+                'Subscription Engine: The main subscription of subscriber "%s" could not be stopped, it is not running.',
                 $subscriberId,
             ));
 
