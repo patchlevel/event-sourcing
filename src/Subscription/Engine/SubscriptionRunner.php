@@ -65,7 +65,9 @@ final class SubscriptionRunner
             $surviving[] = $subscription;
         }
 
-        $surviving = $this->withoutStoppedSubscribers($surviving);
+        // the main subscriptions of the partitions, loaded once for the whole group
+        $mains = $this->mains($surviving);
+        $surviving = $this->withoutStoppedSubscribers($surviving, $mains);
 
         if (count($surviving) > 1) {
             $separated = $this->processBatchesSeparately($surviving, $limit, $boot);
@@ -186,7 +188,7 @@ final class SubscriptionRunner
         $inboxFull = $this->hasFullInbox($members, $inboxes, $inboxLimit);
 
         if (!$limitReached && !$inboxFull) {
-            $this->finishMembers($members, $boot);
+            $this->finishMembers($members, $mains, $boot);
         }
 
         return new ProcessedResult(
@@ -197,14 +199,11 @@ final class SubscriptionRunner
     }
 
     /**
-     * A main subscription in error stops its whole subscriber, e.g. after the circuit breaker detected a systemic
-     * failure. Its partitions wait without being touched until the main subscription is retried.
-     *
      * @param list<Subscription> $subscriptions
      *
-     * @return list<Subscription>
+     * @return array<string, Subscription> subscriber id => main subscription
      */
-    private function withoutStoppedSubscribers(array $subscriptions): array
+    private function mains(array $subscriptions): array
     {
         $subscriberIds = [];
 
@@ -217,30 +216,39 @@ final class SubscriptionRunner
         }
 
         if ($subscriberIds === []) {
-            return $subscriptions;
+            return [];
         }
 
-        $stopped = [];
-        $mains = $this->subscriptionManager->find(
-            new SubscriptionCriteria(ids: array_keys($subscriberIds), partitions: false),
-        );
+        $mains = [];
 
-        foreach ($mains as $main) {
-            if (!$main->isError() && !$main->isFailed()) {
-                continue;
-            }
-
-            $stopped[$main->id()] = true;
+        foreach (
+            $this->subscriptionManager->find(
+                new SubscriptionCriteria(ids: array_keys($subscriberIds), partitions: false),
+            ) as $main
+        ) {
+            $mains[$main->id()] = $main;
         }
 
-        if ($stopped === []) {
-            return $subscriptions;
-        }
+        return $mains;
+    }
 
+    /**
+     * A main subscription in error stops its whole subscriber, e.g. after the circuit breaker detected a systemic
+     * failure. Its partitions wait without being touched until the main subscription is retried.
+     *
+     * @param list<Subscription>          $subscriptions
+     * @param array<string, Subscription> $mains
+     *
+     * @return list<Subscription>
+     */
+    private function withoutStoppedSubscribers(array $subscriptions, array $mains): array
+    {
         $running = [];
 
         foreach ($subscriptions as $subscription) {
-            if ($subscription->isPartition() && isset($stopped[$subscription->subscriberId()])) {
+            $main = $subscription->isPartition() ? $mains[$subscription->subscriberId()] ?? null : null;
+
+            if ($main !== null && ($main->isError() || $main->isFailed())) {
                 $this->logger?->debug(sprintf(
                     'Subscription Engine: Partition "%s" waits, its main subscription is in error.',
                     $subscription->id(),
@@ -516,7 +524,8 @@ final class SubscriptionRunner
         return false;
     }
 
-    private function finishMembers(SubscriptionCollection $members, bool $boot): void
+    /** @param array<string, Subscription> $mains */
+    private function finishMembers(SubscriptionCollection $members, array $mains, bool $boot): void
     {
         foreach ($members as $member) {
             if ($boot) {
@@ -525,11 +534,11 @@ final class SubscriptionRunner
                 }
 
                 // the main subscription may still route messages into the inbox of a booting partition
-                if ($member->isPartition() && $this->main($member)?->isBooting()) {
+                if ($member->isPartition() && ($mains[$member->subscriberId()] ?? null)?->isBooting()) {
                     continue;
                 }
 
-                if ($member->runMode() === RunMode::Once && $this->isRoutingFinished($member)) {
+                if ($member->runMode() === RunMode::Once && $this->isRoutingFinished($member, $mains)) {
                     $member->finished();
 
                     $this->logger?->info(sprintf(
@@ -554,7 +563,7 @@ final class SubscriptionRunner
                 continue;
             }
 
-            if (!$this->isRoutingFinished($member)) {
+            if (!$this->isRoutingFinished($member, $mains)) {
                 continue;
             }
 
@@ -568,20 +577,17 @@ final class SubscriptionRunner
         }
     }
 
-    /** A partition is only done when its main subscription has routed all messages. */
-    private function isRoutingFinished(Subscription $subscription): bool
+    /**
+     * A partition is only done when its main subscription has routed all messages.
+     *
+     * @param array<string, Subscription> $mains
+     */
+    private function isRoutingFinished(Subscription $subscription, array $mains): bool
     {
         if (!$subscription->isPartition()) {
             return true;
         }
 
-        return $this->main($subscription)?->isFinished() ?? true;
-    }
-
-    private function main(Subscription $partition): Subscription|null
-    {
-        return $this->subscriptionManager->find(
-            new SubscriptionCriteria(ids: [$partition->subscriberId()], partitions: false),
-        )[0] ?? null;
+        return ($mains[$subscription->subscriberId()] ?? null)?->isFinished() ?? true;
     }
 }
