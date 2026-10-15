@@ -504,7 +504,19 @@ ALTER TABLE subscriptions ALTER COLUMN subscriber_id SET NOT NULL;
 CREATE INDEX IDX_SUBSCRIPTIONS_SUBSCRIBER_ID ON subscriptions (subscriber_id);
 CREATE TABLE subscriptions_inbox (subscription_id VARCHAR(255) NOT NULL, message_index INT NOT NULL, PRIMARY KEY (subscription_id, message_index));
 ```
-Adjust the table names if you configured your own, and the `ALTER COLUMN` syntax for MySQL (`MODIFY`).
+On MySQL and MariaDB the ids and the partition key are compared binary, so that partition keys that only differ in
+case are different partitions:
+
+```sql
+ALTER TABLE subscriptions ADD subscriber_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL;
+ALTER TABLE subscriptions ADD partition_key VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL;
+UPDATE subscriptions SET subscriber_id = id;
+ALTER TABLE subscriptions MODIFY subscriber_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL;
+ALTER TABLE subscriptions MODIFY id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL;
+CREATE INDEX IDX_SUBSCRIPTIONS_SUBSCRIBER_ID ON subscriptions (subscriber_id);
+CREATE TABLE subscriptions_inbox (subscription_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL, message_index INT NOT NULL, PRIMARY KEY (subscription_id, message_index));
+```
+Adjust the table names if you configured your own.
 
 A custom `SubscriptionStore` has to persist `partitionKey()` and `subscriberId()` and support the new
 `partitions` and `pendingPartitionsOnly` criteria. To support partitions, it also has to implement the

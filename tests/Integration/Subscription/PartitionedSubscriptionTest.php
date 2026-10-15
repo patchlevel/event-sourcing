@@ -36,6 +36,7 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedBatchProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedTransactionalBatchProjection;
@@ -46,6 +47,7 @@ use RuntimeException;
 
 use function array_keys;
 use function array_map;
+use function array_values;
 use function gc_collect_cycles;
 use function random_int;
 use function sort;
@@ -421,6 +423,47 @@ final class PartitionedSubscriptionTest extends TestCase
         $repository->save(Profile::create($id, 'name'));
 
         self::assertSame(['name'], $projection->processed[$id->toString()]);
+    }
+
+    /** @return iterable<string, array{bool}> */
+    public static function sameRun(): iterable
+    {
+        yield 'routed in the same run' => [true];
+        yield 'routed in separate runs' => [false];
+    }
+
+    /** MySQL and MariaDB compare strings case insensitive by default, partition keys must not. */
+    #[DataProvider('sameRun')]
+    public function testKeysThatOnlyDifferInCaseAreDifferentPartitions(bool $sameRun): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $projection->partitionKey = static function (Message $message): string {
+            $event = $message->event();
+
+            return $event instanceof ProfileCreated ? 'tenant-' . $event->name : 'other';
+        };
+
+        $engine = $this->engine($projection);
+        $engine->execute(new Setup(skipBooting: true));
+
+        [$upperId] = $this->createProfiles(1, ['ACME']);
+
+        if (!$sameRun) {
+            $this->runUntilFinished($engine);
+        }
+
+        [$lowerId] = $this->createProfiles(1, ['acme']);
+        $this->runUntilFinished($engine);
+
+        self::assertSame(['ACME'], $projection->processed[$upperId]);
+        self::assertSame(['acme'], $projection->processed[$lowerId]);
+        $keys = array_map(
+            static fn (Subscription $partition): string|null => $partition->partitionKey(),
+            array_values($this->partitions()),
+        );
+        sort($keys);
+
+        self::assertSame(['tenant-ACME', 'tenant-acme'], $keys);
     }
 
     /** @param 'index'|'plain'|'unsupported' $messageLoader */

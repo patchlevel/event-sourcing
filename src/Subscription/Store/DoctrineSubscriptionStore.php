@@ -12,6 +12,7 @@ use Doctrine\DBAL\Exception\DriverException;
 use Doctrine\DBAL\Exception\RetryableException;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\DBAL\ParameterType;
+use Doctrine\DBAL\Platforms\AbstractMySQLPlatform;
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Platforms\PostgreSQLPlatform;
 use Doctrine\DBAL\Platforms\SQLitePlatform;
@@ -737,7 +738,8 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
 
         $table->addColumn('id', Types::STRING)
             ->setLength(255)
-            ->setNotnull(true);
+            ->setNotnull(true)
+            ->setPlatformOptions($this->caseSensitive($connection));
         $table->addColumn('group_name', Types::STRING)
             ->setLength(32)
             ->setNotnull(true);
@@ -765,10 +767,12 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
 
         $table->addColumn('subscriber_id', Types::STRING)
             ->setLength(255)
-            ->setNotnull(true);
+            ->setNotnull(true)
+            ->setPlatformOptions($this->caseSensitive($connection));
         $table->addColumn('partition_key', Types::STRING)
             ->setLength(255)
-            ->setNotnull(false);
+            ->setNotnull(false)
+            ->setPlatformOptions($this->caseSensitive($connection));
 
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
@@ -779,11 +783,27 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
 
         $inbox->addColumn('subscription_id', Types::STRING)
             ->setLength(255)
-            ->setNotnull(true);
+            ->setNotnull(true)
+            ->setPlatformOptions($this->caseSensitive($connection));
         $inbox->addColumn('message_index', Types::INTEGER)
             ->setNotnull(true);
 
         $inbox->setPrimaryKey(['subscription_id', 'message_index']);
+    }
+
+    /**
+     * Partition keys come from the messages, keys that only differ in case or accents are different partitions.
+     * The default collations of MySQL and MariaDB compare them as equal, so the ids are compared binary there.
+     *
+     * @return array{charset?: non-empty-string, collation?: non-empty-string}
+     */
+    private function caseSensitive(Connection $connection): array
+    {
+        if (!$connection->getDatabasePlatform() instanceof AbstractMySQLPlatform) {
+            return [];
+        }
+
+        return ['charset' => 'utf8mb4', 'collation' => 'utf8mb4_bin'];
     }
 
     /** @param Data $row */
