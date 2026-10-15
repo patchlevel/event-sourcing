@@ -184,9 +184,11 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                     throw InvalidPartitionMethod::invalidSignature($subscriber, $method->getName());
                 }
 
+                $partition = $partitionAttributes[0]->newInstance();
                 $partitionMethod = new PartitionMetadata(
                     $method->getName(),
-                    $partitionAttributes[0]->newInstance()->maxConsecutiveFailures,
+                    $partition->maxConsecutiveFailures,
+                    $partition->removeIdleAfter,
                 );
             }
 

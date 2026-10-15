@@ -344,6 +344,15 @@ final class SubscriptionManager
         return $this->inboxStore()->inbox($afterIndex, $limit);
     }
 
+    /**
+     * @param positive-int $idleSeconds
+     * @param positive-int $limit
+     */
+    public function removeIdlePartitions(string $subscriberId, int $idleSeconds, int $limit): int
+    {
+        return $this->inboxStore()->removeIdlePartitions($subscriberId, $idleSeconds, $limit);
+    }
+
     public function supportsPartitions(): bool
     {
         return $this->subscriptionStore instanceof PartitionInboxStore;

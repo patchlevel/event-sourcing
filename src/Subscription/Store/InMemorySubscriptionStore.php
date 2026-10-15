@@ -16,6 +16,7 @@ use function array_slice;
 use function array_values;
 use function in_array;
 use function sort;
+use function sprintf;
 
 final class InMemorySubscriptionStore implements PartitionInboxStore
 {
@@ -218,6 +219,37 @@ final class InMemorySubscriptionStore implements PartitionInboxStore
         }
 
         return $inbox;
+    }
+
+    /**
+     * @param positive-int $idleSeconds
+     * @param positive-int $limit
+     */
+    public function removeIdlePartitions(string $subscriberId, int $idleSeconds, int $limit): int
+    {
+        $idleSince = $this->clock->now()->modify(sprintf('-%d seconds', $idleSeconds));
+        $removed = 0;
+
+        foreach ($this->subscriptions as $id => $subscription) {
+            if ($removed >= $limit) {
+                break;
+            }
+
+            if (
+                !$subscription->isPartition()
+                || $subscription->subscriberId() !== $subscriberId
+                || !$subscription->isActive()
+                || ($this->inbox[$id] ?? []) !== []
+                || ($subscription->lastSavedAt() ?? $idleSince) >= $idleSince
+            ) {
+                continue;
+            }
+
+            unset($this->subscriptions[$id], $this->inbox[$id]);
+            $removed++;
+        }
+
+        return $removed;
     }
 
     public function clear(): void

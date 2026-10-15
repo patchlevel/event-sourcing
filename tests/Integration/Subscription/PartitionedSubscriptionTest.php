@@ -37,6 +37,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorR
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\EphemeralPartitionProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedBatchProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedTransactionalBatchProjection;
@@ -464,6 +465,57 @@ final class PartitionedSubscriptionTest extends TestCase
         sort($keys);
 
         self::assertSame(['tenant-ACME', 'tenant-acme'], $keys);
+    }
+
+    public function testIdlePartitionsAreRemovedAndCreatedAgain(): void
+    {
+        $projection = new EphemeralPartitionProjection();
+        $projection->failingNames = ['broken'];
+        $engine = $this->engine($projection);
+        $subscriberId = EphemeralPartitionProjection::SUBSCRIBER_ID;
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        [$idleId, $busyId, $brokenId] = $this->createProfiles(3, ['idle', 'busy', 'broken']);
+        $this->runUntilFinished($engine);
+
+        self::assertCount(3, $this->partitions($subscriberId));
+
+        $this->clock->sleep(40);
+        $this->changeName(ProfileId::fromString($busyId), 'busy-2');
+        $this->runUntilFinished($engine);
+
+        self::assertCount(3, $this->partitions($subscriberId), 'nothing is idle long enough yet');
+
+        $this->clock->sleep(30);
+        $this->runUntilFinished($engine);
+
+        $expected = [
+            Subscription::partitionId($subscriberId, 'profile-' . $brokenId),
+            Subscription::partitionId($subscriberId, 'profile-' . $busyId),
+        ];
+        sort($expected);
+
+        self::assertSame(
+            $expected,
+            $this->sortedPartitionIds($subscriberId),
+            'the idle partition is removed, a busy one and one in error stay',
+        );
+
+        $this->changeName(ProfileId::fromString($idleId), 'idle-2');
+        $this->runUntilFinished($engine);
+
+        self::assertSame(['idle', 'idle-2'], $projection->processed[$idleId], 'the next message creates it again');
+        self::assertCount(3, $this->partitions($subscriberId));
+    }
+
+    /** @return list<string> */
+    private function sortedPartitionIds(string $subscriberId): array
+    {
+        $ids = array_keys($this->partitions($subscriberId));
+        sort($ids);
+
+        return $ids;
     }
 
     /** @param 'index'|'plain'|'unsupported' $messageLoader */

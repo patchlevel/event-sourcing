@@ -727,6 +727,56 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
         return implode(' UNION ALL ', $selects);
     }
 
+    /**
+     * @param positive-int $idleSeconds
+     * @param positive-int $limit
+     */
+    public function removeIdlePartitions(string $subscriberId, int $idleSeconds, int $limit): int
+    {
+        $qb = $this->connection->createQueryBuilder()
+            ->select('id')
+            ->from($this->tableName)
+            ->where('subscriber_id = :subscriber_id')
+            ->andWhere('partition_key IS NOT NULL')
+            ->andWhere('status = :status')
+            ->andWhere('last_saved_at < :idle_since')
+            ->andWhere(sprintf(
+                'NOT EXISTS (SELECT 1 FROM %s WHERE %s.subscription_id = %s.id)',
+                $this->inboxTableName,
+                $this->inboxTableName,
+                $this->tableName,
+            ))
+            ->setParameter('subscriber_id', $subscriberId)
+            ->setParameter('status', Status::Active->value)
+            ->setParameter(
+                'idle_since',
+                $this->clock->now()->modify(sprintf('-%d seconds', $idleSeconds)),
+                Types::DATETIME_IMMUTABLE,
+            )
+            ->orderBy('id')
+            ->setMaxResults($limit);
+
+        // a partition a worker is processing right now is not idle
+        if (!$this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
+            $qb->forUpdate(ConflictResolutionMode::SKIP_LOCKED);
+        }
+
+        /** @var list<string> $ids */
+        $ids = $qb->fetchFirstColumn();
+
+        if ($ids === []) {
+            return 0;
+        }
+
+        $this->connection->executeStatement(
+            sprintf('DELETE FROM %s WHERE id IN (?)', $this->tableName),
+            [$ids],
+            [ArrayParameterType::STRING],
+        );
+
+        return count($ids);
+    }
+
     /** @param array<string, int> $toIndex */
     private function removeFromInbox(array $toIndex): void
     {
@@ -828,7 +878,8 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
         $table->addIndex(['status']);
-        $table->addIndex(['subscriber_id']);
+        // also finds the idle partitions of a subscriber
+        $table->addIndex(['subscriber_id', 'last_saved_at']);
 
         $inbox = $schema->createTable($this->inboxTableName);
 

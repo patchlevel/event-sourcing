@@ -947,6 +947,34 @@ With [batching](#batching), every partition has its own batch and the partitions
 Many small partitions therefore mean many small batches.
 :::
 
+#### Removing idle partitions
+
+By default a partition is kept forever, also after it processed its inbox.
+With many keys, like one per aggregate, set `removeIdleAfter` to the seconds after which an idle partition is removed.
+A partition is idle when it is active, its inbox is empty and it was not saved for that long.
+The next message of its key creates it again, so nothing is lost.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+
+#[Projector('profile_1')]
+final class ProfileProjector
+{
+    #[Partition(removeIdleAfter: 3600)]
+    public function partition(Message $message): string
+    {
+        return $message->header(StreamNameHeader::class)->streamName;
+    }
+
+    // ...
+}
+```
+The main subscription removes the idle partitions of its subscriber in its run, at most 1000 at a time.
+Partitions in error or paused ones are kept.
+
 #### Circuit breaker
 
 A failure that hits every partition, like a database that is down, would put every partition into the error status

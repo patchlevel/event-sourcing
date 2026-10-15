@@ -121,6 +121,15 @@ final class DummySubscriptionStore implements PartitionInboxStore
         return $this->parentStore->inbox($afterIndex, $limit);
     }
 
+    /**
+     * @param positive-int $idleSeconds
+     * @param positive-int $limit
+     */
+    public function removeIdlePartitions(string $subscriberId, int $idleSeconds, int $limit): int
+    {
+        return $this->parentStore->removeIdlePartitions($subscriberId, $idleSeconds, $limit);
+    }
+
     public function reset(): void
     {
         $this->addedSubscriptions = [];

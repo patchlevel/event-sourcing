@@ -1229,6 +1229,36 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         return $store;
     }
 
+    public function testRemoveIdlePartitions(): void
+    {
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+        $store = new DoctrineSubscriptionStore($this->connection, $clock);
+        (new DoctrineSchemaDirector($this->connection, $store))->create();
+
+        $main = new Subscription('profile', status: Status::Active, position: 10);
+        $other = new Subscription('other', status: Status::Active, position: 10);
+        $idle = Subscription::partition($main, 'idle', 1);
+        $withInbox = Subscription::partition($main, 'inbox', 1);
+        $failing = Subscription::partition($main, 'error', 1);
+        $failing->error('broken');
+        $otherIdle = Subscription::partition($other, 'idle', 1);
+        $store->add($main, $other, $idle, $withInbox, $failing, $otherIdle);
+        $store->addToInbox([$withInbox->id() => [5]]);
+
+        $clock->sleep(30);
+        $recent = Subscription::partition($main, 'recent', 1);
+        $store->add($recent);
+
+        $clock->sleep(40);
+
+        self::assertSame(1, $store->removeIdlePartitions('profile', 60, 10));
+        self::assertSame(
+            ['other', 'other#idle', 'profile', 'profile#error', 'profile#inbox', 'profile#recent'],
+            array_map(static fn (Subscription $subscription): string => $subscription->id(), $store->find()),
+        );
+        self::assertSame(0, $store->removeIdlePartitions('profile', 60, 10), 'nothing left to remove');
+    }
+
     public function testClaimAll(): void
     {
         $store = $this->createStore();

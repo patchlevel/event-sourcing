@@ -21,6 +21,13 @@ final class Partition
          * @var positive-int
          */
         public readonly int $maxConsecutiveFailures = 5,
+        /**
+         * Partitions are kept forever by default. With a number of seconds, a partition that processed its inbox and
+         * did nothing for that long is removed. It is created again with the next message of its key.
+         *
+         * @var positive-int|null
+         */
+        public readonly int|null $removeIdleAfter = null,
     ) {
     }
 }

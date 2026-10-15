@@ -26,4 +26,16 @@ interface PartitionInboxStore extends SubscriptionStore
      * @return array<string, non-empty-list<int>>
      */
     public function inbox(array $afterIndex, int $limit): array;
+
+    /**
+     * Removes active partitions of the subscriber with an empty inbox that were not saved for the given seconds.
+     * Partitions that are held by another worker are left out. Only call it while holding the lock of the main
+     * subscription, otherwise it could remove a partition the main subscription routes into at the same time.
+     *
+     * @param positive-int $idleSeconds
+     * @param positive-int $limit
+     *
+     * @return int how many partitions were removed
+     */
+    public function removeIdlePartitions(string $subscriberId, int $idleSeconds, int $limit): int;
 }

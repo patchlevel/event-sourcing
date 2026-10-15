@@ -34,6 +34,9 @@ final class SubscriptionRunner
     /** How many messages of its inbox a partition processes at most in one run without a limit. */
     private const INBOX_LIMIT = 1000;
 
+    /** How many idle partitions a main subscription removes at most in one run. */
+    private const IDLE_PARTITIONS_LIMIT = 1000;
+
     /** How many indices are loaded with one query, far below the parameter limits of the databases. */
     private const INDEX_CHUNK = 1000;
 
@@ -87,6 +90,7 @@ final class SubscriptionRunner
         $inboxes = $this->loadInboxes($members, $inboxLimit);
         $working = $this->workingMembers($members, $inboxes);
         $router = new PartitionRouter($this->subscriptionManager, $this->logger);
+        $this->removeIdlePartitions($working);
 
         /** @var list<Error> $errors */
         $errors = [];
@@ -216,6 +220,41 @@ final class SubscriptionRunner
             !$limitReached && !$inboxFull,
             $errors,
         );
+    }
+
+    /**
+     * The main subscription removes the idle partitions of its subscriber before it routes, while it holds its lock.
+     * So it never routes into a partition that is removed at the same time, a removed one is created again.
+     */
+    private function removeIdlePartitions(SubscriptionCollection $working): void
+    {
+        foreach ($working as $member) {
+            if ($member->isPartition()) {
+                continue;
+            }
+
+            $idleSeconds = $this->subscriberRepository->get($member->subscriberId())?->metadata()->partition?->removeIdleAfter;
+
+            if ($idleSeconds === null) {
+                continue;
+            }
+
+            $removed = $this->subscriptionManager->removeIdlePartitions(
+                $member->subscriberId(),
+                $idleSeconds,
+                self::IDLE_PARTITIONS_LIMIT,
+            );
+
+            if ($removed === 0) {
+                continue;
+            }
+
+            $this->logger?->info(sprintf(
+                'Subscription Engine: %d idle partitions of subscriber "%s" removed.',
+                $removed,
+                $member->subscriberId(),
+            ));
+        }
     }
 
     /** @return list<Error> */
