@@ -1696,6 +1696,8 @@ position, and the group is committed in one transaction.
 Only subscriptions whose positions are at most `limit` apart (1000 without a limit) form a group,
 so a subscription that is rebuilt does not hold back the ones that are up to date.
 Partitions are claimed in groups of 100 by default, because they only read their inbox and are often many.
+The `limit` of a group of subscriptions applies to the whole group, the one of a group of partitions to every
+single partition, so such a group processes up to `partitionsPerClaim × limit` messages in one transaction.
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
@@ -1710,7 +1712,7 @@ Subscribers with [batching](#batching) are processed one after another within a 
 
 :::warning
 A group holds the locks of all its subscriptions until it is committed.
-Large groups make the work spread worse over several workers, and the `limit` applies to the whole group.
+Large groups make the work spread worse over several workers.
 :::
 
 :::note
