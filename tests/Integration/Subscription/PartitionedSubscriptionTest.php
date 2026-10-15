@@ -471,6 +471,46 @@ final class PartitionedSubscriptionTest extends TestCase
 
         self::assertSame(Status::Error, $partitionOfA->status());
         self::assertSame(0, $partitionOfA->position(), 'the failed batch did not move the position');
+        self::assertSame(
+            [$partitionOfA->id() => [1, 3]],
+            $this->subscriptionStore->inbox([$partitionOfA->id() => -1], 10),
+            'nothing of the rolled back batch leaves the inbox',
+        );
         self::assertSame(Status::Active, $partitionOfB->status());
+    }
+
+    public function testFailedPartitionKeepsOnlyTheUnprocessedMessagesInItsInbox(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $projection->failingNames = ['broken'];
+        $engine = $this->engine($projection);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        $id = ProfileId::generate();
+        $this->repository->save(Profile::create($id, 'n1'));
+        $this->changeName($id, 'n2');
+        $this->changeName($id, 'broken');
+        $this->changeName($id, 'n4');
+
+        $this->runUntilFinished($engine);
+
+        $partition = $this->partitions()[Subscription::partitionId(self::MAIN, 'profile-' . $id->toString())];
+
+        self::assertSame(Status::Error, $partition->status());
+        self::assertSame(2, $partition->position());
+        self::assertSame(['n1', 'n2'], $projection->processed[$id->toString()]);
+        self::assertSame(
+            [$partition->id() => [3, 4]],
+            $this->subscriptionStore->inbox([$partition->id() => -1], 10),
+            'the processed messages before the error leave the inbox',
+        );
+
+        $projection->failingNames = [];
+        $this->clock->sleep(10);
+        $this->runUntilFinished($engine);
+
+        self::assertSame(['n1', 'n2', 'broken', 'n4'], $projection->processed[$id->toString()]);
+        self::assertSame([], $this->subscriptionStore->inbox([$partition->id() => -1], 10));
     }
 }

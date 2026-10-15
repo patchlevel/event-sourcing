@@ -81,6 +81,9 @@ final class SubscriptionRunner
         $lastIndex = null;
         $limitReached = false;
 
+        /** @var list<Subscription> $failedPartitions */
+        $failedPartitions = [];
+
         if (count($working) > 0) {
             [$startIndex, $endIndex] = $this->range($working, $inboxes);
             $indices = $this->inboxIndices($working, $inboxes);
@@ -131,6 +134,10 @@ final class SubscriptionRunner
                         $working->remove($member);
                         $members->remove($member);
 
+                        if ($member->isPartition()) {
+                            $failedPartitions[] = $member;
+                        }
+
                         if (count($working) === 0) {
                             break 2;
                         }
@@ -167,6 +174,11 @@ final class SubscriptionRunner
 
                 $this->subscriptionManager->update($member);
             }
+        }
+
+        // a failed partition keeps the messages from its error on, the ones before are processed and can go
+        foreach ($failedPartitions as $partition) {
+            $this->removeProcessedFromInbox($partition);
         }
 
         $inboxFull = $this->hasFullInbox($members, $inboxes, $inboxLimit);
@@ -356,6 +368,21 @@ final class SubscriptionRunner
         if ($position > $end) {
             $partition->changePosition($end);
             $position = $end;
+        }
+
+        $this->subscriptionManager->removeFromInbox($partition->id(), $position);
+    }
+
+    /**
+     * The position of a failed partition is the last message it processed successfully,
+     * after a rolled back batch the position before the batch.
+     */
+    private function removeProcessedFromInbox(Subscription $partition): void
+    {
+        $position = $partition->position();
+
+        if ($position === null) {
+            return;
         }
 
         $this->subscriptionManager->removeFromInbox($partition->id(), $position);
