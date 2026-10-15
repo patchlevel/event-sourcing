@@ -793,12 +793,82 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
                 $types[] = ParameterType::INTEGER;
             }
 
-            $this->connection->executeStatement(
-                sprintf('DELETE FROM %s WHERE %s', $this->inboxTableName, implode(' OR ', $conditions)),
+            // a plain read, the rows up to the position already exist
+            /** @var list<array{0: string, 1: int|string}> $rows */
+            $rows = $this->connection->fetchAllNumeric(
+                sprintf('SELECT subscription_id, message_index FROM %s WHERE %s', $this->inboxTableName, implode(' OR ', $conditions)),
                 $parameters,
                 $types,
             );
+
+            $this->deleteFromInbox($rows);
         }
+    }
+
+    /**
+     * Deletes exactly these rows. A range delete would also lock the next row after the range, often a message the main
+     * subscription has just routed, and MariaDB with snapshot isolation (default since 11.6) fails on that row with
+     * "Record has changed since last read".
+     *
+     * @param list<array{0: string, 1: int|string}> $rows
+     */
+    private function deleteFromInbox(array $rows): void
+    {
+        /** @var array<string, list<int>> $indices */
+        $indices = [];
+
+        foreach ($rows as [$subscriptionId, $messageIndex]) {
+            $indices[(string)$subscriptionId][] = (int)$messageIndex;
+        }
+
+        $conditions = [];
+        $parameters = [];
+        $types = [];
+
+        foreach ($indices as $subscriptionId => $messageIndices) {
+            foreach (array_chunk($messageIndices, self::INBOX_CHUNK) as $indexChunk) {
+                $conditions[] = sprintf(
+                    '(subscription_id = ? AND message_index IN (%s))',
+                    implode(', ', array_fill(0, count($indexChunk), '?')),
+                );
+                $parameters[] = (string)$subscriptionId;
+                $types[] = ParameterType::STRING;
+
+                foreach ($indexChunk as $messageIndex) {
+                    $parameters[] = $messageIndex;
+                    $types[] = ParameterType::INTEGER;
+                }
+
+                if (count($parameters) < self::INBOX_CHUNK) {
+                    continue;
+                }
+
+                $this->executeInboxDelete($conditions, $parameters, $types);
+                $conditions = [];
+                $parameters = [];
+                $types = [];
+            }
+        }
+
+        if ($conditions === []) {
+            return;
+        }
+
+        $this->executeInboxDelete($conditions, $parameters, $types);
+    }
+
+    /**
+     * @param non-empty-list<string> $conditions
+     * @param list<int|string>       $parameters
+     * @param list<ParameterType>    $types
+     */
+    private function executeInboxDelete(array $conditions, array $parameters, array $types): void
+    {
+        $this->connection->executeStatement(
+            sprintf('DELETE FROM %s WHERE %s', $this->inboxTableName, implode(' OR ', $conditions)),
+            $parameters,
+            $types,
+        );
     }
 
     /**
