@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * A subscription worker for ConcurrentWorkerTest: runs the engine until the stop file exists.
- * Arguments: worker name, stop file. The database comes from DB_URL.
+ * Arguments: worker name, stop file, projector (plain, batch or emitting). The database comes from DB_URL.
  */
 
 use Doctrine\DBAL\Configuration;
@@ -19,13 +19,17 @@ use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventEmitterResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ConcurrentBatchProfileProjection;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ConcurrentEmittingProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ConcurrentProfileProjection;
 
 require __DIR__ . '/../../../vendor/autoload.php';
 
 $worker = $argv[1] ?? 'worker';
 $stopFile = $argv[2] ?? throw new RuntimeException('missing stop file');
+$projector = $argv[3] ?? 'plain';
 $dbUrl = getenv('DB_URL');
 
 if (!is_string($dbUrl)) {
@@ -39,13 +43,19 @@ $connection = DriverManager::getConnection(
 
 $store = new StreamDoctrineDbalStore($connection, DefaultEventSerializer::createFromPaths([__DIR__ . '/../Subscription/Events']));
 $subscriberRepository = new MetadataSubscriberAccessorRepository([
-    new ConcurrentProfileProjection($connection, $worker),
+    match ($projector) {
+        'plain' => new ConcurrentProfileProjection($connection, $worker),
+        'batch' => new ConcurrentBatchProfileProjection($connection, $worker),
+        'emitting' => new ConcurrentEmittingProfileProjection($connection, $worker),
+        default => throw new RuntimeException('unknown projector ' . $projector),
+    },
 ]);
 
 $engine = new DefaultSubscriptionEngine(
     new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
     new DoctrineSubscriptionStore($connection),
     $subscriberRepository,
+    argumentResolvers: [new EventEmitterResolver($store)],
 );
 
 $runs = 0;

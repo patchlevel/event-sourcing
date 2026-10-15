@@ -15,6 +15,8 @@ use Patchlevel\EventSourcing\Repository\Repository;
 use Patchlevel\EventSourcing\Schema\ChainDoctrineSchemaConfigurator;
 use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Setup;
 use Patchlevel\EventSourcing\Subscription\Engine\DefaultSubscriptionEngine;
@@ -24,12 +26,18 @@ use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Tests\DbalManager;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NotificationSent;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ConcurrentBatchProfileProjection;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ConcurrentEmittingProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ConcurrentProfileProjection;
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 
+use function array_filter;
 use function array_map;
+use function array_values;
 use function fclose;
 use function file_exists;
 use function getenv;
@@ -39,6 +47,7 @@ use function microtime;
 use function proc_close;
 use function proc_open;
 use function range;
+use function str_starts_with;
 use function stream_get_contents;
 use function sys_get_temp_dir;
 use function tempnam;
@@ -100,7 +109,17 @@ final class ConcurrentWorkerTest extends TestCase
         $this->connection->close();
     }
 
-    public function testTwoWorkersProcessEveryMessageOnceAndInOrder(): void
+    /** @return iterable<string, array{'plain'|'batch'|'emitting', string}> */
+    public static function projectors(): iterable
+    {
+        yield 'plain' => ['plain', ConcurrentProfileProjection::SUBSCRIBER_ID];
+        yield 'transactional batches' => ['batch', ConcurrentBatchProfileProjection::SUBSCRIBER_ID];
+        yield 'event emitter' => ['emitting', ConcurrentEmittingProfileProjection::SUBSCRIBER_ID];
+    }
+
+    /** @param 'plain'|'batch'|'emitting' $projector */
+    #[DataProvider('projectors')]
+    public function testTwoWorkersProcessEveryMessageOnceAndInOrder(string $projector, string $subscriberId): void
     {
         $store = new StreamDoctrineDbalStore($this->connection, DefaultEventSerializer::createFromPaths([__DIR__ . '/Events']));
         $subscriptionStore = new DoctrineSubscriptionStore($this->connection);
@@ -119,7 +138,11 @@ final class ConcurrentWorkerTest extends TestCase
         $this->connection->createSchemaManager()->createTable($table);
 
         $subscriberRepository = new MetadataSubscriberAccessorRepository([
-            new ConcurrentProfileProjection($this->connection, 'test'),
+            match ($projector) {
+                'plain' => new ConcurrentProfileProjection($this->connection, 'test'),
+                'batch' => new ConcurrentBatchProfileProjection($this->connection, 'test'),
+                'emitting' => new ConcurrentEmittingProfileProjection($this->connection, 'test'),
+            },
         ]);
 
         (new DefaultSubscriptionEngine(
@@ -128,8 +151,8 @@ final class ConcurrentWorkerTest extends TestCase
             $subscriberRepository,
         ))->execute(new Setup(skipBooting: true));
 
-        $this->startWorker('worker-a');
-        $this->startWorker('worker-b');
+        $this->startWorker('worker-a', $projector);
+        $this->startWorker('worker-b', $projector);
 
         /** @var Repository<Profile> $repository */
         $repository = (new DefaultRepositoryManager(
@@ -184,7 +207,7 @@ final class ConcurrentWorkerTest extends TestCase
 
         self::assertCount(2, $workers, 'both workers processed messages');
 
-        $subscriptions = $subscriptionStore->find(new SubscriptionCriteria(ids: [ConcurrentProfileProjection::SUBSCRIBER_ID]));
+        $subscriptions = $subscriptionStore->find(new SubscriptionCriteria(ids: [$subscriberId]));
         self::assertCount(self::AGGREGATES + 1, $subscriptions);
 
         foreach ($subscriptions as $subscription) {
@@ -192,12 +215,34 @@ final class ConcurrentWorkerTest extends TestCase
         }
 
         self::assertSame(0, $this->rows('subscriptions_inbox'), 'every inbox is processed');
+
+        if ($projector !== 'emitting') {
+            return;
+        }
+
+        // the partitions share the stream of their subscriber, every processed message emitted exactly one event
+        $emitted = [];
+
+        foreach ($store->load(new Criteria(new StreamCriterion('subscription_' . $subscriberId))) as $message) {
+            $event = $message->event();
+            self::assertInstanceOf(NotificationSent::class, $event);
+            $emitted[$event->profileId->toString()] = ($emitted[$event->profileId->toString()] ?? 0) + 1;
+        }
+
+        self::assertSame(['subscription_' . $subscriberId], array_values(array_filter(
+            $store->streams(),
+            static fn (string $stream): bool => str_starts_with($stream, 'subscription_'),
+        )), 'one stream for all partitions');
+
+        foreach ($ids as $id) {
+            self::assertSame(self::EVENTS_PER_AGGREGATE, $emitted[$id->toString()] ?? 0, 'emitted once per message: ' . $id->toString());
+        }
     }
 
-    private function startWorker(string $name): void
+    private function startWorker(string $name, string $projector): void
     {
         $process = proc_open(
-            [PHP_BINARY, __DIR__ . '/../Worker/partition-worker.php', $name, $this->stopFile],
+            [PHP_BINARY, __DIR__ . '/../Worker/partition-worker.php', $name, $this->stopFile, $projector],
             [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
             $pipes,
             null,
