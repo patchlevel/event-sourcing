@@ -612,7 +612,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $table->addIndex(['group_name']);
         $table->addIndex(['status']);
         $table->addIndex(['partition_key', 'status']);
-        $table->addIndex(['subscriber_id', 'last_saved_at']);
+        $table->addIndex(['subscriber_id', 'status', 'last_saved_at']);
 
         $inbox = $expectedSchema->createTable('subscriptions_inbox');
         $inbox->addColumn('subscription_id', Types::STRING)

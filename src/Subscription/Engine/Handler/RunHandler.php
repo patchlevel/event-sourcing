@@ -107,6 +107,11 @@ final class RunHandler implements Handler
 
         $criteria = new SubscriptionCriteria(ids: $subscriberIds, status: [Status::Active], partitions: true);
 
+        // counted on every run, usually all partitions of a finished subscriber are finished as well
+        if ($this->subscriptionManager->stats($criteria)->total() === 0) {
+            return [];
+        }
+
         // a partition held by another worker is not claimed, every run checks again
         return $this->process($criteria, $claimGroups, $command);
     }

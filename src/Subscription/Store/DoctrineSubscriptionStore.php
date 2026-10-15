@@ -979,8 +979,8 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
         $table->addIndex(['status']);
         // finds the main subscriptions without reading the partitions
         $table->addIndex(['partition_key', 'status']);
-        // also finds the idle partitions of a subscriber
-        $table->addIndex(['subscriber_id', 'last_saved_at']);
+        // the partitions of a subscriber, also by status and the idle ones
+        $table->addIndex(['subscriber_id', 'status', 'last_saved_at']);
 
         $inbox = $schema->createTable($this->inboxTableName);
 

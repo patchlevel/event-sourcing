@@ -994,6 +994,11 @@ With [batching](#batching), every partition has its own batch and the partitions
 Many small partitions therefore mean many small batches.
 :::
 
+:::note
+Commands like pause, reactivate, remove or refresh load all partitions of a subscriber at once.
+With very many keys, keep the number of partitions bounded with the `BucketPartitioner` or `removeIdleAfter`.
+:::
+
 #### Removing idle partitions
 
 By default a partition is kept forever, also after it processed its inbox.

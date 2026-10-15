@@ -109,7 +109,8 @@ final class BootHandler implements Handler
 
         $criteria = new SubscriptionCriteria(ids: $subscriberIds, status: [Status::Booting], partitions: true);
 
-        if ($this->subscriptionManager->find($criteria) === []) {
+        // counted, not loaded, there can be many partitions
+        if ($this->subscriptionManager->stats($criteria)->total() === 0) {
             return [];
         }
 

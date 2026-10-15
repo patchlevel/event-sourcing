@@ -509,7 +509,7 @@ ALTER TABLE subscriptions ADD subscriber_id VARCHAR(255) DEFAULT NULL;
 ALTER TABLE subscriptions ADD partition_key VARCHAR(255) DEFAULT NULL;
 UPDATE subscriptions SET subscriber_id = id;
 ALTER TABLE subscriptions ALTER COLUMN subscriber_id SET NOT NULL;
-CREATE INDEX IDX_SUBSCRIPTIONS_SUBSCRIBER_ID ON subscriptions (subscriber_id, last_saved_at);
+CREATE INDEX IDX_SUBSCRIPTIONS_SUBSCRIBER_ID ON subscriptions (subscriber_id, status, last_saved_at);
 CREATE INDEX IDX_SUBSCRIPTIONS_PARTITION_KEY ON subscriptions (partition_key, status);
 CREATE TABLE subscriptions_inbox (subscription_id VARCHAR(255) NOT NULL, message_index INT NOT NULL, PRIMARY KEY (subscription_id, message_index));
 ```
@@ -522,7 +522,7 @@ ALTER TABLE subscriptions ADD partition_key VARCHAR(255) CHARACTER SET utf8mb4 C
 UPDATE subscriptions SET subscriber_id = id;
 ALTER TABLE subscriptions MODIFY subscriber_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL;
 ALTER TABLE subscriptions MODIFY id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL;
-CREATE INDEX IDX_SUBSCRIPTIONS_SUBSCRIBER_ID ON subscriptions (subscriber_id, last_saved_at);
+CREATE INDEX IDX_SUBSCRIPTIONS_SUBSCRIBER_ID ON subscriptions (subscriber_id, status, last_saved_at);
 CREATE INDEX IDX_SUBSCRIPTIONS_PARTITION_KEY ON subscriptions (partition_key, status);
 CREATE TABLE subscriptions_inbox (subscription_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL, message_index INT NOT NULL, PRIMARY KEY (subscription_id, message_index));
 ```
