@@ -6,14 +6,18 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Subscriber;
 
 use Patchlevel\EventSourcing\Attribute\Cleanup;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
+use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\AttributeSubscriberMetadataFactory;
+use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
+use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileId;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -137,6 +141,36 @@ final class MetadataSubscriberAccessorTest extends TestCase
 
         self::assertSame('profile', $accessor->metadata()->id);
         self::assertSame($subscriber, $accessor->subscriber());
+    }
+
+    public function testPartitioner(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        #[Partition(new StreamPartitioner())]
+        class {
+        };
+
+        $accessor = $this->accessor($subscriber);
+        $partitioner = $accessor->partitioner();
+
+        self::assertInstanceOf(StreamPartitioner::class, $partitioner);
+        self::assertSame('profile-1', $partitioner($this->streamMessage()));
+        self::assertSame($partitioner, $accessor->partitioner(), 'created once');
+    }
+
+    public function testNoPartitioner(): void
+    {
+        $subscriber = new #[Subscriber('profile', RunMode::FromBeginning)]
+        class {
+        };
+
+        self::assertNull($this->accessor($subscriber)->partitioner());
+    }
+
+    private function streamMessage(): Message
+    {
+        return Message::create(new ProfileVisited(ProfileId::fromString('1')))
+            ->withHeader(new StreamNameHeader('profile-1'));
     }
 
     public function testCleanupMethod(): void

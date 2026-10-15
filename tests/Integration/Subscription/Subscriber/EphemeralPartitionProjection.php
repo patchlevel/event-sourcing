@@ -7,15 +7,16 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 use RuntimeException;
 
 use function in_array;
 
+/** The partition is set on the class with a partitioner. */
 #[Projector(self::SUBSCRIBER_ID)]
+#[Partition(new StreamPartitioner(), removeIdleAfter: 60)]
 final class EphemeralPartitionProjection
 {
     public const SUBSCRIBER_ID = 'ephemeral_profile';
@@ -25,12 +26,6 @@ final class EphemeralPartitionProjection
 
     /** @var list<string> */
     public array $failingNames = [];
-
-    #[Partition(removeIdleAfter: 60)]
-    public function partition(Message $message): string
-    {
-        return $message->header(StreamNameHeader::class)->streamName;
-    }
 
     #[Subscribe(ProfileCreated::class)]
     public function handleProfileCreated(ProfileCreated $event): void

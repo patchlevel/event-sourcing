@@ -12,7 +12,6 @@ use Psr\Log\LoggerInterface;
 
 use function array_chunk;
 use function array_keys;
-use function is_string;
 use function sprintf;
 use function strlen;
 
@@ -20,7 +19,7 @@ use function strlen;
  * The main subscription of a partitioned subscriber never calls the subscriber itself. It resolves the partition key of
  * every message exactly once and writes the message into the inbox of that partition, creating the partition on the way.
  * A partition only processes the messages in its inbox and never resolves the key again, so a changed or
- * non-deterministic key method can not make a message disappear.
+ * non-deterministic partitioner can not make a message disappear.
  *
  * A router lives for one run of the claimed main subscription, so the known partitions never go stale.
  * The partitions of new keys are created by createPartitions() at the end of the run.
@@ -101,17 +100,13 @@ final class PartitionRouter
     /** @param MetadataSubscriberAccessor<object> $subscriber */
     private function partitionKey(Message $message, Subscription $main, MetadataSubscriberAccessor $subscriber): string
     {
-        $partitionMethod = $subscriber->partitionMethod();
+        $partitioner = $subscriber->partitioner();
 
-        if ($partitionMethod === null) {
-            throw new UnexpectedError(sprintf('The subscriber of "%s" has no partition method.', $main->id()));
+        if ($partitioner === null) {
+            throw new UnexpectedError(sprintf('The subscriber of "%s" has no partitioner.', $main->id()));
         }
 
-        $partitionKey = $partitionMethod($message);
-
-        if (!is_string($partitionKey)) {
-            throw InvalidPartitionKey::notAString($main->id(), $partitionKey);
-        }
+        $partitionKey = $partitioner($message);
 
         if ($partitionKey === '') {
             throw InvalidPartitionKey::empty($main->id());

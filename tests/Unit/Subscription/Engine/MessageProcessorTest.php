@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessingStopped;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -184,14 +185,9 @@ final class MessageProcessorTest extends TestCase
     public function testPartitionGetsItsPartitionKey(): void
     {
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        #[Partition(new StreamPartitioner())]
         class {
             public string|null $partitionKey = null;
-
-            #[Partition]
-            public function partition(Message $message): string
-            {
-                return 'tenant-a';
-            }
 
             #[Subscribe(ProfileVisited::class)]
             public function onProfileVisited(ProfileVisited $event, #[PartitionKey]

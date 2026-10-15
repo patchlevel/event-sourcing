@@ -323,17 +323,11 @@ use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\PartitionKey;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
 
 #[Projector('profile_1')]
+#[Partition(new TenantPartitioner())]
 final class ProfileProjector
 {
-    #[Partition]
-    public function partition(Message $message): string
-    {
-        return $message->header(TenantHeader::class)->tenant;
-    }
-
     #[Subscribe(ProfileCreated::class)]
     public function onProfileCreated(ProfileCreated $event, #[PartitionKey] string $tenant): void
     {
@@ -884,24 +878,20 @@ With `#[Partition]` the subscriber is split into one subscription per partition 
 The partitions are processed independently, so several workers can process them in parallel,
 and an error only stops the partition it happened in.
 
-The method marked with `#[Partition]` gets the `Message` and returns the partition key.
+The `#[Partition]` attribute on the subscriber class takes a partitioner, which returns the partition key of a message.
 Choose a key from your domain that groups everything that has to be processed in order, like the tenant or the aggregate.
+The `StreamPartitioner` creates one partition per stream, e.g. per aggregate.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 
 #[Projector('profile_1')]
+#[Partition(new StreamPartitioner())]
 final class ProfileProjector
 {
-    #[Partition]
-    public function partition(Message $message): string
-    {
-        return $message->header(TenantHeader::class)->tenant;
-    }
-
     #[Subscribe(ProfileCreated::class)]
     public function onProfileCreated(ProfileCreated $event): void
     {
@@ -909,6 +899,36 @@ final class ProfileProjector
     }
 }
 ```
+#### Custom partitioner
+
+For another key, implement the `Partitioner` interface.
+The partitioner is created by the attribute, so it can only get constant values, e.g. the name of a header.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\Partitioner\Partitioner;
+
+final class TenantPartitioner implements Partitioner
+{
+    public function __invoke(Message $message): string
+    {
+        return $message->header(TenantHeader::class)->tenant;
+    }
+}
+```
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+
+#[Projector('profile_1')]
+#[Partition(new TenantPartitioner())]
+final class ProfileProjector
+{
+    // ...
+}
+```
+#### How partitions work
+
 The subscription with the subscriber id is the main subscription. It never calls your subscribe methods.
 Instead, it resolves the partition key of every message exactly once and puts the message into the inbox of that partition.
 Partitions are created on the fly as new keys appear, get the id `{subscriber id}#{partition key}`
@@ -933,7 +953,7 @@ The id of a partitioned subscriber must not contain `#`.
 :::
 
 :::tip
-Changing the partition method is safe: messages that were already routed stay in their partition.
+Changing the partitioner is safe: messages that were already routed stay in their partition.
 Only the order between the old and the new partition of the same aggregate is not guaranteed during the change.
 :::
 
@@ -957,18 +977,12 @@ The next message of its key creates it again, so nothing is lost.
 ```php
 use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Projector;
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 
 #[Projector('profile_1')]
+#[Partition(new StreamPartitioner(), removeIdleAfter: 3600)]
 final class ProfileProjector
 {
-    #[Partition(removeIdleAfter: 3600)]
-    public function partition(Message $message): string
-    {
-        return $message->header(StreamNameHeader::class)->streamName;
-    }
-
     // ...
 }
 ```
@@ -989,17 +1003,12 @@ The default is 5 failures in a row, you can change it on the attribute.
 ```php
 use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Projector;
-use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 
 #[Projector('profile_1')]
+#[Partition(new StreamPartitioner(), maxConsecutiveFailures: 20)]
 final class ProfileProjector
 {
-    #[Partition(maxConsecutiveFailures: 20)]
-    public function partition(Message $message): string
-    {
-        return $message->header(TenantHeader::class)->tenant;
-    }
-
     // ...
 }
 ```

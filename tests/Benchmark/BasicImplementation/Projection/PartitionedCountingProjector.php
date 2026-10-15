@@ -7,22 +7,16 @@ namespace Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Projectio
 use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Benchmark\BasicImplementation\Events\ProfileCreated;
 
 /** One partition per aggregate, the projection only counts the handled events. */
 #[Projector('partitioned_counting')]
+#[Partition(new StreamPartitioner())]
 final class PartitionedCountingProjector
 {
     public int $handled = 0;
-
-    #[Partition]
-    public function partition(Message $message): string
-    {
-        return $message->header(StreamNameHeader::class)->streamName;
-    }
 
     #[Subscribe(ProfileCreated::class)]
     public function onProfileCreated(ProfileCreated $event): void

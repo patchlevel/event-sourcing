@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Attribute;
 
 use Attribute;
+use Patchlevel\EventSourcing\Subscription\Partitioner\Partitioner;
 
 /**
- * Marks the method that returns the partition key of a message, signature `(Message): string`.
+ * Splits a subscriber into partitions, the partitioner returns the partition key of every message,
+ * e.g. `#[Partition(new StreamPartitioner())]`.
  */
-#[Attribute(Attribute::TARGET_METHOD)]
+#[Attribute(Attribute::TARGET_CLASS)]
 final class Partition
 {
     public function __construct(
+        public readonly Partitioner $partitioner,
         /**
          * After that many partitions of the subscriber failed in a row, without any success in between, the failure is
          * treated as systemic (e.g. the database is down): the main subscription goes into the error status instead of

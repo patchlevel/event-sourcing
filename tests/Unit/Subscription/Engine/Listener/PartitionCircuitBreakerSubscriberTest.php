@@ -20,6 +20,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\FailedMessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\PartitionCircuitBreakerSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -224,26 +225,16 @@ final class PartitionCircuitBreakerSubscriberTest extends TestCase
     {
         $subscriber = $maxConsecutiveFailures === 1
             ? new #[Subscriber('profile', RunMode::FromBeginning)]
+        #[Partition(new StreamPartitioner(), maxConsecutiveFailures: 1)]
         class {
-            #[Partition(maxConsecutiveFailures: 1)]
-            public function partition(Message $message): string
-            {
-                return 'key';
-            }
-
             #[Subscribe(ProfileVisited::class)]
             public function on(ProfileVisited $event): void
             {
             }
         }
             : new #[Subscriber('profile', RunMode::FromBeginning)]
+        #[Partition(new StreamPartitioner(), maxConsecutiveFailures: 3)]
         class {
-            #[Partition(maxConsecutiveFailures: 3)]
-            public function partition(Message $message): string
-            {
-                return 'key';
-            }
-
             #[Subscribe(ProfileVisited::class)]
             public function on(ProfileVisited $event): void
             {

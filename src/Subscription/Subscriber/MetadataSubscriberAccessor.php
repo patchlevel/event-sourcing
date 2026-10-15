@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Subscriber;
 
 use Closure;
+use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
+use Patchlevel\EventSourcing\Subscription\Partitioner\Partitioner;
+use ReflectionClass;
 use Throwable;
 
 use function array_key_exists;
@@ -19,6 +22,8 @@ final class MetadataSubscriberAccessor
 {
     /** @var array<class-string, list<SubscribeMethodMetadata>> */
     private array $subscribeCache = [];
+
+    private Partitioner|null $partitioner = null;
 
     /** @param T $subscriber */
     public function __construct(
@@ -84,16 +89,17 @@ final class MetadataSubscriberAccessor
         return $this->subscriber->$method(...);
     }
 
-    /** @return Closure(Message):mixed|null */
-    public function partitionMethod(): Closure|null
+    /** The partitioner of a partitioned subscriber, created from its #[Partition] attribute. */
+    public function partitioner(): Partitioner|null
     {
-        $method = $this->metadata->partition?->method;
-
-        if ($method === null) {
+        if ($this->metadata->partition === null) {
             return null;
         }
 
-        return $this->subscriber->$method(...);
+        return $this->partitioner ??= (new ReflectionClass($this->subscriber))
+            ->getAttributes(Partition::class)[0]
+            ->newInstance()
+            ->partitioner;
     }
 
     /** @return list<class-string|'*'> */

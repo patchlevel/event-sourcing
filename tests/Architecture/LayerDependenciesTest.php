@@ -27,7 +27,13 @@ final class LayerDependenciesTest
 
     public function testAttributeCanOnlyDependOnAllowedLayers(): Rule
     {
-        return $this->layerCanOnlyDependOnAllowedLayers($this->layer('Attribute'));
+        return $this->layerCanOnlyDependOnAllowedLayers(
+            $this->layer('Attribute'),
+            [
+                // #[Partition] on a class takes a partitioner
+                $this->layer('Subscription\Partitioner'),
+            ],
+        );
     }
 
     public function testClockCanOnlyDependOnAllowedLayers(): Rule

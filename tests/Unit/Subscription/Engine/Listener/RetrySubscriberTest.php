@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -181,12 +182,8 @@ final class RetrySubscriberTest extends TestCase
     public function testRoutingDoesNotResetTheRetriesOfThePartitionedMain(): void
     {
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        #[Partition(new StreamPartitioner())]
         class {
-            #[Partition]
-            public function partition(Message $message): string
-            {
-                return 'key';
-            }
         };
 
         $main = new Subscription('test', status: Status::Active, retryAttempt: 3);

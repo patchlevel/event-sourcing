@@ -71,10 +71,12 @@ final class PartitionedSubscriptionTest extends TestCase
     {
         $this->connection = DbalManager::createConnection();
         $this->clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+        ConfigurablePartitioner::$key = null;
     }
 
     public function tearDown(): void
     {
+        ConfigurablePartitioner::$key = null;
         $this->connection->close();
 
         gc_collect_cycles();
@@ -149,7 +151,7 @@ final class PartitionedSubscriptionTest extends TestCase
     {
         $projection = new PartitionedProfileProjection();
         $engine = $this->engine($projection);
-        $projection->partitionKey = static fn (Message $message): string => 'v1-' . $message->header(StreamNameHeader::class)->streamName;
+        ConfigurablePartitioner::$key = static fn (Message $message): string => 'v1-' . $message->header(StreamNameHeader::class)->streamName;
 
         $engine->execute(new Setup(skipBooting: true));
 
@@ -162,7 +164,7 @@ final class PartitionedSubscriptionTest extends TestCase
         $this->runUntilFinished($engine);
 
         // deploy: the key method changes and the bug is fixed while the partition is still in error
-        $projection->partitionKey = static fn (Message $message): string => 'v2-' . $message->header(StreamNameHeader::class)->streamName;
+        ConfigurablePartitioner::$key = static fn (Message $message): string => 'v2-' . $message->header(StreamNameHeader::class)->streamName;
         $projection->failingNames = [];
         $this->changeName($profileId, 'n3');
 
@@ -183,7 +185,7 @@ final class PartitionedSubscriptionTest extends TestCase
     public function testNonDeterministicPartitionKeyProcessesEveryMessageExactlyOnce(): void
     {
         $projection = new PartitionedProfileProjection();
-        $projection->partitionKey = static fn (Message $message): string => 'bucket-' . random_int(1, 5);
+        ConfigurablePartitioner::$key = static fn (Message $message): string => 'bucket-' . random_int(1, 5);
         $engine = $this->engine($projection);
 
         $engine->execute(new Setup(skipBooting: true));
@@ -232,7 +234,7 @@ final class PartitionedSubscriptionTest extends TestCase
     public function testRunWithLimitProcessesTheInboxInChunks(): void
     {
         $projection = new PartitionedProfileProjection();
-        $projection->partitionKey = static fn (Message $message): string => 'all';
+        ConfigurablePartitioner::$key = static fn (Message $message): string => 'all';
         $engine = $this->engine($projection);
 
         $engine->execute(new Setup(skipBooting: true));
@@ -389,7 +391,7 @@ final class PartitionedSubscriptionTest extends TestCase
 
         [$firstId, $secondId, $brokenId] = $this->createProfiles(3);
 
-        $projection->partitionKey = static function (Message $message) use ($brokenId): string {
+        ConfigurablePartitioner::$key = static function (Message $message) use ($brokenId): string {
             $streamName = $message->header(StreamNameHeader::class)->streamName;
 
             if ($streamName === 'profile-' . $brokenId) {
@@ -439,7 +441,7 @@ final class PartitionedSubscriptionTest extends TestCase
     public function testKeysThatOnlyDifferInCaseAreDifferentPartitions(bool $sameRun): void
     {
         $projection = new PartitionedProfileProjection();
-        $projection->partitionKey = static function (Message $message): string {
+        ConfigurablePartitioner::$key = static function (Message $message): string {
             $event = $message->event();
 
             return $event instanceof ProfileCreated ? 'tenant-' . $event->name : 'other';

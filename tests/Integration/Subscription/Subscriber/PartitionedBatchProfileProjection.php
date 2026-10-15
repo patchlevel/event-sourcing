@@ -11,13 +11,13 @@ use Patchlevel\EventSourcing\Attribute\BatchState;
 use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
 /** Collects the names of a batch and only stores them on flush. */
 #[Projector(self::SUBSCRIBER_ID)]
+#[Partition(new StreamPartitioner())]
 final class PartitionedBatchProfileProjection
 {
     public const SUBSCRIBER_ID = 'partitioned_batch_profile';
@@ -26,12 +26,6 @@ final class PartitionedBatchProfileProjection
     public array $flushed = [];
 
     public int $flushCount = 0;
-
-    #[Partition]
-    public function partition(Message $message): string
-    {
-        return $message->header(StreamNameHeader::class)->streamName;
-    }
 
     /** @param ArrayObject<int, array{string, string}> $state */
     #[Subscribe(ProfileCreated::class)]

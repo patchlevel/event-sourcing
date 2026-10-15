@@ -19,12 +19,10 @@ use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Attribute\Teardown;
-use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use ReflectionAttribute;
 use ReflectionClass;
 use ReflectionMethod;
-use ReflectionNamedType;
 use Symfony\Component\TypeInfo\TypeResolver\TypeResolver;
 
 use function array_key_exists;
@@ -73,7 +71,6 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
         $flushAfterMessages = null;
         $shouldFlushMethod = null;
         $rollbackBatchMethod = null;
-        $partitionMethod = null;
 
         foreach ($methods as $method) {
             $attributes = $method->getAttributes(Subscribe::class);
@@ -169,29 +166,6 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
                 $setupMethod = $method->getName();
             }
 
-            $partitionAttributes = $method->getAttributes(Partition::class);
-
-            if ($partitionAttributes !== []) {
-                if ($partitionMethod !== null) {
-                    throw new DuplicatePartitionMethod(
-                        $subscriber,
-                        $partitionMethod->method,
-                        $method->getName(),
-                    );
-                }
-
-                if (!$this->isPartitionMethodSignature($method)) {
-                    throw InvalidPartitionMethod::invalidSignature($subscriber, $method->getName());
-                }
-
-                $partition = $partitionAttributes[0]->newInstance();
-                $partitionMethod = new PartitionMetadata(
-                    $method->getName(),
-                    $partition->maxConsecutiveFailures,
-                    $partition->removeIdleAfter,
-                );
-            }
-
             if ($method->getAttributes(Cleanup::class)) {
                 if ($cleanupMethod !== null) {
                     throw new DuplicateCleanupMethod(
@@ -261,8 +235,16 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             );
         }
 
-        if ($partitionMethod !== null && str_contains($subscriberInfo->id, Subscription::PARTITION_SEPARATOR)) {
-            throw InvalidPartitionMethod::invalidSubscriberId($subscriber, $subscriberInfo->id);
+        $partitionAttributes = $reflector->getAttributes(Partition::class);
+        $partitionMetadata = null;
+
+        if ($partitionAttributes !== []) {
+            if (str_contains($subscriberInfo->id, Subscription::PARTITION_SEPARATOR)) {
+                throw new InvalidPartitionedSubscriberId($subscriber, $subscriberInfo->id);
+            }
+
+            $partition = $partitionAttributes[0]->newInstance();
+            $partitionMetadata = new PartitionMetadata($partition->maxConsecutiveFailures, $partition->removeIdleAfter);
         }
 
         $metadata = new SubscriberMetadata(
@@ -278,7 +260,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $reflector->getAttributes(EnableEventEmittingDuringBoot::class) !== [],
             $reflector->getAttributes(DisableEventEmitting::class) !== [],
             $batch,
-            $partitionMethod,
+            $partitionMetadata,
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;
@@ -315,19 +297,6 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $method->getName(),
             $arguments,
         );
-    }
-
-    private function isPartitionMethodSignature(ReflectionMethod $method): bool
-    {
-        $parameters = $method->getParameters();
-
-        if (count($parameters) !== 1) {
-            return false;
-        }
-
-        $type = $parameters[0]->getType();
-
-        return $type instanceof ReflectionNamedType && $type->getName() === Message::class;
     }
 
     /** @param array<class-string|"*", SubscribeMethodMetadata> $subscribeMethods */

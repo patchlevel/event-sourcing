@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber;
 
-use Closure;
 use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\PartitionKey;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\ConfigurablePartitioner;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 use RuntimeException;
 
 use function in_array;
 
+/** The key comes from the ConfigurablePartitioner, one partition per stream unless a test changes it. */
 #[Projector(self::SUBSCRIBER_ID)]
+#[Partition(new ConfigurablePartitioner())]
 final class PartitionedProfileProjection
 {
     public const SUBSCRIBER_ID = 'partitioned_profile';
@@ -32,20 +32,6 @@ final class PartitionedProfileProjection
 
     /** @var list<string> names that throw while processing */
     public array $failingNames = [];
-
-    /** @var Closure(Message):string */
-    public Closure $partitionKey;
-
-    public function __construct()
-    {
-        $this->partitionKey = static fn (Message $message): string => $message->header(StreamNameHeader::class)->streamName;
-    }
-
-    #[Partition]
-    public function partition(Message $message): string
-    {
-        return ($this->partitionKey)($message);
-    }
 
     #[Subscribe(ProfileCreated::class)]
     public function handleProfileCreated(ProfileCreated $event, #[PartitionKey]

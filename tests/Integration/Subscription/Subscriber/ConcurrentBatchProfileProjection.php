@@ -11,13 +11,13 @@ use Patchlevel\EventSourcing\Attribute\BatchRollback;
 use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 
 /** Like ConcurrentProfileProjection, but every batch of three messages is its own database transaction. */
 #[Projector(self::SUBSCRIBER_ID)]
+#[Partition(new StreamPartitioner())]
 final class ConcurrentBatchProfileProjection
 {
     public const SUBSCRIBER_ID = 'concurrent_batch_profile';
@@ -26,12 +26,6 @@ final class ConcurrentBatchProfileProjection
         private readonly Connection $connection,
         private readonly string $worker,
     ) {
-    }
-
-    #[Partition]
-    public function partition(Message $message): string
-    {
-        return $message->header(StreamNameHeader::class)->streamName;
     }
 
     #[BatchBegin]

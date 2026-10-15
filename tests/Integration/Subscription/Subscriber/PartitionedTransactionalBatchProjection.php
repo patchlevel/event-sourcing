@@ -14,8 +14,7 @@ use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 use RuntimeException;
@@ -26,6 +25,7 @@ use stdClass;
  * so overlapping batches of different partitions would roll back the wrong writes.
  */
 #[Projector(self::SUBSCRIBER_ID)]
+#[Partition(new StreamPartitioner())]
 final class PartitionedTransactionalBatchProjection
 {
     public const SUBSCRIBER_ID = 'partitioned_transactional_batch';
@@ -45,12 +45,6 @@ final class PartitionedTransactionalBatchProjection
         $table->setPrimaryKey(['id']);
 
         $this->connection->createSchemaManager()->createTable($table);
-    }
-
-    #[Partition]
-    public function partition(Message $message): string
-    {
-        return $message->header(StreamNameHeader::class)->streamName;
     }
 
     #[BatchBegin]

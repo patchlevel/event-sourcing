@@ -8,8 +8,7 @@ use Doctrine\DBAL\Connection;
 use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
-use Patchlevel\EventSourcing\Message\Message;
-use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Subscription\Subscriber\EventEmitter\EventEmitter;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NotificationSent;
@@ -18,6 +17,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\ProfileId;
 
 /** Like ConcurrentProfileProjection, but every processed message also emits an event into the subscriber stream. */
 #[Projector(self::SUBSCRIBER_ID)]
+#[Partition(new StreamPartitioner())]
 final class ConcurrentEmittingProfileProjection
 {
     public const SUBSCRIBER_ID = 'concurrent_emitting_profile';
@@ -26,12 +26,6 @@ final class ConcurrentEmittingProfileProjection
         private readonly Connection $connection,
         private readonly string $worker,
     ) {
-    }
-
-    #[Partition]
-    public function partition(Message $message): string
-    {
-        return $message->header(StreamNameHeader::class)->streamName;
     }
 
     #[Subscribe(ProfileCreated::class)]
