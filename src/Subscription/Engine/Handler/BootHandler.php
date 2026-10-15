@@ -62,20 +62,22 @@ final class BootHandler implements Handler
 
         // the partitions are found after the main subscriptions routed, so they process the new messages right away.
         // partitions without messages in their inbox have nothing to do while their main subscription boots.
-        $results = [
-            ...$results,
-            ...$this->claim(
-                new SubscriptionCriteria(
-                    ids: $command->ids,
-                    groups: $command->groups,
-                    status: [Status::Booting],
-                    partitions: true,
-                    pendingPartitionsOnly: true,
-                ),
-                $claimGroups,
-                $command,
-            ),
-        ];
+        $partitions = new SubscriptionCriteria(
+            ids: $command->ids,
+            groups: $command->groups,
+            status: [Status::Booting],
+            partitions: true,
+            pendingPartitionsOnly: true,
+        );
+
+        // a partition processes a limited part of its inbox at a time, without a limit the boot goes on until it is done
+        do {
+            $pass = ProcessedResult::merge($this->claim($partitions, $claimGroups, $command));
+            $repeat = $command->limit === null && !$pass->finished && $pass->processedMessages > 0;
+
+            // only the last pass tells whether the partitions are done
+            $results[] = $repeat ? new ProcessedResult($pass->processedMessages, true, $pass->errors) : $pass;
+        } while ($repeat);
 
         return ProcessedResult::merge([...$results, ...$this->finishPartitions($command, $claimGroups)]);
     }

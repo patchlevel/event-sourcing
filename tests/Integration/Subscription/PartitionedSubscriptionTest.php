@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Schema\DoctrineSchemaDirector;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
+use Patchlevel\EventSourcing\Store\Header\PlayheadHeader;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Store\StreamDoctrineDbalStore;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
@@ -42,6 +43,7 @@ use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\EphemeralPartitionProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\OncePartitionedProjection;
@@ -54,6 +56,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
+use function array_chunk;
 use function array_keys;
 use function array_map;
 use function array_values;
@@ -676,6 +679,37 @@ final class PartitionedSubscriptionTest extends TestCase
             self::assertSame(Status::Active, $partition->status(), $partition->id());
             self::assertSame(['name-' . $i, 'changed-' . $id], $projection->flushed[$id]);
         }
+    }
+
+    /** A boot without a limit processes everything, also a partition with more messages than it reads at a time. */
+    public function testBootWithoutLimitProcessesLargeInboxes(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection);
+
+        $id = ProfileId::generate();
+        $messages = [];
+
+        for ($i = 1; $i <= 2500; $i++) {
+            $messages[] = Message::create($i === 1 ? new ProfileCreated($id, 'name-1') : new NameChanged($id, 'name-' . $i))
+                ->withHeader(new StreamNameHeader('profile-' . $id->toString()))
+                ->withHeader(new PlayheadHeader($i));
+        }
+
+        foreach (array_chunk($messages, 500) as $chunk) {
+            $this->store->save(...$chunk);
+        }
+
+        $engine->execute(new Setup());
+        $result = $engine->execute(new Boot());
+
+        self::assertInstanceOf(ProcessedResult::class, $result);
+        self::assertTrue($result->finished);
+        self::assertCount(2500, $projection->processed[$id->toString()]);
+        self::assertSame(
+            Status::Active,
+            $this->subscriptionStore->get(Subscription::partitionId(self::MAIN, 'profile-' . $id->toString()))->status(),
+        );
     }
 
     /** @param 'index'|'plain'|'unsupported' $messageLoader */
