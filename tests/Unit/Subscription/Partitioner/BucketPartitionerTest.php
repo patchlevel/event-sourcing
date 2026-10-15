@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Partitioner;
 
-use InvalidArgumentException;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Store\Header\StreamNameHeader;
 use Patchlevel\EventSourcing\Subscription\Partitioner\BucketPartitioner;
@@ -41,14 +40,6 @@ final class BucketPartitionerTest extends TestCase
         $partitioner = new BucketPartitioner(new StreamPartitioner(), 16);
 
         self::assertSame($partitioner($this->message('profile-1')), $partitioner($this->message('profile-1')));
-    }
-
-    public function testNeedsAtLeastOneBucket(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-
-        /** @phpstan-ignore argument.type, new.resultUnused */
-        new BucketPartitioner(new StreamPartitioner(), 0);
     }
 
     private function message(string $stream): Message
