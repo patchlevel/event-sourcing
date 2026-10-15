@@ -181,7 +181,7 @@ final class PartitionCircuitBreakerSubscriberTest extends TestCase
             $breaker->holdBackFailure($event);
 
             self::assertFalse($event->transitionToFailed, 'the fail subscriber does not see it');
-            self::assertSame(Status::Error, $this->partitions[$i]->status());
+            self::assertSame(Status::Active, $this->partitions[$i]->status(), 'nothing about the failure is stored yet');
         }
 
         $breaker->onResult(new OnResult(new Run(), new Result()));
@@ -207,6 +207,49 @@ final class PartitionCircuitBreakerSubscriberTest extends TestCase
 
         self::assertSame(Status::Active, $this->store->get('profile')->status());
         self::assertSame(Status::Failed, $this->store->get($this->partitions[0]->id())->status());
+    }
+
+    /** If the run does not get to its end, the partition is still active and processes the message again. */
+    public function testHeldBackFailureSurvivesACrash(): void
+    {
+        $breaker = $this->breaker(3);
+        $breaker->onCommand(new OnCommand(new Run()));
+
+        $event = $this->error($this->partitions[0]);
+        $event->transitionToFailed = true;
+
+        $breaker->onHandleMessageError($event);
+        $breaker->holdBackFailure($event);
+        $this->store->update($this->partitions[0]);
+
+        // the process dies before the result, the next command starts fresh
+        $breaker->onCommand(new OnCommand(new Run()));
+        $breaker->onResult(new OnResult(new Run(), new Result()));
+
+        $partition = $this->store->get($this->partitions[0]->id());
+        self::assertSame(Status::Active, $partition->status());
+        self::assertSame(0, $partition->position(), 'the message is processed again');
+    }
+
+    public function testHeldBackFailureOfAMessageProcessedMeanwhile(): void
+    {
+        $breaker = $this->breaker(3);
+        $breaker->onCommand(new OnCommand(new Run()));
+
+        $event = $this->error($this->partitions[0]);
+        $event->transitionToFailed = true;
+
+        $breaker->onHandleMessageError($event);
+        $breaker->holdBackFailure($event);
+
+        // another worker processed the message in the meantime
+        $partition = $this->store->get($this->partitions[0]->id());
+        $partition->changePosition(1);
+        $this->store->update($partition);
+
+        $breaker->onResult(new OnResult(new Run(), new Result()));
+
+        self::assertSame(Status::Active, $this->store->get($this->partitions[0]->id())->status());
     }
 
     public function testOnlyRunAndBoot(): void

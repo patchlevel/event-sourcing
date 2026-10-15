@@ -109,7 +109,7 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
     /**
      * A partition without retries left would go into the failed status and call its #[OnFailed] method, which may
      * skip the message. During a systemic failure that must not happen, so the transition is held back until the end
-     * of the command: the partition goes into the error status for now and only fails if the breaker did not trip.
+     * of the command: the partition stays active and only fails if the breaker did not trip.
      */
     public function holdBackFailure(OnHandleMessageError $event): void
     {
@@ -119,8 +119,9 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
 
         $partition = $event->subscription;
 
+        // nothing about the failure is stored yet, only the position of the messages handled before.
+        // if the run does not get to its end, the message is simply processed again in the next run.
         $event->transitionToFailed = false;
-        $partition->error($event->throwable);
         $this->subscriptionManager->update($partition);
 
         $this->heldBackFailures[$partition->subscriberId()][$partition->id()] = [
@@ -287,7 +288,7 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
     private function fail(array $failures): void
     {
         $this->subscriptionManager->forEachClaimed(
-            new SubscriptionCriteria(ids: array_keys($failures), status: [Status::Error], partitions: true),
+            new SubscriptionCriteria(ids: array_keys($failures), status: [Status::Active, Status::Booting], partitions: true),
             function (Subscription $partition) use ($failures): void {
                 if (!isset($failures[$partition->id()])) {
                     return;
@@ -295,8 +296,11 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
 
                 [$throwable, $message, $index] = $failures[$partition->id()];
 
-                // back to the status before the error, the failed message processor decides about the rest
-                $partition->doRetry();
+                // another worker may have processed the message since, then it already failed there
+                if (($partition->position() ?? -1) >= $index) {
+                    return;
+                }
+
                 $this->failedMessageProcessor->process($partition, $throwable, $message, $index);
             },
             wait: true,
