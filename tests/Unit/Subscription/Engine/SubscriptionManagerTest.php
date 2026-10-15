@@ -121,8 +121,8 @@ final class SubscriptionManagerTest extends TestCase
         $criteria = new SubscriptionCriteria();
 
         $store = $this->createMock(SubscriptionStore::class);
-        $store->expects($this->once())->method('findLazy')->with($criteria)->willReturn([$subscription]);
-        $store->expects($this->once())->method('claim')->with('foo', $criteria)->willReturn($subscription);
+        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
+        $store->expects($this->once())->method('claim')->with(['foo'], $criteria)->willReturn([$subscription]);
         $store->expects($this->once())->method('update')->with($subscription);
         $store
             ->expects($this->once())
@@ -140,14 +140,14 @@ final class SubscriptionManagerTest extends TestCase
         self::assertSame([$subscription], $result);
     }
 
-    public function testForEachClaimedSkipsWhenClaimReturnsNull(): void
+    public function testForEachClaimedSkipsWhenNothingIsClaimed(): void
     {
         $subscription = new Subscription('foo');
         $criteria = new SubscriptionCriteria();
 
         $store = $this->createMock(SubscriptionStore::class);
-        $store->expects($this->once())->method('findLazy')->with($criteria)->willReturn([$subscription]);
-        $store->expects($this->once())->method('claim')->with('foo', $criteria)->willReturn(null);
+        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
+        $store->expects($this->once())->method('claim')->with(['foo'], $criteria)->willReturn([]);
         $store->expects($this->never())->method('update');
         $store
             ->expects($this->once())
@@ -166,8 +166,8 @@ final class SubscriptionManagerTest extends TestCase
         $criteria = new SubscriptionCriteria();
 
         $store = $this->createMock(SubscriptionStore::class);
-        $store->expects($this->once())->method('findLazy')->with($criteria)->willReturn([$subscription]);
-        $store->expects($this->once())->method('claim')->with('foo', $criteria)->willReturn($subscription);
+        $store->expects($this->once())->method('find')->with($criteria)->willReturn([$subscription]);
+        $store->expects($this->once())->method('claim')->with(['foo'], $criteria)->willReturn([$subscription]);
         $store
             ->expects($this->once())
             ->method('inLock')

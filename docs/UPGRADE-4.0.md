@@ -454,8 +454,8 @@ This is mostly transparent, but a few contracts changed.
 #### SubscriptionStore
 
 `claim()` and `inLock()` are now mandatory parts of the `SubscriptionStore` interface, and the
-separate `LockableSubscriptionStore` interface has been removed. Every custom store has to implement
-both:
+separate `LockableSubscriptionStore` interface has been removed. `add()`, `update()` and `remove()` take
+several subscriptions at once. Every custom store has to implement:
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
@@ -463,13 +463,23 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 
 interface SubscriptionStore
 {
-    // ... get/find/add/update/remove ...
+    // ... get/find ...
 
     /**
-     * Claim exactly one subscription via a row lock (SKIP LOCKED). Return null if the row is held
-     * by another worker or no longer matches the criteria.
+     * Claim the subscriptions via row locks (SKIP LOCKED). Leave out the ones that are held
+     * by another worker or no longer match the criteria.
+     *
+     * @param non-empty-list<string> $ids
+     *
+     * @return list<Subscription>
      */
-    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null;
+    public function claim(array $ids, SubscriptionCriteria $criteria): array;
+
+    public function add(Subscription ...$subscriptions): void;
+
+    public function update(Subscription ...$subscriptions): void;
+
+    public function remove(Subscription ...$subscriptions): void;
 
     /**
      * @param Closure():T $closure
@@ -483,6 +493,10 @@ interface SubscriptionStore
 ```
 `find()` no longer locks the matched rows: it is now a plain, unlocked snapshot read. The locking
 happens per subscription inside `claim()`.
+
+The `DoctrineSubscriptionStore` loads the error context and the cleanup tasks of the subscriptions from `find()`
+lazily. Subscriptions that have one of them are native lazy objects, which `var_dump()` and `assertEquals()` show
+without these fields until they are accessed.
 
 #### Message limit is now per subscription
 
@@ -519,12 +533,13 @@ CREATE TABLE subscriptions_inbox (subscription_id VARCHAR(255) NOT NULL, message
 ```
 Adjust the table names if you configured your own, and the `ALTER COLUMN` syntax for MySQL (`MODIFY`).
 
-A custom `SubscriptionStore` has to persist `partitionKey()` and `subscriberId()`, implement the inbox methods
-`addToInbox()`, `inbox()` and `removeFromInbox()`, remove the inbox in `remove()`, and support the new
-`partitions` and `pendingPartitionsOnly` criteria. It also has to implement `claimAll()`, `addAll()` and `updateAll()`,
-which work on several subscriptions at once. A simple loop over `claim()`, `add()` and `update()` is enough.
-`findLazy()` may return subscriptions whose error context and cleanup tasks are loaded on first access,
-the engine uses it for lookups that only need the other fields. Returning the result of `find()` is enough. The `ids` of `SubscriptionCriteria` now match the subscription
+A custom `SubscriptionStore` has to persist `partitionKey()` and `subscriberId()` and support the new
+`partitions` and `pendingPartitionsOnly` criteria. To support partitions, it also has to implement the
+`PartitionInboxStore` interface with `addToInbox()` and `inbox()`. The inbox of a partition only holds messages after its
+position: updating a partition clears its inbox up to its position, removing it removes its inbox.
+A store without partitions support throws `PartitionsNotSupported` as soon as a partitioned subscriber is processed.
+
+The `ids` of `SubscriptionCriteria` now match the subscription
 id or the subscriber id, so the id of a partitioned subscriber also selects its partitions.
 For subscribers without partitions nothing changes, because the subscriber id is the subscription id.
 

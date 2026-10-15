@@ -183,8 +183,8 @@ final class InMemorySubscriptionStoreTest extends TestCase
         $store = new InMemorySubscriptionStore([$subscription]);
 
         self::assertSame(
-            $subscription,
-            $store->claim('foo', new SubscriptionCriteria(status: [Status::Active])),
+            [$subscription],
+            $store->claim(['foo'], new SubscriptionCriteria(status: [Status::Active])),
         );
     }
 
@@ -192,7 +192,7 @@ final class InMemorySubscriptionStoreTest extends TestCase
     {
         $store = new InMemorySubscriptionStore();
 
-        self::assertNull($store->claim('foo', new SubscriptionCriteria()));
+        self::assertSame([], $store->claim(['foo'], new SubscriptionCriteria()));
     }
 
     public function testClaimCriteriaNotMatched(): void
@@ -201,7 +201,7 @@ final class InMemorySubscriptionStoreTest extends TestCase
 
         $store = new InMemorySubscriptionStore([$subscription]);
 
-        self::assertNull($store->claim('foo', new SubscriptionCriteria(status: [Status::Active])));
+        self::assertSame([], $store->claim(['foo'], new SubscriptionCriteria(status: [Status::Active])));
     }
 
     public function testInLock(): void
@@ -253,6 +253,11 @@ final class InMemorySubscriptionStoreTest extends TestCase
     {
         $store = new InMemorySubscriptionStore();
 
+        $main = new Subscription('profile', status: Status::Active, position: 0);
+        $a = Subscription::partition($main, 'a', 0);
+        $b = Subscription::partition($main, 'b', 0);
+        $store->add($main, $a, $b);
+
         $store->addToInbox(['profile#a' => [5, 3, 9], 'profile#b' => [4]]);
 
         self::assertSame(['profile#a' => [3, 5, 9]], $store->inbox(['profile#a' => -1], 10));
@@ -264,9 +269,15 @@ final class InMemorySubscriptionStoreTest extends TestCase
         );
         self::assertSame([], $store->inbox(['profile#c' => -1], 10), 'an empty inbox is left out');
 
-        $store->removeFromInbox(['profile#a' => 5, 'profile#b' => 3]);
+        $a->changePosition(5);
+        $b->changePosition(3);
+        $store->update($a, $b);
 
-        self::assertSame(['profile#a' => [9], 'profile#b' => [4]], $store->inbox(['profile#a' => -1, 'profile#b' => -1], 10));
+        self::assertSame(
+            ['profile#a' => [9], 'profile#b' => [4]],
+            $store->inbox(['profile#a' => -1, 'profile#b' => -1], 10),
+            'updating a partition clears its inbox up to its position',
+        );
     }
 
     public function testPendingPartitionsOnly(): void
@@ -289,8 +300,8 @@ final class InMemorySubscriptionStoreTest extends TestCase
             ),
         );
 
-        self::assertNotNull($store->claim('profile#pending', new SubscriptionCriteria(pendingPartitionsOnly: true)));
-        self::assertNull($store->claim('profile#empty', new SubscriptionCriteria(pendingPartitionsOnly: true)));
+        self::assertNotSame([], $store->claim(['profile#pending'], new SubscriptionCriteria(pendingPartitionsOnly: true)));
+        self::assertSame([], $store->claim(['profile#empty'], new SubscriptionCriteria(pendingPartitionsOnly: true)));
     }
 
     public function testRemoveAlsoRemovesTheInbox(): void
@@ -319,7 +330,7 @@ final class InMemorySubscriptionStoreTest extends TestCase
             ['a', 'c'],
             array_map(
                 static fn (Subscription $s) => $s->id(),
-                $store->claimAll(['a', 'b', 'c', 'unknown'], new SubscriptionCriteria(status: [Status::Active])),
+                $store->claim(['a', 'b', 'c', 'unknown'], new SubscriptionCriteria(status: [Status::Active])),
             ),
         );
     }
@@ -328,11 +339,11 @@ final class InMemorySubscriptionStoreTest extends TestCase
     {
         $store = new InMemorySubscriptionStore();
 
-        $store->addAll([new Subscription('a'), new Subscription('b')]);
+        $store->add(...[new Subscription('a'), new Subscription('b')]);
 
         $a = $store->get('a');
         $a->changePosition(5);
-        $store->updateAll([$a, $store->get('b')]);
+        $store->update(...[$a, $store->get('b')]);
 
         self::assertSame(5, $store->get('a')->position());
         self::assertCount(2, $store->find());

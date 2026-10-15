@@ -1029,6 +1029,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $found = $store->find(new SubscriptionCriteria(ids: ['foo']));
 
         self::assertCount(1, $found);
+        self::assertTrue((new ReflectionClass(Subscription::class))->isUninitializedLazyObject($found[0]), 'the cleanup tasks are loaded lazily');
+        self::assertEquals([new DropTableTask('baz')], $found[0]->cleanupTasks());
         self::assertEquals($subscription, $found[0]);
     }
 
@@ -1133,6 +1135,11 @@ final class DoctrineSubscriptionStoreTest extends TestCase
     {
         $store = $this->createStore();
 
+        $main = new Subscription('profile', status: Status::Active, position: 0);
+        $a = Subscription::partition($main, 'a', 0);
+        $b = Subscription::partition($main, 'b', 0);
+        $store->add($main, $a, $b);
+
         $store->addToInbox(['profile#a' => [5, 3, 9], 'profile#b' => [4]]);
 
         self::assertSame(['profile#a' => [3, 5, 9]], $store->inbox(['profile#a' => -1], 10));
@@ -1144,9 +1151,15 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         );
         self::assertSame([], $store->inbox(['profile#c' => -1], 10), 'an empty inbox is left out');
 
-        $store->removeFromInbox(['profile#a' => 5, 'profile#b' => 3]);
+        $a->changePosition(5);
+        $b->changePosition(3);
+        $store->update($a, $b);
 
-        self::assertSame(['profile#a' => [9], 'profile#b' => [4]], $store->inbox(['profile#a' => -1, 'profile#b' => -1], 10));
+        self::assertSame(
+            ['profile#a' => [9], 'profile#b' => [4]],
+            $store->inbox(['profile#a' => -1, 'profile#b' => -1], 10),
+            'updating a partition clears its inbox up to its position',
+        );
     }
 
     public function testPendingPartitionsOnly(): void
@@ -1169,8 +1182,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
             ),
         );
 
-        self::assertNotNull($store->claim('profile#pending', new SubscriptionCriteria(pendingPartitionsOnly: true)));
-        self::assertNull($store->claim('profile#empty', new SubscriptionCriteria(pendingPartitionsOnly: true)));
+        self::assertNotSame([], $store->claim(['profile#pending'], new SubscriptionCriteria(pendingPartitionsOnly: true)));
+        self::assertSame([], $store->claim(['profile#empty'], new SubscriptionCriteria(pendingPartitionsOnly: true)));
     }
 
     public function testRemoveAlsoRemovesTheInbox(): void
@@ -1211,7 +1224,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
             ['a', 'c'],
             array_map(
                 static fn (Subscription $s) => $s->id(),
-                $store->claimAll(['a', 'b', 'c', 'unknown'], new SubscriptionCriteria(status: [Status::Active])),
+                $store->claim(['a', 'b', 'c', 'unknown'], new SubscriptionCriteria(status: [Status::Active])),
             ),
         );
     }
@@ -1224,7 +1237,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $main->error('error message');
         $partition = Subscription::partition(new Subscription('foo', status: Status::Booting), 'tenant-a', 5);
 
-        $store->addAll([$main, $partition, new Subscription('other')]);
+        $store->add(...[$main, $partition, new Subscription('other')]);
 
         self::assertEquals($main, $store->get('foo'));
         self::assertEquals($partition, $store->get('foo#tenant-a'));
@@ -1239,14 +1252,14 @@ final class DoctrineSubscriptionStoreTest extends TestCase
 
         $this->expectException(SubscriptionAlreadyExists::class);
 
-        $store->addAll([new Subscription('bar'), new Subscription('foo')]);
+        $store->add(...[new Subscription('bar'), new Subscription('foo')]);
     }
 
     public function testUpdateAll(): void
     {
         $store = $this->createStore();
 
-        $store->addAll([
+        $store->add(...[
             new Subscription('a', status: Status::Active, position: 1),
             new Subscription('b', status: Status::Active, position: 1),
             new Subscription('c', status: Status::Active, position: 1),
@@ -1261,7 +1274,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $b = $store->get('b');
         $b->error(new RuntimeException('error message'));
 
-        $store->updateAll([$a, $b]);
+        $store->update(...[$a, $b]);
 
         $loadedA = $store->get('a');
         self::assertSame(42, $loadedA->position());
@@ -1283,11 +1296,11 @@ final class DoctrineSubscriptionStoreTest extends TestCase
     {
         $store = $this->createStore();
 
-        $store->addAll([new Subscription('a'), new Subscription('b')]);
+        $store->add(...[new Subscription('a'), new Subscription('b')]);
 
         // mysql and mariadb report no affected rows if nothing changed
-        $store->updateAll([$store->get('a'), $store->get('b')]);
-        $store->updateAll([$store->get('a'), $store->get('b')]);
+        $store->update(...[$store->get('a'), $store->get('b')]);
+        $store->update(...[$store->get('a'), $store->get('b')]);
 
         self::assertSame(Status::New, $store->get('a')->status());
     }
@@ -1299,7 +1312,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
 
         $this->expectException(SubscriptionNotFound::class);
 
-        $store->updateAll([$store->get('a'), new Subscription('unknown')]);
+        $store->update(...[$store->get('a'), new Subscription('unknown')]);
     }
 
     public function testUpdateAllInChunks(): void
@@ -1312,20 +1325,20 @@ final class DoctrineSubscriptionStoreTest extends TestCase
             $subscriptions[] = new Subscription('s' . $i, status: Status::Active, position: 0);
         }
 
-        $store->addAll($subscriptions);
+        $store->add(...$subscriptions);
 
         foreach ($subscriptions as $i => $subscription) {
             $subscription->changePosition($i + 1);
         }
 
-        $store->updateAll($subscriptions);
+        $store->update(...$subscriptions);
 
         self::assertCount(250, $store->find());
         self::assertSame(1, $store->get('s0')->position());
         self::assertSame(250, $store->get('s249')->position());
     }
 
-    public function testFindLazyLoadsErrorContextAndCleanupTasksOnAccess(): void
+    public function testFindLoadsErrorContextAndCleanupTasksOnAccess(): void
     {
         $store = $this->createStore();
 
@@ -1333,7 +1346,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $subscription->error(new RuntimeException('error message'));
         $store->add($subscription);
 
-        [$lazy] = $store->findLazy(new SubscriptionCriteria(ids: ['foo']));
+        [$lazy] = $store->find(new SubscriptionCriteria(ids: ['foo']));
 
         $reflector = new ReflectionClass(Subscription::class);
         $errorReflector = new ReflectionClass(SubscriptionError::class);
@@ -1359,7 +1372,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $subscription->error(new RuntimeException('error message'));
         $store->add($subscription);
 
-        [$lazy] = $store->findLazy(new SubscriptionCriteria(ids: ['foo']));
+        [$lazy] = $store->find(new SubscriptionCriteria(ids: ['foo']));
         $lazy->changePosition(10);
         $store->update($lazy);
 
@@ -1373,13 +1386,27 @@ final class DoctrineSubscriptionStoreTest extends TestCase
     public function testLazySubscriptionThatWasRemoved(): void
     {
         $store = $this->createStore();
-        $store->add(new Subscription('foo'));
+        $store->add(new Subscription('foo', cleanupTasks: [new DropTableTask('baz')]));
 
-        [$lazy] = $store->findLazy(new SubscriptionCriteria(ids: ['foo']));
+        [$lazy] = $store->find(new SubscriptionCriteria(ids: ['foo']));
         $store->remove($store->get('foo'));
 
         $this->expectException(SubscriptionNotFound::class);
 
         self::assertNull($lazy->cleanupTasks());
+    }
+
+    public function testFindWithoutErrorContextAndCleanupTasksIsNotLazy(): void
+    {
+        $store = $this->createStore();
+
+        $subscription = new Subscription('foo', status: Status::Active, position: 3);
+        $subscription->error('error message');
+        $store->add($subscription);
+
+        [$found] = $store->find(new SubscriptionCriteria(ids: ['foo']));
+
+        self::assertFalse((new ReflectionClass(Subscription::class))->isUninitializedLazyObject($found));
+        self::assertEquals($subscription, $found, 'nothing to load, so it is a plain object');
     }
 }

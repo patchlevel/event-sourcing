@@ -32,7 +32,7 @@ final class RefreshHandler implements Handler
 
     public function __invoke(Command $command): Result
     {
-        $subscriptions = $this->subscriptionManager->findLazy(new SubscriptionCriteria(
+        $subscriptions = $this->subscriptionManager->find(new SubscriptionCriteria(
             ids: $command->ids,
             groups: $command->groups,
         ));

@@ -8,13 +8,13 @@ use Closure;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Store\PartitionInboxStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
-use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Assert;
 use Psr\Clock\ClockInterface;
 
-final class DummySubscriptionStore implements SubscriptionStore
+final class DummySubscriptionStore implements PartitionInboxStore
 {
     private readonly ClockInterface $clock;
 
@@ -51,17 +51,18 @@ final class DummySubscriptionStore implements SubscriptionStore
         return $this->parentStore->find($criteria);
     }
 
-    /** @return list<Subscription> */
-    public function findLazy(SubscriptionCriteria $criteria): array
+    /**
+     * @param non-empty-list<string> $ids
+     *
+     * @return list<Subscription>
+     */
+    public function claim(array $ids, SubscriptionCriteria $criteria): array
     {
-        return $this->find($criteria);
-    }
+        foreach ($ids as $id) {
+            $this->claimedIds[] = $id;
+        }
 
-    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null
-    {
-        $this->claimedIds[] = $id;
-
-        return $this->parentStore->claim($id, $criteria);
+        return $this->parentStore->claim($ids, $criteria);
     }
 
     /**
@@ -76,38 +77,31 @@ final class DummySubscriptionStore implements SubscriptionStore
         return $this->parentStore->inLock($closure);
     }
 
-    public function add(Subscription $subscription): void
+    public function add(Subscription ...$subscriptions): void
     {
-        $this->parentStore->add($subscription);
-        $this->addedSubscriptions[] = clone $subscription;
-    }
+        $this->parentStore->add(...$subscriptions);
 
-    /** @param non-empty-list<Subscription> $subscriptions */
-    public function addAll(array $subscriptions): void
-    {
         foreach ($subscriptions as $subscription) {
-            $this->add($subscription);
+            $this->addedSubscriptions[] = clone $subscription;
         }
     }
 
-    /** @param non-empty-list<Subscription> $subscriptions */
-    public function updateAll(array $subscriptions): void
+    public function update(Subscription ...$subscriptions): void
     {
+        $this->parentStore->update(...$subscriptions);
+
         foreach ($subscriptions as $subscription) {
-            $this->update($subscription);
+            $this->updatedSubscriptions[] = clone $subscription;
         }
     }
 
-    public function update(Subscription $subscription): void
+    public function remove(Subscription ...$subscriptions): void
     {
-        $this->parentStore->update($subscription);
-        $this->updatedSubscriptions[] = clone $subscription;
-    }
+        $this->parentStore->remove(...$subscriptions);
 
-    public function remove(Subscription $subscription): void
-    {
-        $this->parentStore->remove($subscription);
-        $this->removedSubscriptions[] = clone $subscription;
+        foreach ($subscriptions as $subscription) {
+            $this->removedSubscriptions[] = clone $subscription;
+        }
     }
 
     /** @param array<string, non-empty-list<int>> $indices */
@@ -125,26 +119,6 @@ final class DummySubscriptionStore implements SubscriptionStore
     public function inbox(array $afterIndex, int $limit): array
     {
         return $this->parentStore->inbox($afterIndex, $limit);
-    }
-
-    /** @param array<string, int> $toIndex */
-    public function removeFromInbox(array $toIndex): void
-    {
-        $this->parentStore->removeFromInbox($toIndex);
-    }
-
-    /**
-     * @param non-empty-list<string> $ids
-     *
-     * @return list<Subscription>
-     */
-    public function claimAll(array $ids, SubscriptionCriteria $criteria): array
-    {
-        foreach ($ids as $id) {
-            $this->claimedIds[] = $id;
-        }
-
-        return $this->parentStore->claimAll($ids, $criteria);
     }
 
     public function reset(): void

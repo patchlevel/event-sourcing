@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use Closure;
+use Patchlevel\EventSourcing\Subscription\Store\PartitionInboxStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\TransactionCommitNotPossible;
@@ -18,7 +19,6 @@ use function array_map;
 use function array_values;
 use function count;
 use function implode;
-use function max;
 use function sprintf;
 use function usort;
 
@@ -39,9 +39,6 @@ final class SubscriptionManager
 
     /** @var array<string, non-empty-list<int>> */
     private array $forInbox = [];
-
-    /** @var array<string, int> */
-    private array $forInboxRemove = [];
 
     public function __construct(
         private readonly SubscriptionStore $subscriptionStore,
@@ -120,7 +117,7 @@ final class SubscriptionManager
         Closure|null $filter = null,
     ): array {
         $results = [];
-        $snapshot = $this->subscriptionStore->findLazy($criteria);
+        $snapshot = $this->subscriptionStore->find($criteria);
 
         if ($filter !== null) {
             $snapshot = array_values(array_filter($snapshot, $filter));
@@ -207,13 +204,7 @@ final class SubscriptionManager
      */
     private function claim(array $candidates, SubscriptionCriteria $criteria): array
     {
-        if (count($candidates) === 1) {
-            $subscription = $this->subscriptionStore->claim($candidates[0]->id(), $criteria);
-
-            return $subscription === null ? [] : [$subscription];
-        }
-
-        return $this->subscriptionStore->claimAll(
+        return $this->subscriptionStore->claim(
             array_map(static fn (Subscription $subscription): string => $subscription->id(), $candidates),
             $criteria,
         );
@@ -314,16 +305,6 @@ final class SubscriptionManager
         return $this->subscriptionStore->find($criteria);
     }
 
-    /**
-     * For lookups that only need the cheap fields, the error context and the cleanup tasks may be loaded on access.
-     *
-     * @return list<Subscription>
-     */
-    public function findLazy(SubscriptionCriteria $criteria): array
-    {
-        return $this->subscriptionStore->findLazy($criteria);
-    }
-
     public function add(Subscription ...$subscriptions): void
     {
         foreach ($subscriptions as $sub) {
@@ -348,17 +329,12 @@ final class SubscriptionManager
     /** Routes a message into the inbox of a partition. */
     public function addToInbox(string $subscriptionId, int $index): void
     {
+        $this->inboxStore();
         $this->forInbox[$subscriptionId][] = $index;
     }
 
-    /** Removes the processed messages up to and including the given index from the inbox of a partition. */
-    public function removeFromInbox(string $subscriptionId, int $toIndex): void
-    {
-        $this->forInboxRemove[$subscriptionId] = max($toIndex, $this->forInboxRemove[$subscriptionId] ?? $toIndex);
-    }
-
     /**
-     * @param array<string, int> $afterIndex subscription id => index after which the inbox is read
+     * @param array<string, int> $afterIndex subscription id => position of the partition
      * @param positive-int       $limit
      *
      * @return array<string, non-empty-list<int>>
@@ -369,7 +345,16 @@ final class SubscriptionManager
             return [];
         }
 
-        return $this->subscriptionStore->inbox($afterIndex, $limit);
+        return $this->inboxStore()->inbox($afterIndex, $limit);
+    }
+
+    private function inboxStore(): PartitionInboxStore
+    {
+        if (!$this->subscriptionStore instanceof PartitionInboxStore) {
+            throw new PartitionsNotSupported($this->subscriptionStore::class);
+        }
+
+        return $this->subscriptionStore;
     }
 
     public function flush(): void
@@ -398,33 +383,31 @@ final class SubscriptionManager
             $toUpdate[] = $subscription;
         }
 
-        // a group of partitions or a catching up router changes many subscriptions at once
-        if (count($toAdd) === 1) {
-            $this->subscriptionStore->add($toAdd[0]);
-        } elseif ($toAdd !== []) {
-            $this->subscriptionStore->addAll($toAdd);
-        }
-
-        if (count($toUpdate) === 1) {
-            $this->subscriptionStore->update($toUpdate[0]);
-        } elseif ($toUpdate !== []) {
-            $this->subscriptionStore->updateAll($toUpdate);
-        }
+        $toRemove = [];
 
         foreach ($this->forRemove as $subscription) {
             if ($this->forAdd->offsetExists($subscription)) {
                 continue;
             }
 
-            $this->subscriptionStore->remove($subscription);
+            $toRemove[] = $subscription;
+        }
+
+        // a group of partitions or a catching up router changes many subscriptions at once
+        if ($toAdd !== []) {
+            $this->subscriptionStore->add(...$toAdd);
+        }
+
+        if ($toUpdate !== []) {
+            $this->subscriptionStore->update(...$toUpdate);
+        }
+
+        if ($toRemove !== []) {
+            $this->subscriptionStore->remove(...$toRemove);
         }
 
         if ($this->forInbox !== []) {
-            $this->subscriptionStore->addToInbox($this->forInbox);
-        }
-
-        if ($this->forInboxRemove !== []) {
-            $this->subscriptionStore->removeFromInbox($this->forInboxRemove);
+            $this->inboxStore()->addToInbox($this->forInbox);
         }
 
         $this->clearPending();
@@ -436,6 +419,5 @@ final class SubscriptionManager
         $this->forUpdate = new SplObjectStorage();
         $this->forRemove = new SplObjectStorage();
         $this->forInbox = [];
-        $this->forInboxRemove = [];
     }
 }

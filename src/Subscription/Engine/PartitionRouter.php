@@ -120,7 +120,7 @@ final class PartitionRouter
         $this->lookups[$main->id()] = ($this->lookups[$main->id()] ?? 0) + 1;
 
         if ($this->lookups[$main->id()] > self::SINGLE_LOOKUPS) {
-            foreach ($this->subscriptionManager->findLazy(new SubscriptionCriteria(ids: [$main->id()], partitions: true)) as $partition) {
+            foreach ($this->subscriptionManager->find(new SubscriptionCriteria(ids: [$main->id()], partitions: true)) as $partition) {
                 $this->knownPartitions[$partition->id()] = true;
             }
 
@@ -129,7 +129,7 @@ final class PartitionRouter
             return isset($this->knownPartitions[$partitionId]);
         }
 
-        if ($this->subscriptionManager->findLazy(new SubscriptionCriteria(ids: [$partitionId], partitions: true)) === []) {
+        if ($this->subscriptionManager->find(new SubscriptionCriteria(ids: [$partitionId], partitions: true)) === []) {
             return false;
         }
 

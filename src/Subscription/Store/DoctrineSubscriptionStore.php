@@ -35,6 +35,7 @@ use function array_fill;
 use function array_keys;
 use function array_map;
 use function array_merge;
+use function array_values;
 use function assert;
 use function count;
 use function implode;
@@ -74,10 +75,12 @@ use const JSON_THROW_ON_ERROR;
  *     last_saved_at: string,
  *     subscriber_id: string,
  *     partition_key: string|null,
+ *     has_error_context: int|string,
+ *     has_cleanup_tasks: int|string,
  * }
  * @phpstan-import-type Context from SubscriptionError
  */
-final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSchemaConfigurator
+final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSchemaConfigurator
 {
     /** How many inbox rows or conditions go into one statement, far below the parameter limits of the databases. */
     private const INBOX_CHUNK = 500;
@@ -85,8 +88,8 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
     /** How many subscriptions go into one insert or update, 100 rows stay below 3000 parameters. */
     private const ROW_CHUNK = 100;
 
-    /** findLazy() leaves out error_context and cleanup_tasks, see createLazySubscription(). */
-    private const LAZY_LOADED_FIND_COLUMNS = [
+    /** find() leaves out error_context and cleanup_tasks, see createLazySubscription(). */
+    private const LAZY_LOADED_COLUMNS = [
         'id',
         'group_name',
         'run_mode',
@@ -174,34 +177,19 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
     }
 
     /**
+     * The error context and the cleanup tasks are loaded with one query on first access, see createLazySubscription().
      * With pendingPartitionsOnly, the main subscriptions come first, then the partitions with messages in their inbox.
      *
      * @return list<Subscription>
      */
     public function find(SubscriptionCriteria|null $criteria = null): array
     {
-        return $this->findBy($criteria, false);
-    }
-
-    /**
-     * The error context and the cleanup tasks are loaded with one query on first access, see createLazySubscription().
-     *
-     * @return list<Subscription>
-     */
-    public function findLazy(SubscriptionCriteria $criteria): array
-    {
-        return $this->findBy($criteria, true);
-    }
-
-    /** @return list<Subscription> */
-    private function findBy(SubscriptionCriteria|null $criteria, bool $lazy): array
-    {
         if ($criteria === null || !$criteria->pendingPartitionsOnly) {
-            return $this->fetch($criteria, $lazy);
+            return $this->fetch($criteria);
         }
 
-        $mains = $criteria->partitions !== true ? $this->fetch($criteria, $lazy, false) : [];
-        $partitions = $criteria->partitions !== false ? $this->fetch($criteria, $lazy, true) : [];
+        $mains = $criteria->partitions !== true ? $this->fetch($criteria, false) : [];
+        $partitions = $criteria->partitions !== false ? $this->fetch($criteria, true) : [];
 
         return [...$mains, ...$partitions];
     }
@@ -212,16 +200,13 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
      *
      * @return list<Subscription>
      */
-    private function fetch(SubscriptionCriteria|null $criteria, bool $lazy, bool|null $pendingPartitions = null): array
+    private function fetch(SubscriptionCriteria|null $criteria, bool|null $pendingPartitions = null): array
     {
-        if ($lazy) {
-            // the error context and the cleanup tasks can be large, they are loaded on first access
-            $columns = $pendingPartitions === true
-                ? array_map(fn (string $column): string => $this->tableName . '.' . $column, self::LAZY_LOADED_FIND_COLUMNS)
-                : self::LAZY_LOADED_FIND_COLUMNS;
-        } else {
-            $columns = [$pendingPartitions === true ? $this->tableName . '.*' : '*'];
-        }
+        // the error context and the cleanup tasks can be large, only whether they exist is loaded right away
+        $prefix = $pendingPartitions === true ? $this->tableName . '.' : '';
+        $columns = array_map(static fn (string $column): string => $prefix . $column, self::LAZY_LOADED_COLUMNS);
+        $columns[] = sprintf('CASE WHEN %serror_context IS NULL THEN 0 ELSE 1 END AS has_error_context', $prefix);
+        $columns[] = sprintf('CASE WHEN %scleanup_tasks IS NULL THEN 0 ELSE 1 END AS has_cleanup_tasks', $prefix);
 
         $qb = $this->connection->createQueryBuilder()
             ->select(...$columns)
@@ -252,38 +237,13 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
                 );
         }
 
-        /** @var list<Data> $result */
+        /** @var list<LightData> $result */
         $result = $qb->fetchAllAssociative();
 
         return array_map(
-            fn (array $data) => $lazy ? $this->createLazySubscription($data) : $this->createSubscription($data),
+            fn (array $data) => $this->createLazySubscription($data),
             $result,
         );
-    }
-
-    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null
-    {
-        $qb = $this->connection->createQueryBuilder()
-            ->select('*')
-            ->from($this->tableName)
-            ->where('id = :id')
-            ->setParameter('id', $id);
-
-        $this->applyCriteria($qb, $criteria);
-        $this->applyPending($qb, $criteria);
-
-        if (!$this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
-            $qb->forUpdate(ConflictResolutionMode::SKIP_LOCKED);
-        }
-
-        /** @var Data|false $result */
-        $result = $qb->fetchAssociative();
-
-        if ($result === false) {
-            return null;
-        }
-
-        return $this->createSubscription($result);
     }
 
     /**
@@ -291,7 +251,7 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
      *
      * @return list<Subscription>
      */
-    public function claimAll(array $ids, SubscriptionCriteria $criteria): array
+    public function claim(array $ids, SubscriptionCriteria $criteria): array
     {
         $qb = $this->connection->createQueryBuilder()
             ->select('*')
@@ -371,7 +331,63 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         $qb->andWhere($criteria->partitions ? 'partition_key IS NOT NULL' : 'partition_key IS NULL');
     }
 
-    public function add(Subscription $subscription): void
+    public function add(Subscription ...$subscriptions): void
+    {
+        $subscriptions = array_values($subscriptions);
+
+        if ($subscriptions === []) {
+            return;
+        }
+
+        if (count($subscriptions) === 1) {
+            $this->insert($subscriptions[0]);
+
+            return;
+        }
+
+        $this->insertAll($subscriptions);
+    }
+
+    /** The inbox of an updated partition is cleared up to its position. */
+    public function update(Subscription ...$subscriptions): void
+    {
+        $subscriptions = array_values($subscriptions);
+
+        if ($subscriptions === []) {
+            return;
+        }
+
+        if (count($subscriptions) === 1) {
+            $this->updateOne($subscriptions[0]);
+        } else {
+            $this->updateAll($subscriptions);
+        }
+
+        $processed = [];
+
+        foreach ($subscriptions as $subscription) {
+            $position = $subscription->position();
+
+            if (!$subscription->isPartition() || $position === null) {
+                continue;
+            }
+
+            $processed[$subscription->id()] = $position;
+        }
+
+        $this->removeFromInbox($processed);
+    }
+
+    /** The inbox of a removed partition is removed as well. */
+    public function remove(Subscription ...$subscriptions): void
+    {
+        foreach ($subscriptions as $subscription) {
+            $this->connection->delete($this->tableName, ['id' => $subscription->id()]);
+            $this->connection->delete($this->inboxTableName, ['subscription_id' => $subscription->id()]);
+        }
+    }
+
+    private function insert(Subscription $subscription): void
     {
         $subscription->updateLastSavedAt($this->clock->now());
 
@@ -389,7 +405,7 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
     }
 
     /** @param non-empty-list<Subscription> $subscriptions */
-    public function addAll(array $subscriptions): void
+    private function insertAll(array $subscriptions): void
     {
         $now = $this->clock->now();
 
@@ -430,7 +446,7 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         }
     }
 
-    public function update(Subscription $subscription): void
+    private function updateOne(Subscription $subscription): void
     {
         $subscription->updateLastSavedAt($this->clock->now());
 
@@ -473,7 +489,7 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
      *
      * @param non-empty-list<Subscription> $subscriptions
      */
-    public function updateAll(array $subscriptions): void
+    private function updateAll(array $subscriptions): void
     {
         $now = $this->clock->now();
         $isPostgres = $this->connection->getDatabasePlatform() instanceof PostgreSQLPlatform;
@@ -584,12 +600,6 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         ];
     }
 
-    public function remove(Subscription $subscription): void
-    {
-        $this->connection->delete($this->tableName, ['id' => $subscription->id()]);
-        $this->connection->delete($this->inboxTableName, ['subscription_id' => $subscription->id()]);
-    }
-
     /** @param array<string, non-empty-list<int>> $indices */
     public function addToInbox(array $indices): void
     {
@@ -666,7 +676,7 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
     }
 
     /** @param array<string, int> $toIndex */
-    public function removeFromInbox(array $toIndex): void
+    private function removeFromInbox(array $toIndex): void
     {
         foreach (array_chunk($toIndex, self::INBOX_CHUNK, true) as $chunk) {
             $conditions = [];
@@ -801,8 +811,9 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
     }
 
     /**
-     * Creates a lazy ghost: everything but the error context and the cleanup tasks is set right away, those two are loaded
-     * with one query when one of them is accessed. Saving the subscription reads them as well, so nothing gets lost.
+     * Everything but the error context and the cleanup tasks is set right away. If there is an error context or there
+     * are cleanup tasks, they are loaded with one query when they are accessed (native lazy ghosts). Saving the
+     * subscription reads them, so nothing gets lost. Without them the subscription is a plain object.
      *
      * @param LightData $row
      */
@@ -813,22 +824,20 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
         $error = null;
 
         if ($row['error_message'] !== null) {
-            $errorReflector = new ReflectionClass(SubscriptionError::class);
-            $error = $errorReflector->newLazyGhost(static function (SubscriptionError $ghost) use ($errorReflector, $details): void {
-                $errorReflector->getProperty('errorContext')->setValue($ghost, $details()['error_context']);
-            });
+            $previousStatus = $row['error_previous_status'] !== null ? Status::from($row['error_previous_status']) : Status::New;
 
-            $errorReflector->getProperty('errorMessage')->setRawValueWithoutLazyInitialization($error, $row['error_message']);
-            $errorReflector->getProperty('previousStatus')->setRawValueWithoutLazyInitialization(
-                $error,
-                $row['error_previous_status'] !== null ? Status::from($row['error_previous_status']) : Status::New,
-            );
+            if ((int)$row['has_error_context'] === 1) {
+                $errorReflector = new ReflectionClass(SubscriptionError::class);
+                $error = $errorReflector->newLazyGhost(static function (SubscriptionError $ghost) use ($errorReflector, $details): void {
+                    $errorReflector->getProperty('errorContext')->setValue($ghost, $details()['error_context']);
+                });
+
+                $errorReflector->getProperty('errorMessage')->setRawValueWithoutLazyInitialization($error, $row['error_message']);
+                $errorReflector->getProperty('previousStatus')->setRawValueWithoutLazyInitialization($error, $previousStatus);
+            } else {
+                $error = new SubscriptionError($row['error_message'], $previousStatus);
+            }
         }
-
-        $reflector = new ReflectionClass(Subscription::class);
-        $subscription = $reflector->newLazyGhost(static function (Subscription $ghost) use ($reflector, $details): void {
-            $reflector->getProperty('cleanupTasks')->setValue($ghost, $details()['cleanup_tasks']);
-        });
 
         $values = [
             'id' => $row['id'],
@@ -841,6 +850,15 @@ final class DoctrineSubscriptionStore implements SubscriptionStore, DoctrineSche
             'lastSavedAt' => self::normalizeDateTime($row['last_saved_at'], $this->connection->getDatabasePlatform()),
             'partitionKey' => $row['partition_key'],
         ];
+
+        if ((int)$row['has_cleanup_tasks'] === 0) {
+            return new Subscription(...$values);
+        }
+
+        $reflector = new ReflectionClass(Subscription::class);
+        $subscription = $reflector->newLazyGhost(static function (Subscription $ghost) use ($reflector, $details): void {
+            $reflector->getProperty('cleanupTasks')->setValue($ghost, $details()['cleanup_tasks']);
+        });
 
         foreach ($values as $property => $value) {
             $reflector->getProperty($property)->setRawValueWithoutLazyInitialization($subscription, $value);

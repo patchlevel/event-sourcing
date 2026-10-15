@@ -36,7 +36,7 @@ final class RemovePartitionsListener implements EventSubscriberInterface
             return;
         }
 
-        $partitions = $this->subscriptionManager->findLazy(new SubscriptionCriteria(ids: [$main->id()], partitions: true));
+        $partitions = $this->subscriptionManager->find(new SubscriptionCriteria(ids: [$main->id()], partitions: true));
 
         if ($partitions === []) {
             return;
