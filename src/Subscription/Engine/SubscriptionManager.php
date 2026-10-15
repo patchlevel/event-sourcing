@@ -25,9 +25,6 @@ use function usort;
 /** @internal */
 final class SubscriptionManager
 {
-    /** Subscriptions further apart than that are not processed together, if there is no message limit. */
-    public const DEFAULT_POSITION_WINDOW = 1000;
-
     /** @var SplObjectStorage<Subscription, null> */
     private SplObjectStorage $forAdd;
 
@@ -50,6 +47,8 @@ final class SubscriptionManager
     }
 
     /**
+     * Claims every subscription alone in its own transaction.
+     *
      * @param Closure(Subscription):T            $closure
      * @param Closure(Subscription, Throwable):T $onError
      * @param Closure(Subscription):bool         $filter  decides on the unclaimed snapshot whether to claim at all
@@ -64,6 +63,12 @@ final class SubscriptionManager
         Closure|null $onError = null,
         Closure|null $filter = null,
     ): array {
+        $snapshot = $this->subscriptionStore->find($criteria);
+
+        if ($filter !== null) {
+            $snapshot = array_values(array_filter($snapshot, $filter));
+        }
+
         $groupOnError = null;
 
         if ($onError !== null) {
@@ -73,16 +78,14 @@ final class SubscriptionManager
             };
         }
 
-        return $this->forEachClaimedGroup(
+        return $this->claimEach(
+            $this->groups($snapshot, new ClaimGroups()),
             $criteria,
-            1,
-            1,
             static function (array $subscriptions) use ($closure): mixed {
                 /** @var non-empty-list<Subscription> $subscriptions */
                 return $closure($subscriptions[0]);
             },
             $groupOnError,
-            filter: $filter,
         );
     }
 
@@ -92,14 +95,6 @@ final class SubscriptionManager
      * inbox. A subscription that is locked by another worker is left out of its group.
      * If the closure throws, every subscription of the group goes into the error status.
      *
-     * Subscriptions are only grouped if their positions are at most $positionWindow apart, the group reads the stream
-     * from its lowest position and a subscription far behind would hold back the others.
-     *
-     * @param positive-int                                       $partitionsPerClaim
-     * @param positive-int                                       $subscriptionsPerClaim
-     * @param positive-int                                       $positionWindow
-     * @param Closure(Subscription):bool                         $filter                decides on the unclaimed snapshot whether to
-     *                                                                                  claim at all, the closure checks again
      * @param Closure(non-empty-list<Subscription>):T            $closure
      * @param Closure(non-empty-list<Subscription>, Throwable):T $onError
      *
@@ -109,26 +104,30 @@ final class SubscriptionManager
      */
     public function forEachClaimedGroup(
         SubscriptionCriteria $criteria,
-        int $partitionsPerClaim,
-        int $subscriptionsPerClaim,
+        ClaimGroups $groups,
         Closure $closure,
         Closure|null $onError = null,
-        int $positionWindow = self::DEFAULT_POSITION_WINDOW,
-        Closure|null $filter = null,
     ): array {
-        $results = [];
-        $snapshot = $this->subscriptionStore->find($criteria);
-
-        if ($filter !== null) {
-            $snapshot = array_values(array_filter($snapshot, $filter));
-        }
-
-        $groups = $this->groups(
-            $snapshot,
-            $partitionsPerClaim,
-            $subscriptionsPerClaim,
-            $positionWindow,
+        return $this->claimEach(
+            $this->groups($this->subscriptionStore->find($criteria), $groups),
+            $criteria,
+            $closure,
+            $onError,
         );
+    }
+
+    /**
+     * @param list<non-empty-list<Subscription>>                 $groups
+     * @param Closure(non-empty-list<Subscription>):T            $closure
+     * @param Closure(non-empty-list<Subscription>, Throwable):T $onError
+     *
+     * @return list<T>
+     *
+     * @template T
+     */
+    private function claimEach(array $groups, SubscriptionCriteria $criteria, Closure $closure, Closure|null $onError): array
+    {
+        $results = [];
 
         foreach ($groups as $candidates) {
             $skipped = false;
@@ -215,18 +214,15 @@ final class SubscriptionManager
      * subscriptions close to each other read the stream together. Without grouping, the order of the snapshot is kept.
      *
      * @param list<Subscription> $subscriptions
-     * @param positive-int       $partitionsPerClaim
-     * @param positive-int       $subscriptionsPerClaim
-     * @param positive-int       $positionWindow
      *
      * @return list<non-empty-list<Subscription>>
      */
-    private function groups(
-        array $subscriptions,
-        int $partitionsPerClaim,
-        int $subscriptionsPerClaim,
-        int $positionWindow,
-    ): array {
+    private function groups(array $subscriptions, ClaimGroups $claimGroups): array
+    {
+        $partitionsPerClaim = $claimGroups->partitions;
+        $subscriptionsPerClaim = $claimGroups->subscriptions;
+        $positionWindow = $claimGroups->positionWindow;
+
         $groups = [];
         $partitions = [];
         $others = [];
@@ -346,6 +342,11 @@ final class SubscriptionManager
         }
 
         return $this->inboxStore()->inbox($afterIndex, $limit);
+    }
+
+    public function supportsPartitions(): bool
+    {
+        return $this->subscriptionStore instanceof PartitionInboxStore;
     }
 
     private function inboxStore(): PartitionInboxStore

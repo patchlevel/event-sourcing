@@ -311,7 +311,8 @@ final class PartitionedSubscriptionTest extends TestCase
         }
     }
 
-    private function engine(object $subscriber): SubscriptionEngine
+    /** @param 'index'|'plain'|'unsupported' $messageLoader */
+    private function engine(object $subscriber, string $messageLoader = 'index', bool $inboxStore = true): SubscriptionEngine
     {
         $store = new StreamDoctrineDbalStore(
             $this->connection,
@@ -332,9 +333,15 @@ final class PartitionedSubscriptionTest extends TestCase
 
         $subscriberRepository = new MetadataSubscriberAccessorRepository([$subscriber]);
 
+        $loader = new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository);
+
         return new DefaultSubscriptionEngine(
-            new EventFilteredStoreMessageLoader($store, new AttributeEventMetadataFactory(), $subscriberRepository),
-            $this->subscriptionStore,
+            match ($messageLoader) {
+                'index' => $loader,
+                'plain' => new PlainMessageLoader($loader),
+                'unsupported' => new IndexCriterionNotSupportedMessageLoader($loader),
+            },
+            $inboxStore ? $this->subscriptionStore : new PlainSubscriptionStore($this->subscriptionStore),
             $subscriberRepository,
             new RetryStrategyRepository([
                 RetryStrategyRepository::DEFAULT_STRATEGY_NAME => new ClockBasedRetryStrategy($this->clock),
@@ -512,5 +519,58 @@ final class PartitionedSubscriptionTest extends TestCase
 
         self::assertSame(['n1', 'n2', 'broken', 'n4'], $projection->processed[$id->toString()]);
         self::assertSame([], $this->subscriptionStore->inbox([$partition->id() => -1], 10));
+    }
+
+    /** @return iterable<string, array{'plain'|'unsupported'}> */
+    public static function messageLoadersWithoutIndexSupport(): iterable
+    {
+        yield 'loader without IndexMessageLoader' => ['plain'];
+        yield 'store without IndexCriterion' => ['unsupported'];
+    }
+
+    /** @param 'plain'|'unsupported' $messageLoader */
+    #[DataProvider('messageLoadersWithoutIndexSupport')]
+    public function testMessageLoaderWithoutIndexSupport(string $messageLoader): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection, $messageLoader);
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        $ids = $this->createProfiles(3);
+
+        foreach ($ids as $id) {
+            $this->changeName(ProfileId::fromString($id), 'changed-' . $id);
+        }
+
+        $this->runUntilFinished($engine);
+
+        foreach ($ids as $i => $id) {
+            self::assertSame(['name-' . $i, 'changed-' . $id], $projection->processed[$id], 'the partitions read the range of their inbox');
+        }
+
+        foreach ($this->partitions() as $partition) {
+            self::assertSame([], $this->subscriptionStore->inbox([$partition->id() => -1], 10), $partition->id());
+        }
+    }
+
+    public function testSubscriptionStoreWithoutInbox(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection, inboxStore: false);
+
+        $engine->execute(new Setup(skipBooting: true));
+        $this->createProfiles(1);
+
+        $engine->execute(new Run());
+
+        $main = $this->subscriptionStore->get(self::MAIN);
+
+        $error = $main->subscriptionError();
+
+        self::assertSame(Status::Error, $main->status());
+        self::assertNotNull($error);
+        self::assertStringContainsString('does not support partitions', $error->errorMessage);
+        self::assertSame([], $this->partitions());
     }
 }

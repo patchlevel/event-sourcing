@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine\Handler;
 
+use Patchlevel\EventSourcing\Subscription\Engine\ClaimGroups;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
@@ -38,10 +39,15 @@ final class RunHandler implements Handler
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Active],
-                pendingPartitionsOnly: true,
+                // only a store with an inbox has partitions, every other store does not need to know the filter
+                pendingPartitionsOnly: $this->subscriptionManager->supportsPartitions(),
             ),
-            $command->partitionsPerClaim,
-            $command->subscriptionsPerClaim,
+            new ClaimGroups(
+                $command->subscriptionsPerClaim,
+                $command->partitionsPerClaim,
+                // the group reads the stream from its lowest position, a larger gap would use up the limit of the others
+                $command->limit ?? ClaimGroups::DEFAULT_POSITION_WINDOW,
+            ),
             fn (array $subscriptions): ProcessedResult => $this->runner->process(
                 $subscriptions,
                 $command->limit,
@@ -54,8 +60,6 @@ final class RunHandler implements Handler
                     $subscriptions,
                 ),
             ),
-            // the group reads the stream from its lowest position, a larger gap would use up the limit of the others
-            $command->limit ?? SubscriptionManager::DEFAULT_POSITION_WINDOW,
         );
 
         return ProcessedResult::merge($results);

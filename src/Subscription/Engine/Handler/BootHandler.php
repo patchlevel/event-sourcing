@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine\Handler;
 
+use Patchlevel\EventSourcing\Subscription\Engine\ClaimGroups;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
@@ -39,8 +40,12 @@ final class BootHandler implements Handler
                 groups: $command->groups,
                 status: [Status::Booting],
             ),
-            $command->partitionsPerClaim,
-            $command->subscriptionsPerClaim,
+            new ClaimGroups(
+                $command->subscriptionsPerClaim,
+                $command->partitionsPerClaim,
+                // the group reads the stream from its lowest position, a larger gap would use up the limit of the others
+                $command->limit ?? ClaimGroups::DEFAULT_POSITION_WINDOW,
+            ),
             fn (array $subscriptions): ProcessedResult => $this->runner->process(
                 $subscriptions,
                 $command->limit,
@@ -54,8 +59,6 @@ final class BootHandler implements Handler
                     $subscriptions,
                 ),
             ),
-            // the group reads the stream from its lowest position, a larger gap would use up the limit of the others
-            $command->limit ?? SubscriptionManager::DEFAULT_POSITION_WINDOW,
         );
 
         return ProcessedResult::merge($results);

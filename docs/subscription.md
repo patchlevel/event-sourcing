@@ -886,6 +886,8 @@ Partitions are created on the fly as new keys appear, get the id `{subscriber id
 and start with the group, run mode and status of the main subscription.
 A partition only processes the messages in its inbox and is only claimed by a worker if its inbox has messages,
 so idle partitions cost nothing.
+The built-in message loaders load exactly these messages. A custom message loader can do the same by implementing
+`IndexMessageLoader`, otherwise a partition reads the range of its inbox and skips the other messages.
 
 Setup, teardown and cleanup belong to the subscriber as a whole and only run on the main subscription.
 Removing the main subscription removes its partitions as well.

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
+use Patchlevel\EventSourcing\Message\Stream;
+use Patchlevel\EventSourcing\Store\UnsupportedCriterion;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnSubscriptionProcessed;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
@@ -84,17 +86,13 @@ final class SubscriptionRunner
         if (count($working) > 0) {
             [$startIndex, $endIndex] = $this->range($working, $inboxes);
             $indices = $this->inboxIndices($working, $inboxes);
+            // only partitions, then the limit is already applied to every single inbox
+            $onlyPartitions = $endIndex !== null;
 
             try {
-                if ($indices !== null) {
-                    // only partitions, so only the messages of their inboxes have to be loaded
-                    $this->logger?->debug(sprintf(
-                        'Subscription Engine: %d messages of the inbox are processed.',
-                        count($indices),
-                    ));
+                $stream = $indices !== null ? $this->loadIndices($indices) : null;
 
-                    $stream = $this->messageLoader->loadIndices($indices);
-                } else {
+                if ($stream === null) {
                     $this->logger?->debug(sprintf(
                         'Subscription Engine: Event stream is processed from position %s.',
                         $startIndex ?? 'beginning',
@@ -137,7 +135,7 @@ final class SubscriptionRunner
                     }
 
                     // the inbox of every partition is already limited, a shared limit would starve the others
-                    if ($indices === null && $limit !== null && $messageCounter >= $limit) {
+                    if (!$onlyPartitions && $limit !== null && $messageCounter >= $limit) {
                         $this->logger?->info(sprintf(
                             'Subscription Engine: Message limit (%d) reached, finish processing.',
                             $limit,
@@ -307,6 +305,27 @@ final class SubscriptionRunner
         }
 
         return [$startIndex, $bounded ? $endIndex : null];
+    }
+
+    /**
+     * Only the messages of the inboxes are loaded if the loader and the store can do it,
+     * otherwise the partitions read the range of their inboxes and skip the other messages.
+     *
+     * @param non-empty-list<int> $indices
+     */
+    private function loadIndices(array $indices): Stream|null
+    {
+        if (!$this->messageLoader instanceof IndexMessageLoader) {
+            return null;
+        }
+
+        $this->logger?->debug(sprintf('Subscription Engine: %d messages of the inbox are processed.', count($indices)));
+
+        try {
+            return $this->messageLoader->loadIndices($indices);
+        } catch (UnsupportedCriterion) {
+            return null;
+        }
     }
 
     /**

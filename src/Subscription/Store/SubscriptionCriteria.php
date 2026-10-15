@@ -15,7 +15,8 @@ final class SubscriptionCriteria
      * @param list<string>|null $groups
      * @param list<Status>|null $status
      * @param bool|null         $partitions            true only matches partitions, false only the main subscriptions
-     * @param bool              $pendingPartitionsOnly partitions only match if their inbox has messages after their position
+     * @param bool              $pendingPartitionsOnly partitions only match if their inbox has messages after their position,
+     *                                                 only used with a PartitionInboxStore
      */
     public function __construct(
         public readonly array|null $ids = null,

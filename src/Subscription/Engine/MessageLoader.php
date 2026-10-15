@@ -12,12 +12,5 @@ interface MessageLoader
     /** @param list<Subscription> $subscriptions */
     public function load(int|null $startIndex, array $subscriptions): Stream;
 
-    /**
-     * Loads only the messages with the given indices in ascending order, e.g. the inbox of a partition.
-     *
-     * @param non-empty-list<int> $indices
-     */
-    public function loadIndices(array $indices): Stream;
-
     public function lastIndex(): int;
 }

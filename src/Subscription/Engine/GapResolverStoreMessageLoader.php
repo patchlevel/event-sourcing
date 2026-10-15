@@ -19,7 +19,7 @@ use Psr\Clock\ClockInterface;
 
 use function usleep;
 
-final class GapResolverStoreMessageLoader implements MessageLoader
+final class GapResolverStoreMessageLoader implements IndexMessageLoader
 {
     /** @param list<int> $retriesInMs in milliseconds */
     public function __construct(

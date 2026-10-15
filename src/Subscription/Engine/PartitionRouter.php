@@ -55,6 +55,9 @@ final class PartitionRouter
         $partitionKey = $this->partitionKey($message, $main, $subscriber);
         $partitionId = Subscription::partitionId($main->id(), $partitionKey);
 
+        // fails first if the store has no inbox, so no partition is created that could never be processed
+        $this->subscriptionManager->addToInbox($partitionId, $index);
+
         if (!$this->exists($main, $partitionId)) {
             $this->subscriptionManager->add(Subscription::partition($main, $partitionKey, $index - 1));
             $this->knownPartitions[$partitionId] = true;
@@ -66,7 +69,6 @@ final class PartitionRouter
             ));
         }
 
-        $this->subscriptionManager->addToInbox($partitionId, $index);
         $this->routed = true;
     }
 

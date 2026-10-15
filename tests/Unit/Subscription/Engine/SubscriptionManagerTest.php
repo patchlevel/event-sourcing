@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
 use Closure;
+use Patchlevel\EventSourcing\Subscription\Engine\ClaimGroups;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
@@ -200,8 +201,7 @@ final class SubscriptionManagerTest extends TestCase
 
         $groups = $manager->forEachClaimedGroup(
             new SubscriptionCriteria(),
-            2,
-            2,
+            new ClaimGroups(subscriptions: 2, partitions: 2),
             static fn (array $subscriptions): array => array_map(
                 static fn (Subscription $subscription): string => $subscription->id(),
                 $subscriptions,
@@ -222,8 +222,7 @@ final class SubscriptionManagerTest extends TestCase
 
         $results = $manager->forEachClaimedGroup(
             new SubscriptionCriteria(),
-            1,
-            2,
+            new ClaimGroups(subscriptions: 2),
             static fn (array $subscriptions): never => throw new RuntimeException('boom'),
             static fn (array $subscriptions, Throwable $e): int => count($subscriptions),
         );
@@ -248,13 +247,11 @@ final class SubscriptionManagerTest extends TestCase
 
         $groups = $manager->forEachClaimedGroup(
             new SubscriptionCriteria(),
-            1,
-            10,
+            new ClaimGroups(subscriptions: 10, positionWindow: 1000),
             static fn (array $subscriptions): array => array_map(
                 static fn (Subscription $subscription): string => $subscription->id(),
                 $subscriptions,
             ),
-            positionWindow: 1000,
         );
 
         self::assertSame(
@@ -276,5 +273,11 @@ final class SubscriptionManagerTest extends TestCase
             ['b', 'a'],
             $manager->forEachClaimed(new SubscriptionCriteria(), static fn (Subscription $subscription): string => $subscription->id()),
         );
+    }
+
+    public function testSupportsPartitionsOnlyWithAnInboxStore(): void
+    {
+        self::assertFalse((new SubscriptionManager($this->createMock(SubscriptionStore::class)))->supportsPartitions());
+        self::assertTrue((new SubscriptionManager(new InMemorySubscriptionStore()))->supportsPartitions());
     }
 }

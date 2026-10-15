@@ -11,7 +11,7 @@ use Patchlevel\EventSourcing\Store\Criteria\IndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
-final class StoreMessageLoader implements MessageLoader
+final class StoreMessageLoader implements IndexMessageLoader
 {
     public function __construct(
         private readonly Store $store,
