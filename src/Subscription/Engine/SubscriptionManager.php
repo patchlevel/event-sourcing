@@ -53,6 +53,8 @@ final class SubscriptionManager
      * @param Closure(Subscription):T            $closure
      * @param Closure(Subscription, Throwable):T $onError
      * @param Closure(Subscription):bool         $filter  decides on the unclaimed snapshot whether to claim at all
+     * @param bool                               $wait    waits for subscriptions held by another worker instead of
+     *                                                    leaving them out, for commands that have to reach every one
      *
      * @return list<T>
      *
@@ -63,6 +65,7 @@ final class SubscriptionManager
         Closure $closure,
         Closure|null $onError = null,
         Closure|null $filter = null,
+        bool $wait = false,
     ): array {
         $snapshot = $this->subscriptionStore->find($criteria);
 
@@ -87,17 +90,19 @@ final class SubscriptionManager
                 return $closure($subscriptions[0]);
             },
             $groupOnError,
+            $wait,
         );
     }
 
     /**
      * Claims subscriptions in groups in one transaction and passes them to the closure together. Partitions and other
      * subscriptions are never mixed, because the others have to read the whole stream while partitions only read their
-     * inbox. A subscription that is locked by another worker is left out of its group.
+     * inbox. A subscription that is locked by another worker is left out of its group, unless $wait is set.
      * If the closure throws, every subscription of the group goes into the error status.
      *
      * @param Closure(non-empty-list<Subscription>):T            $closure
      * @param Closure(non-empty-list<Subscription>, Throwable):T $onError
+     * @param Closure(Subscription):bool                         $filter  decides on the unclaimed snapshot whether to claim at all
      *
      * @return list<T>
      *
@@ -108,12 +113,21 @@ final class SubscriptionManager
         ClaimGroups $groups,
         Closure $closure,
         Closure|null $onError = null,
+        bool $wait = false,
+        Closure|null $filter = null,
     ): array {
+        $snapshot = $this->subscriptionStore->find($criteria);
+
+        if ($filter !== null) {
+            $snapshot = array_values(array_filter($snapshot, $filter));
+        }
+
         return $this->claimEach(
-            $this->groups($this->subscriptionStore->find($criteria), $groups),
+            $this->groups($snapshot, $groups),
             $criteria,
             $closure,
             $onError,
+            $wait,
         );
     }
 
@@ -126,8 +140,13 @@ final class SubscriptionManager
      *
      * @template T
      */
-    private function claimEach(array $groups, SubscriptionCriteria $criteria, Closure $closure, Closure|null $onError): array
-    {
+    private function claimEach(
+        array $groups,
+        SubscriptionCriteria $criteria,
+        Closure $closure,
+        Closure|null $onError,
+        bool $wait,
+    ): array {
         $results = [];
 
         foreach ($groups as $candidates) {
@@ -136,8 +155,8 @@ final class SubscriptionManager
             try {
                 $outcome = $this->subscriptionStore->inLock(
                     /** @return T|null */
-                    function () use ($candidates, $criteria, $closure, $onError, &$skipped): mixed {
-                        $subscriptions = $this->claim($candidates, $criteria);
+                    function () use ($candidates, $criteria, $closure, $onError, $wait, &$skipped): mixed {
+                        $subscriptions = $this->claim($candidates, $criteria, $wait);
 
                         if ($subscriptions === []) {
                             $skipped = true;
@@ -202,11 +221,12 @@ final class SubscriptionManager
      *
      * @return list<Subscription>
      */
-    private function claim(array $candidates, SubscriptionCriteria $criteria): array
+    private function claim(array $candidates, SubscriptionCriteria $criteria, bool $wait): array
     {
         return $this->subscriptionStore->claim(
             array_map(static fn (Subscription $subscription): string => $subscription->id(), $candidates),
             $criteria,
+            $wait,
         );
     }
 

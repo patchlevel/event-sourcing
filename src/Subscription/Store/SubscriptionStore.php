@@ -23,14 +23,15 @@ interface SubscriptionStore
     public function stats(SubscriptionCriteria $criteria): SubscriptionStats;
 
     /**
-     * Claims the subscriptions via row locks (SKIP LOCKED), leaving out the ones that are held by another worker or no
-     * longer match the criteria.
+     * Claims the subscriptions via row locks, leaving out the ones that no longer match the criteria.
+     * By default the ones held by another worker are left out as well (SKIP LOCKED), that is what processing needs.
+     * With $wait the claim waits until the other worker released them, that is what a command like pause needs.
      *
      * @param non-empty-list<string> $ids
      *
      * @return list<Subscription>
      */
-    public function claim(array $ids, SubscriptionCriteria $criteria): array;
+    public function claim(array $ids, SubscriptionCriteria $criteria, bool $wait = false): array;
 
     /** @throws SubscriptionAlreadyExists */
     public function add(Subscription ...$subscriptions): void;

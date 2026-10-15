@@ -62,13 +62,13 @@ final class DummySubscriptionStore implements PartitionInboxStore
      *
      * @return list<Subscription>
      */
-    public function claim(array $ids, SubscriptionCriteria $criteria): array
+    public function claim(array $ids, SubscriptionCriteria $criteria, bool $wait = false): array
     {
         foreach ($ids as $id) {
             $this->claimedIds[] = $id;
         }
 
-        return $this->parentStore->claim($ids, $criteria);
+        return $this->parentStore->claim($ids, $criteria, $wait);
     }
 
     /**

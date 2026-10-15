@@ -124,6 +124,7 @@ final class TeardownHandler implements Handler
             static fn (Subscription $subscription, Throwable $e): Result => new Result(
                 [new Error($subscription->id(), $e->getMessage(), $e)],
             ),
+            wait: true,
         );
 
         return Result::merge($results);

@@ -277,7 +277,7 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
      *
      * @return list<Subscription>
      */
-    public function claim(array $ids, SubscriptionCriteria $criteria): array
+    public function claim(array $ids, SubscriptionCriteria $criteria, bool $wait = false): array
     {
         $qb = $this->connection->createQueryBuilder()
             ->select('*')
@@ -290,7 +290,7 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
         $this->applyPending($qb, $criteria);
 
         if (!$this->connection->getDatabasePlatform() instanceof SQLitePlatform) {
-            $qb->forUpdate(ConflictResolutionMode::SKIP_LOCKED);
+            $qb->forUpdate($wait ? ConflictResolutionMode::ORDINARY : ConflictResolutionMode::SKIP_LOCKED);
         }
 
         /** @var list<Data> $result */

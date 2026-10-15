@@ -65,6 +65,7 @@ final class PauseHandler implements Handler
                 static fn (Subscription $subscription): Error => new Error($subscription->id(), $e->getMessage(), $e),
                 $subscriptions,
             )),
+            wait: true,
         );
 
         return Result::merge($results);

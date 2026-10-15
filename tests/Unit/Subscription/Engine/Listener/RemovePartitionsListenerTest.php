@@ -71,9 +71,9 @@ final class RemovePartitionsListenerTest extends TestCase
              *
              * @return list<Subscription>
              */
-            public function claim(array $ids, SubscriptionCriteria $criteria): array
+            public function claim(array $ids, SubscriptionCriteria $criteria, bool $wait = false): array
             {
-                return $this->inner->claim($ids, $criteria);
+                return $this->inner->claim($ids, $criteria, $wait);
             }
 
             public function add(Subscription ...$subscriptions): void

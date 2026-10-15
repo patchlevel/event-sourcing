@@ -39,9 +39,9 @@ final class PlainSubscriptionStore implements SubscriptionStore
      *
      * @return list<Subscription>
      */
-    public function claim(array $ids, SubscriptionCriteria $criteria): array
+    public function claim(array $ids, SubscriptionCriteria $criteria, bool $wait = false): array
     {
-        return $this->store->claim($ids, $criteria);
+        return $this->store->claim($ids, $criteria, $wait);
     }
 
     public function add(Subscription ...$subscriptions): void

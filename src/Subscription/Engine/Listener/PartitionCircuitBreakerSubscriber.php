@@ -235,6 +235,7 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
 
                 return true;
             },
+            wait: true,
         );
 
         if ($stopped === [] && !$this->isStopped($subscriberId)) {
@@ -264,6 +265,7 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
 
                 $this->subscriptionManager->update($partition);
             },
+            wait: true,
         );
 
         return true;
@@ -297,6 +299,7 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
                 $partition->doRetry();
                 $this->failedMessageProcessor->process($partition, $throwable, $message, $index);
             },
+            wait: true,
         );
     }
 

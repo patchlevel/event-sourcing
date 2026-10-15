@@ -443,14 +443,15 @@ interface SubscriptionStore
     public function stats(SubscriptionCriteria $criteria): SubscriptionStats;
 
     /**
-     * Claim the subscriptions via row locks (SKIP LOCKED). Leave out the ones that are held
-     * by another worker or no longer match the criteria.
+     * Claim the subscriptions via row locks. Leave out the ones that no longer match the criteria,
+     * and the ones held by another worker (SKIP LOCKED). With $wait, wait for them instead,
+     * commands like pause or remove have to reach every subscription.
      *
      * @param non-empty-list<string> $ids
      *
      * @return list<Subscription>
      */
-    public function claim(array $ids, SubscriptionCriteria $criteria): array;
+    public function claim(array $ids, SubscriptionCriteria $criteria, bool $wait = false): array;
 
     public function add(Subscription ...$subscriptions): void;
 

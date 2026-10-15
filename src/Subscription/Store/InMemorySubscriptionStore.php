@@ -78,7 +78,7 @@ final class InMemorySubscriptionStore implements PartitionInboxStore
      *
      * @return list<Subscription>
      */
-    public function claim(array $ids, SubscriptionCriteria $criteria): array
+    public function claim(array $ids, SubscriptionCriteria $criteria, bool $wait = false): array
     {
         $claimed = [];
 
