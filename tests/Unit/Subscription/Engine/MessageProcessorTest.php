@@ -9,8 +9,10 @@ use Patchlevel\EventSourcing\Attribute\PartitionKey;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
+use Patchlevel\EventSourcing\Subscription\Engine\ProcessingStopped;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -141,11 +143,11 @@ final class MessageProcessorTest extends TestCase
 
         $error = $processor->process(1, $message, $subscription);
 
-        self::assertNotNull($error);
+        self::assertInstanceOf(Error::class, $error);
         self::assertInstanceOf(NoSuitableResolver::class, $error->throwable);
     }
 
-    public function testListenerCanSkipAMessage(): void
+    public function testListenerCanStopTheSubscription(): void
     {
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
         class {
@@ -160,7 +162,7 @@ final class MessageProcessorTest extends TestCase
 
         $eventDispatcher = new EventDispatcher();
         $eventDispatcher->addListener(OnHandleMessage::class, static function (OnHandleMessage $event): void {
-            $event->skip = true;
+            $event->stop = true;
         });
 
         $processor = new MessageProcessor(
@@ -174,9 +176,9 @@ final class MessageProcessorTest extends TestCase
 
         $error = $processor->process(1, Message::create(new ProfileVisited(ProfileId::fromString('1'))), $subscription);
 
-        self::assertNull($error);
+        self::assertInstanceOf(ProcessingStopped::class, $error);
         self::assertFalse($subscriber->called);
-        self::assertSame(0, $subscription->position(), 'a skipped message does not move the position');
+        self::assertSame(0, $subscription->position(), 'a stopped subscription does not move the position');
     }
 
     public function testPartitionGetsItsPartitionKey(): void

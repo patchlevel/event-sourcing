@@ -82,7 +82,7 @@ final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterfac
             return;
         }
 
-        $event->skip = true;
+        $event->stop = true;
     }
 
     public function onHandleMessageSuccess(OnHandleMessageSuccess $event): void

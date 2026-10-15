@@ -95,6 +95,10 @@ final class SubscriptionRunner
         $lastIndex = null;
         /** @var array<int, true> $loaded */
         $loaded = [];
+        /** @var array<string, int> $lastHandled subscription id => index of the last message it handled */
+        $lastHandled = [];
+        /** @var list<Subscription> $stopped stopped by a listener for the rest of the run */
+        $stopped = [];
         $limitReached = false;
 
         if (count($working) > 0) {
@@ -136,13 +140,20 @@ final class SubscriptionRunner
 
                         $error = $this->messageProcessor->process($index, $message, $member, $router);
 
-                        if (!$error) {
+                        if ($error === null) {
+                            $lastHandled[$member->id()] = $index;
+
                             continue;
                         }
 
-                        $errors[] = $error;
                         $working->remove($member);
                         $members->remove($member);
+
+                        if ($error instanceof ProcessingStopped) {
+                            $stopped[] = $member;
+                        } else {
+                            $errors[] = $error;
+                        }
 
                         if (count($working) === 0) {
                             break 2;
@@ -170,13 +181,20 @@ final class SubscriptionRunner
 
         if ($lastIndex !== null) {
             foreach ($working as $member) {
-                $event = new OnSubscriptionProcessed($member, $lastIndex);
-                $this->eventDispatcher->dispatch($event);
-                $errors = array_merge($errors, $event->errors);
+                $errors = array_merge($errors, $this->processed($member, $lastIndex));
             }
         }
 
-        foreach ($working as $member) {
+        // a stopped subscription only gets as far as the messages it handled, a batch must not move it further
+        foreach ($stopped as $member) {
+            if (!isset($lastHandled[$member->id()])) {
+                continue;
+            }
+
+            $errors = array_merge($errors, $this->processed($member, $lastHandled[$member->id()]));
+        }
+
+        foreach ([...$working, ...$stopped] as $member) {
             if ($member->isPartition()) {
                 // also without any loaded message, then every message of the inbox was removed from the store
                 $this->finishInbox($member, $inboxes[$member->id()], $loaded);
@@ -198,6 +216,15 @@ final class SubscriptionRunner
             !$limitReached && !$inboxFull,
             $errors,
         );
+    }
+
+    /** @return list<Error> */
+    private function processed(Subscription $subscription, int $lastIndex): array
+    {
+        $event = new OnSubscriptionProcessed($subscription, $lastIndex);
+        $this->eventDispatcher->dispatch($event);
+
+        return $event->errors;
     }
 
     /**

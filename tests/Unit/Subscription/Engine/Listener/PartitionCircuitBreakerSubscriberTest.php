@@ -53,12 +53,12 @@ final class PartitionCircuitBreakerSubscriberTest extends TestCase
             $breaker->onHandleMessageError($this->error($this->partitions[$i]));
         }
 
-        self::assertFalse($this->handle($breaker, $this->partitions[3])->skip, 'not tripped yet');
+        self::assertFalse($this->handle($breaker, $this->partitions[3])->stop, 'not tripped yet');
 
         $breaker->onHandleMessageError($this->error($this->partitions[2]));
 
-        self::assertTrue($this->handle($breaker, $this->partitions[3])->skip);
-        self::assertFalse($this->handle($breaker, new Subscription('other#a', partitionKey: 'a'))->skip, 'other subscribers go on');
+        self::assertTrue($this->handle($breaker, $this->partitions[3])->stop);
+        self::assertFalse($this->handle($breaker, new Subscription('other#a', partitionKey: 'a'))->stop, 'other subscribers go on');
     }
 
     public function testSuccessResetsTheFailuresInARow(): void
@@ -72,7 +72,7 @@ final class PartitionCircuitBreakerSubscriberTest extends TestCase
         $breaker->onHandleMessageError($this->error($this->partitions[3]));
         $breaker->onHandleMessageError($this->error($this->partitions[4]));
 
-        self::assertFalse($this->handle($breaker, $this->partitions[5])->skip);
+        self::assertFalse($this->handle($breaker, $this->partitions[5])->stop);
     }
 
     public function testStopsTheMainSubscriptionAndSetsBackThePartitions(): void

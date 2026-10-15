@@ -67,7 +67,7 @@ final class MessageProcessor
         Message $message,
         Subscription $subscription,
         PartitionRouter|null $router = null,
-    ): Error|null {
+    ): Error|ProcessingStopped|null {
         $subscriber = $this->subscriberRepository->get($subscription->subscriberId());
 
         if (!$subscriber) {
@@ -115,14 +115,14 @@ final class MessageProcessor
 
             $this->eventDispatcher->dispatch($event);
 
-            if ($event->skip) {
+            if ($event->stop) {
                 $this->logger?->debug(sprintf(
-                    'Subscription Engine: Subscription "%s" skipped the event "%s".',
+                    'Subscription Engine: Subscription "%s" stopped before the event "%s".',
                     $subscription->id(),
                     $message->event()::class,
                 ));
 
-                return null;
+                return new ProcessingStopped();
             }
 
             $context = new ArgumentResolverContext($message, $subscription, $subscriber->metadata());
