@@ -6,6 +6,7 @@ namespace Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber;
 
 use Closure;
 use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\PartitionKey;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
@@ -26,6 +27,9 @@ final class PartitionedProfileProjection
 
     public int $handled = 0;
 
+    /** @var array<string, string> profile id => partition key that processed its creation */
+    public array $partitionKeys = [];
+
     /** @var list<string> names that throw while processing */
     public array $failingNames = [];
 
@@ -44,8 +48,10 @@ final class PartitionedProfileProjection
     }
 
     #[Subscribe(ProfileCreated::class)]
-    public function handleProfileCreated(ProfileCreated $event): void
+    public function handleProfileCreated(ProfileCreated $event, #[PartitionKey]
+    string $partitionKey,): void
     {
+        $this->partitionKeys[$event->profileId->toString()] = $partitionKey;
         $this->record($event->profileId->toString(), $event->name);
     }
 

@@ -102,6 +102,7 @@ final class PartitionedSubscriptionTest extends TestCase
 
         foreach ($ids as $i => $id) {
             self::assertSame(['name-' . $i], $projection->processed[$id]);
+            self::assertSame('profile-' . $id, $projection->partitionKeys[$id], 'the handler gets the key of its partition');
         }
 
         foreach ($this->partitions() as $partition) {

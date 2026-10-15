@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentRe
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolverContext;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\EventArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\MessageArgumentResolver;
+use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\PartitionKeyArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\RecordedOnArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
 use Patchlevel\EventSourcing\Subscription\Subscriber\NoSuitableResolver;
@@ -49,6 +50,7 @@ final class MessageProcessor
             // the check for array is required before PHP 8.2
             array_values(is_array($argumentResolvers) ? $argumentResolvers : iterator_to_array($argumentResolvers)),
             [
+                new PartitionKeyArgumentResolver(),
                 new MessageArgumentResolver(),
                 new EventArgumentResolver(),
                 new RecordedOnArgumentResolver(),

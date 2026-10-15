@@ -313,6 +313,34 @@ final class DoStuffSubscriber
     }
 }
 ```
+##### Partition Key Resolver
+
+The partition key resolver resolves the key of the [partition](#partitioning) that processes the message.
+It looks for a parameter with the `#[PartitionKey]` attribute, without partitions the value is `null`.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\PartitionKey;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Message\Message;
+
+#[Projector('profile_1')]
+final class ProfileProjector
+{
+    #[Partition]
+    public function partition(Message $message): string
+    {
+        return $message->header(TenantHeader::class)->tenant;
+    }
+
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(ProfileCreated $event, #[PartitionKey] string $tenant): void
+    {
+        // write into the database of the tenant
+    }
+}
+```
 ##### Event Emitter Resolver
 
 A subscriber can not only build a projection or trigger a side effect, it can also emit new events

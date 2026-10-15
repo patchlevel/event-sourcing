@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\PartitionKey;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
@@ -175,5 +177,40 @@ final class MessageProcessorTest extends TestCase
         self::assertNull($error);
         self::assertFalse($subscriber->called);
         self::assertSame(0, $subscription->position(), 'a skipped message does not move the position');
+    }
+
+    public function testPartitionGetsItsPartitionKey(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public string|null $partitionKey = null;
+
+            #[Partition]
+            public function partition(Message $message): string
+            {
+                return 'tenant-a';
+            }
+
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(ProfileVisited $event, #[PartitionKey]
+            string $partitionKey,): void
+            {
+                $this->partitionKey = $partitionKey;
+            }
+        };
+
+        $processor = new MessageProcessor(
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new EventDispatcher(),
+            [],
+            new NullLogger(),
+        );
+
+        $partition = Subscription::partition(new Subscription('test', status: Status::Active), 'tenant-a', 0);
+
+        $error = $processor->process(1, Message::create(new ProfileVisited(ProfileId::fromString('1'))), $partition);
+
+        self::assertNull($error);
+        self::assertSame('tenant-a', $subscriber->partitionKey);
     }
 }
