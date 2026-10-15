@@ -611,6 +611,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
         $table->addIndex(['status']);
+        $table->addIndex(['partition_key', 'status']);
         $table->addIndex(['subscriber_id', 'last_saved_at']);
 
         $inbox = $expectedSchema->createTable('subscriptions_inbox');

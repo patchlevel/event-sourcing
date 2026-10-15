@@ -961,8 +961,7 @@ The subscription with the subscriber id is the main subscription. It never calls
 Instead, it resolves the partition key of every message exactly once and puts the message into the inbox of that partition.
 Partitions are created on the fly as new keys appear, get the id `{subscriber id}#{partition key}`
 and start with the group, run mode and status of the main subscription.
-A partition only processes the messages in its inbox and is only claimed by a worker if its inbox has messages,
-so idle partitions cost nothing.
+A partition only processes the messages in its inbox and is only claimed by a worker if its inbox has messages.
 The built-in message loaders load exactly these messages. A custom message loader can do the same by implementing
 `IndexMessageLoader`, otherwise a partition reads the range of its inbox and skips the other messages.
 

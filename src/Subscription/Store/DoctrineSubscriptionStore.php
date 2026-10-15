@@ -318,7 +318,15 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
 
     private function applyCriteria(QueryBuilder $qb, SubscriptionCriteria $criteria): void
     {
-        if ($criteria->ids !== null) {
+        // the id of a main subscription is its subscriber id, so it is found by its primary key alone
+        if ($criteria->ids !== null && $criteria->partitions === false) {
+            $qb->andWhere('id IN (:ids)')
+                ->setParameter(
+                    'ids',
+                    $criteria->ids,
+                    ArrayParameterType::STRING,
+                );
+        } elseif ($criteria->ids !== null) {
             $qb->andWhere('id IN (:ids) OR subscriber_id IN (:subscriber_ids)')
                 ->setParameter(
                     'ids',
@@ -969,6 +977,8 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
         $table->addIndex(['status']);
+        // finds the main subscriptions without reading the partitions
+        $table->addIndex(['partition_key', 'status']);
         // also finds the idle partitions of a subscriber
         $table->addIndex(['subscriber_id', 'last_saved_at']);
 
