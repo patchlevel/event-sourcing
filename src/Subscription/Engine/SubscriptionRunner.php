@@ -55,6 +55,14 @@ final class SubscriptionRunner
             $surviving[] = $subscription;
         }
 
+        if (count($surviving) > 1) {
+            $separated = $this->processBatchesSeparately($surviving, $limit, $boot);
+
+            if ($separated !== null) {
+                return $separated;
+            }
+        }
+
         $members = new SubscriptionCollection($surviving);
 
         if (count($members) === 0) {
@@ -172,6 +180,45 @@ final class SubscriptionRunner
             !$limitReached && !$inboxFull && !$router->hasRouted(),
             $errors,
         );
+    }
+
+    /**
+     * Batches of a group must not overlap. A batch often holds a resource like a database transaction from begin to
+     * flush, and overlapping transactions on one connection are a stack: rolling back one batch would roll back the
+     * innermost, so another batch would lose its writes while its position moves on. So every subscription with
+     * batching runs alone, one after the other, while the others of the group are still processed together.
+     * They all stay in the claimed transaction, so the writes of the group are still flushed together.
+     *
+     * @param list<Subscription> $subscriptions
+     */
+    private function processBatchesSeparately(array $subscriptions, int|null $limit, bool $boot): ProcessedResult|null
+    {
+        $batched = [];
+        $others = [];
+
+        foreach ($subscriptions as $subscription) {
+            if ($this->subscriberRepository->get($subscription->subscriberId())?->metadata()->batch !== null) {
+                $batched[] = $subscription;
+            } else {
+                $others[] = $subscription;
+            }
+        }
+
+        if ($batched === []) {
+            return null;
+        }
+
+        $results = [];
+
+        if ($others !== []) {
+            $results[] = $this->process($others, $limit, $boot);
+        }
+
+        foreach ($batched as $subscription) {
+            $results[] = $this->process([$subscription], $limit, $boot);
+        }
+
+        return ProcessedResult::merge($results);
     }
 
     /**

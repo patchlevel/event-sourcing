@@ -35,7 +35,9 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedBatchProfileProjection;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedProfileProjection;
+use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\PartitionedTransactionalBatchProjection;
 use PHPUnit\Framework\Attributes\CoversNothing;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 use function array_keys;
@@ -427,5 +429,48 @@ final class PartitionedSubscriptionTest extends TestCase
         foreach ($ids as $i => $id) {
             self::assertSame(['name-' . $i], $projection->processed[$id], 'a limit of 1 still lets every partition of the group process a message');
         }
+    }
+
+    /** @return iterable<string, array{positive-int}> */
+    public static function partitionsPerClaim(): iterable
+    {
+        yield 'one partition per claim' => [1];
+        yield 'partitions in groups' => [100];
+    }
+
+    /**
+     * Every batch is a transaction on the shared connection. Partition A fails after partition B started its batch:
+     * only A may be rolled back, B has to be committed.
+     *
+     * @param positive-int $partitionsPerClaim
+     */
+    #[DataProvider('partitionsPerClaim')]
+    public function testTransactionalBatchesOfAGroupDoNotOverlap(int $partitionsPerClaim): void
+    {
+        $engine = $this->engine(new PartitionedTransactionalBatchProjection($this->connection));
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        $a = ProfileId::generate();
+        $b = ProfileId::generate();
+        $this->repository->save(Profile::create($a, 'A'));
+        $this->repository->save(Profile::create($b, 'B'));
+        $this->changeName($a, PartitionedTransactionalBatchProjection::POISON);
+        $this->changeName($b, 'B2');
+
+        $this->runUntilFinished($engine, partitionsPerClaim: $partitionsPerClaim);
+
+        self::assertSame(
+            [['id' => $b->toString(), 'name' => 'B2']],
+            $this->connection->fetchAllAssociative('SELECT id, name FROM ' . PartitionedTransactionalBatchProjection::SUBSCRIBER_ID),
+        );
+
+        $partitions = $this->partitions(PartitionedTransactionalBatchProjection::SUBSCRIBER_ID);
+        $partitionOfA = $partitions[Subscription::partitionId(PartitionedTransactionalBatchProjection::SUBSCRIBER_ID, 'profile-' . $a->toString())];
+        $partitionOfB = $partitions[Subscription::partitionId(PartitionedTransactionalBatchProjection::SUBSCRIBER_ID, 'profile-' . $b->toString())];
+
+        self::assertSame(Status::Error, $partitionOfA->status());
+        self::assertSame(0, $partitionOfA->position(), 'the failed batch did not move the position');
+        self::assertSame(Status::Active, $partitionOfB->status());
     }
 }

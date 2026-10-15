@@ -1635,6 +1635,7 @@ $subscriptionEngine->execute(new Run(limit: 100, subscriptionsPerClaim: 10, part
 ```
 An error still only stops the subscription it happened in, the others of the group are committed.
 Partitions and other subscriptions are never mixed in one group.
+Subscribers with [batching](#batching) are processed one after another within a group, so their batches never overlap.
 
 :::warning
 A group holds the locks of all its subscriptions until it is committed.
