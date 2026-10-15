@@ -31,7 +31,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Listener\BatchSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DetachListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DiscoverSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailSubscriber;
-use Patchlevel\EventSourcing\Subscription\Engine\Listener\PartitionCircuitBreaker;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\PartitionCircuitBreakerSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RemovePartitionsListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
@@ -169,11 +169,18 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             ),
         );
 
+        $failedMessageProcessor = new FailedMessageProcessor(
+            $this->subscriptionManager,
+            $this->subscriberRepository,
+            $this->logger,
+        );
+
         $this->eventDispatcher->addSubscriber(
-            new PartitionCircuitBreaker(
+            new PartitionCircuitBreakerSubscriber(
                 $this->subscriptionManager,
                 $this->subscriberRepository,
                 $this->retryStrategyRepository,
+                $failedMessageProcessor,
                 $this->logger,
             ),
         );
@@ -194,13 +201,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             ),
         );
 
-        $this->eventDispatcher->addSubscriber(
-            new FailSubscriber(
-                $this->subscriptionManager,
-                $this->subscriberRepository,
-                $this->logger,
-            ),
-        );
+        $this->eventDispatcher->addSubscriber(new FailSubscriber($failedMessageProcessor));
 
         $this->eventDispatcher->addListener(
             OnCommand::class,

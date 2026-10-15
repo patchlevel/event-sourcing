@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine\Listener;
 
+use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
@@ -11,6 +12,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnResult;
+use Patchlevel\EventSourcing\Subscription\Engine\FailedMessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ConditionalRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
@@ -36,7 +38,7 @@ use function str_contains;
  *
  * @internal
  */
-final class PartitionCircuitBreaker implements EventSubscriberInterface
+final class PartitionCircuitBreakerSubscriber implements EventSubscriberInterface
 {
     private bool $active = false;
 
@@ -52,10 +54,14 @@ final class PartitionCircuitBreaker implements EventSubscriberInterface
     /** @var array<string, true> subscriber ids with a successful partition */
     private array $succeeded = [];
 
+    /** @var array<string, array<string, array{Throwable, Message, int}>> subscriber id => partition id => held back failure */
+    private array $heldBackFailures = [];
+
     public function __construct(
         private readonly SubscriptionManager $subscriptionManager,
         private readonly SubscriberAccessorRepository $subscriberRepository,
         private readonly RetryStrategyRepository $retryStrategyRepository,
+        private readonly FailedMessageProcessor $failedMessageProcessor,
         private readonly LoggerInterface|null $logger = null,
     ) {
     }
@@ -67,6 +73,7 @@ final class PartitionCircuitBreaker implements EventSubscriberInterface
         $this->failedPartitions = [];
         $this->tripped = [];
         $this->succeeded = [];
+        $this->heldBackFailures = [];
     }
 
     public function onHandleMessage(OnHandleMessage $event): void
@@ -100,6 +107,30 @@ final class PartitionCircuitBreaker implements EventSubscriberInterface
     }
 
     /**
+     * A partition without retries left would go into the failed status and call its #[OnFailed] method, which may
+     * skip the message. During a systemic failure that must not happen, so the transition is held back until the end
+     * of the command: the partition goes into the error status for now and only fails if the breaker did not trip.
+     */
+    public function holdBackFailure(OnHandleMessageError $event): void
+    {
+        if (!$this->active || !$event->transitionToFailed || !$event->subscription->isPartition()) {
+            return;
+        }
+
+        $partition = $event->subscription;
+
+        $event->transitionToFailed = false;
+        $partition->error($event->throwable);
+        $this->subscriptionManager->update($partition);
+
+        $this->heldBackFailures[$partition->subscriberId()][$partition->id()] = [
+            $event->throwable,
+            $event->message,
+            $event->index,
+        ];
+    }
+
+    /**
      * Failures outside of a message, like a failing batch flush or a whole group, only show up in the result.
      * Then the main subscriptions of tripped subscribers go into error and their failed partitions are set back.
      */
@@ -127,7 +158,18 @@ final class PartitionCircuitBreaker implements EventSubscriberInterface
         }
 
         foreach ($this->tripped as $subscriberId => $throwable) {
-            $this->stopSubscriber($subscriberId, $throwable);
+            if ($this->stopSubscriber($subscriberId, $throwable)) {
+                // the partitions did not fail on their own, they are set back
+                unset($this->heldBackFailures[$subscriberId]);
+
+                continue;
+            }
+
+            unset($this->tripped[$subscriberId]);
+        }
+
+        foreach ($this->heldBackFailures as $failures) {
+            $this->fail($failures);
         }
 
         $this->resetRetries();
@@ -174,11 +216,15 @@ final class PartitionCircuitBreaker implements EventSubscriberInterface
         return false;
     }
 
-    private function stopSubscriber(string $subscriberId, Throwable $throwable): void
+    /**
+     * Returns whether the main subscription is stopped. Only then the failed partitions are set back, otherwise they
+     * would start again right away without any backoff.
+     */
+    private function stopSubscriber(string $subscriberId, Throwable $throwable): bool
     {
-        $this->subscriptionManager->forEachClaimed(
+        $stopped = $this->subscriptionManager->forEachClaimed(
             new SubscriptionCriteria(ids: [$subscriberId], status: [Status::Active, Status::Booting], partitions: false),
-            function (Subscription $main) use ($throwable): void {
+            function (Subscription $main) use ($throwable): bool {
                 if ($this->canRetry($main)) {
                     $main->error($throwable);
                 } else {
@@ -186,13 +232,24 @@ final class PartitionCircuitBreaker implements EventSubscriberInterface
                 }
 
                 $this->subscriptionManager->update($main);
+
+                return true;
             },
         );
+
+        if ($stopped === [] && !$this->isStopped($subscriberId)) {
+            $this->logger?->warning(sprintf(
+                'Subscription Engine: The main subscription of subscriber "%s" could not be stopped, it is held by another worker.',
+                $subscriberId,
+            ));
+
+            return false;
+        }
 
         $partitionIds = array_keys($this->failedPartitions[$subscriberId] ?? []);
 
         if ($partitionIds === []) {
-            return;
+            return true;
         }
 
         // the partitions did not fail on their own, they continue where they were once the subscriber runs again
@@ -206,6 +263,39 @@ final class PartitionCircuitBreaker implements EventSubscriberInterface
                 }
 
                 $this->subscriptionManager->update($partition);
+            },
+        );
+
+        return true;
+    }
+
+    /** E.g. by another worker whose breaker tripped as well. */
+    private function isStopped(string $subscriberId): bool
+    {
+        foreach ($this->subscriptionManager->find(new SubscriptionCriteria(ids: [$subscriberId], partitions: false)) as $main) {
+            if ($main->isError() || $main->isFailed()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param array<string, array{Throwable, Message, int}> $failures partition id => held back failure */
+    private function fail(array $failures): void
+    {
+        $this->subscriptionManager->forEachClaimed(
+            new SubscriptionCriteria(ids: array_keys($failures), status: [Status::Error], partitions: true),
+            function (Subscription $partition) use ($failures): void {
+                if (!isset($failures[$partition->id()])) {
+                    return;
+                }
+
+                [$throwable, $message, $index] = $failures[$partition->id()];
+
+                // back to the status before the error, the failed message processor decides about the rest
+                $partition->doRetry();
+                $this->failedMessageProcessor->process($partition, $throwable, $message, $index);
             },
         );
     }
@@ -247,7 +337,7 @@ final class PartitionCircuitBreaker implements EventSubscriberInterface
         return !$retryStrategy instanceof ConditionalRetryStrategy || $retryStrategy->canRetry($main);
     }
 
-    /** @return array<class-string, string|array{string, int}> */
+    /** @return array<class-string, string|array{string, int}|list<array{string, int}>> */
     public static function getSubscribedEvents(): array
     {
         return [
@@ -255,7 +345,11 @@ final class PartitionCircuitBreaker implements EventSubscriberInterface
             // before the batch subscriber, a skipped message must not open a batch
             OnHandleMessage::class => ['onHandleMessage', 32],
             OnHandleMessageSuccess::class => 'onHandleMessageSuccess',
-            OnHandleMessageError::class => 'onHandleMessageError',
+            OnHandleMessageError::class => [
+                ['onHandleMessageError', 0],
+                // after the retry subscriber decided about the transition, before the fail subscriber executes it
+                ['holdBackFailure', -4],
+            ],
             OnResult::class => 'onResult',
         ];
     }

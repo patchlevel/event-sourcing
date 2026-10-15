@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
+use Patchlevel\EventSourcing\Subscription\Engine\FailedMessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RunMode;
@@ -31,6 +32,7 @@ use RuntimeException;
 use stdClass;
 
 #[CoversClass(FailSubscriber::class)]
+#[CoversClass(FailedMessageProcessor::class)]
 final class FailSubscriberTest extends TestCase
 {
     /**
@@ -43,11 +45,11 @@ final class FailSubscriberTest extends TestCase
         $subscriptionManager = new SubscriptionManager($store);
 
         return [
-            new FailSubscriber(
+            new FailSubscriber(new FailedMessageProcessor(
                 $subscriptionManager,
                 new MetadataSubscriberAccessorRepository($subscribers),
                 new NullLogger(),
-            ),
+            )),
             $subscriptionManager,
         ];
     }

@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run as RunCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
+use Patchlevel\EventSourcing\Subscription\Engine\FailedMessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\RunHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DetachListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailSubscriber;
@@ -62,7 +63,7 @@ final class RunHandlerTest extends TestCase
         $eventDispatcher = new EventDispatcher();
 
         $eventDispatcher->addSubscriber(new RetrySubscriber($subscriptionManager, $subscriberRepository, $retryStrategyRepository, new NullLogger()));
-        $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
+        $eventDispatcher->addSubscriber(new FailSubscriber(new FailedMessageProcessor($subscriptionManager, $subscriberRepository, new NullLogger())));
         $eventDispatcher->addListener(OnCommand::class, new DetachListener($subscriptionManager, $subscriberRepository, new NullLogger()), 32);
 
         $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [], new NullLogger());

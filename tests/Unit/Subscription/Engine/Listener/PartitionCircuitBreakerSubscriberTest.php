@@ -16,7 +16,8 @@ use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnResult;
-use Patchlevel\EventSourcing\Subscription\Engine\Listener\PartitionCircuitBreaker;
+use Patchlevel\EventSourcing\Subscription\Engine\FailedMessageProcessor;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\PartitionCircuitBreakerSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
@@ -35,8 +36,8 @@ use RuntimeException;
 use function array_map;
 use function range;
 
-#[CoversClass(PartitionCircuitBreaker::class)]
-final class PartitionCircuitBreakerTest extends TestCase
+#[CoversClass(PartitionCircuitBreakerSubscriber::class)]
+final class PartitionCircuitBreakerSubscriberTest extends TestCase
 {
     private InMemorySubscriptionStore $store;
 
@@ -119,6 +120,94 @@ final class PartitionCircuitBreakerTest extends TestCase
         }
     }
 
+    public function testPartitionsStayInErrorIfTheMainSubscriptionCanNotBeStopped(): void
+    {
+        $breaker = $this->breaker(3);
+        $breaker->onCommand(new OnCommand(new Run()));
+
+        // e.g. claimed by another worker, here simply no longer in a status the breaker stops
+        $main = $this->store->get('profile');
+        $main->pause();
+        $this->store->update($main);
+
+        foreach ([0, 1, 2] as $i) {
+            $this->partitions[$i]->error(new RuntimeException('database down'));
+            $this->store->update($this->partitions[$i]);
+            $breaker->onHandleMessageError($this->error($this->partitions[$i]));
+        }
+
+        $breaker->onResult(new OnResult(new Run(), new Result()));
+
+        self::assertSame(Status::Paused, $this->store->get('profile')->status());
+
+        foreach ([0, 1, 2] as $i) {
+            self::assertSame(Status::Error, $this->store->get($this->partitions[$i]->id())->status(), 'no restart without backoff');
+        }
+    }
+
+    public function testPartitionsAreSetBackIfTheMainSubscriptionIsAlreadyStopped(): void
+    {
+        $breaker = $this->breaker(3);
+        $breaker->onCommand(new OnCommand(new Run()));
+
+        $main = $this->store->get('profile');
+        $main->error(new RuntimeException('stopped by another worker'));
+        $this->store->update($main);
+
+        foreach ([0, 1, 2] as $i) {
+            $this->partitions[$i]->error(new RuntimeException('database down'));
+            $this->store->update($this->partitions[$i]);
+            $breaker->onHandleMessageError($this->error($this->partitions[$i]));
+        }
+
+        $breaker->onResult(new OnResult(new Run(), new Result()));
+
+        foreach ([0, 1, 2] as $i) {
+            self::assertSame(Status::Active, $this->store->get($this->partitions[$i]->id())->status());
+        }
+    }
+
+    public function testHeldBackFailureIsDroppedIfTheBreakerTrips(): void
+    {
+        $breaker = $this->breaker(3);
+        $breaker->onCommand(new OnCommand(new Run()));
+
+        foreach ([0, 1, 2] as $i) {
+            $event = $this->error($this->partitions[$i]);
+            $event->transitionToFailed = true;
+
+            $breaker->onHandleMessageError($event);
+            $breaker->holdBackFailure($event);
+
+            self::assertFalse($event->transitionToFailed, 'the fail subscriber does not see it');
+            self::assertSame(Status::Error, $this->partitions[$i]->status());
+        }
+
+        $breaker->onResult(new OnResult(new Run(), new Result()));
+
+        foreach ([0, 1, 2] as $i) {
+            self::assertSame(Status::Active, $this->store->get($this->partitions[$i]->id())->status(), 'set back, not failed');
+        }
+    }
+
+    public function testHeldBackFailureFailsThePartitionWithoutTrip(): void
+    {
+        $breaker = $this->breaker(3);
+        $breaker->onCommand(new OnCommand(new Run()));
+
+        $event = $this->error($this->partitions[0]);
+        $event->transitionToFailed = true;
+
+        $breaker->onHandleMessageError($event);
+        $breaker->holdBackFailure($event);
+        $this->store->update($this->partitions[0]);
+
+        $breaker->onResult(new OnResult(new Run(), new Result()));
+
+        self::assertSame(Status::Active, $this->store->get('profile')->status());
+        self::assertSame(Status::Failed, $this->store->get($this->partitions[0]->id())->status());
+    }
+
     public function testOnlyRunAndBoot(): void
     {
         $breaker = $this->breaker(1);
@@ -131,7 +220,7 @@ final class PartitionCircuitBreakerTest extends TestCase
     }
 
     /** @param positive-int $maxConsecutiveFailures */
-    private function breaker(int $maxConsecutiveFailures): PartitionCircuitBreaker
+    private function breaker(int $maxConsecutiveFailures): PartitionCircuitBreakerSubscriber
     {
         $subscriber = $maxConsecutiveFailures === 1
             ? new #[Subscriber('profile', RunMode::FromBeginning)]
@@ -169,10 +258,14 @@ final class PartitionCircuitBreakerTest extends TestCase
 
         $this->store = new InMemorySubscriptionStore([$main, ...$this->partitions]);
 
-        return new PartitionCircuitBreaker(
-            new SubscriptionManager($this->store),
-            new MetadataSubscriberAccessorRepository([$subscriber]),
+        $subscriptionManager = new SubscriptionManager($this->store);
+        $subscriberRepository = new MetadataSubscriberAccessorRepository([$subscriber]);
+
+        return new PartitionCircuitBreakerSubscriber(
+            $subscriptionManager,
+            $subscriberRepository,
             RetryStrategyRepository::withDefault(new NoRetryStrategy()),
+            new FailedMessageProcessor($subscriptionManager, $subscriberRepository),
         );
     }
 
@@ -181,7 +274,7 @@ final class PartitionCircuitBreakerTest extends TestCase
         return new OnHandleMessageError($partition, new RuntimeException('database down'), $this->message(), 1);
     }
 
-    private function handle(PartitionCircuitBreaker $breaker, Subscription $partition): OnHandleMessage
+    private function handle(PartitionCircuitBreakerSubscriber $breaker, Subscription $partition): OnHandleMessage
     {
         $event = new OnHandleMessage($partition, $this->message());
         $breaker->onHandleMessage($event);
