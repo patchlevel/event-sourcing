@@ -51,9 +51,18 @@ final class DetachListener
                 $subscription->detached();
                 $this->subscriptionManager->update($subscription);
 
+                // every partition, also booting or failed ones, otherwise they would be retried without a subscriber
                 $partitions = $this->subscriptionManager->find(new SubscriptionCriteria(
                     ids: [$subscription->id()],
-                    status: [Status::Active, Status::Paused, Status::Finished],
+                    status: [
+                        Status::New,
+                        Status::Booting,
+                        Status::Active,
+                        Status::Paused,
+                        Status::Finished,
+                        Status::Error,
+                        Status::Failed,
+                    ],
                     partitions: true,
                 ));
 
