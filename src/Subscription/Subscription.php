@@ -38,7 +38,8 @@ final class Subscription
 
     /**
      * Creates the partition of a partitioned subscriber. The partition belongs to the same subscriber as the given main
-     * subscription and starts with its group, run mode and status.
+     * subscription and starts with its group, run mode and status. A failure of the main subscription is not the one of
+     * the partition: if the main subscription is in error or failed, the partition starts with the status before.
      */
     public static function partition(self $main, string $partitionKey, int $position): self
     {
@@ -46,11 +47,17 @@ final class Subscription
             throw new PartitionOfPartitionNotPossible($main->id());
         }
 
+        $status = $main->status();
+
+        if ($status === Status::Error || $status === Status::Failed) {
+            $status = $main->subscriptionError()->previousStatus ?? Status::Active;
+        }
+
         return new self(
             self::partitionId($main->id(), $partitionKey),
             $main->group(),
             $main->runMode(),
-            $main->status(),
+            $status,
             $position,
             partitionKey: $partitionKey,
         );

@@ -419,6 +419,67 @@ final class PartitionedSubscriptionTest extends TestCase
             ],
             array_keys($this->partitions()),
         );
+
+        foreach ($this->partitions() as $partition) {
+            self::assertSame(Status::Active, $partition->status(), 'the error of the main subscription is not theirs');
+        }
+
+        // the bug is fixed, the main subscription is retried and the partitions process what was routed before
+        ConfigurablePartitioner::$key = null;
+        $this->clock->sleep(10);
+        $this->runUntilFinished($engine);
+
+        self::assertSame(['name-0'], $projection->processed[$firstId]);
+        self::assertSame(['name-1'], $projection->processed[$secondId]);
+        self::assertSame(['name-2'], $projection->processed[$brokenId]);
+    }
+
+    /** The same while booting: the partitions start booting and finish once the main subscription booted. */
+    public function testPartitionsOfMessagesRoutedBeforeAnErrorWhileBooting(): void
+    {
+        $projection = new PartitionedProfileProjection();
+        $engine = $this->engine($projection);
+
+        [$firstId, $brokenId] = $this->createProfiles(2);
+
+        $engine->execute(new Setup());
+
+        ConfigurablePartitioner::$key = static function (Message $message) use ($brokenId): string {
+            $streamName = $message->header(StreamNameHeader::class)->streamName;
+
+            if ($streamName === 'profile-' . $brokenId) {
+                throw new RuntimeException('no key');
+            }
+
+            return $streamName;
+        };
+
+        $engine->execute(new Boot());
+
+        self::assertSame(Status::Error, $this->subscriptionStore->get(self::MAIN)->status());
+        self::assertSame(
+            Status::Booting,
+            $this->subscriptionStore->get(Subscription::partitionId(self::MAIN, 'profile-' . $firstId))->status(),
+        );
+
+        ConfigurablePartitioner::$key = null;
+        $this->clock->sleep(10);
+
+        for ($i = 0; $i < 20; $i++) {
+            $result = $engine->execute(new Boot());
+            self::assertInstanceOf(ProcessedResult::class, $result);
+
+            if ($result->finished) {
+                break;
+            }
+        }
+
+        self::assertSame(['name-0'], $projection->processed[$firstId]);
+        self::assertSame(['name-1'], $projection->processed[$brokenId]);
+
+        foreach ($this->partitions() as $partition) {
+            self::assertSame(Status::Active, $partition->status(), $partition->id());
+        }
     }
 
     /** The repository that runs the engine after every save, e.g. to read your own writes. */

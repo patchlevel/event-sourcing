@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use stdClass;
@@ -285,6 +286,30 @@ final class SubscriptionTest extends TestCase
         self::assertFalse($main->isPartition());
         self::assertSame('profile', $main->subscriberId());
         self::assertNull($main->partitionKey());
+    }
+
+    /** @return iterable<string, array{Status, Status|null, Status}> main status, status before the error, partition status */
+    public static function partitionStatus(): iterable
+    {
+        yield 'active' => [Status::Active, null, Status::Active];
+        yield 'booting' => [Status::Booting, null, Status::Booting];
+        yield 'error while active' => [Status::Error, Status::Active, Status::Active];
+        yield 'error while booting' => [Status::Error, Status::Booting, Status::Booting];
+        yield 'failed while active' => [Status::Failed, Status::Active, Status::Active];
+    }
+
+    /** The failure of the main subscription is not the one of a partition it creates. */
+    #[DataProvider('partitionStatus')]
+    public function testPartitionStatus(Status $mainStatus, Status|null $previousStatus, Status $expected): void
+    {
+        $main = new Subscription(
+            'profile',
+            status: $mainStatus,
+            position: 10,
+            error: $previousStatus !== null ? new SubscriptionError('routing failed', $previousStatus) : null,
+        );
+
+        self::assertSame($expected, Subscription::partition($main, 'tenant-a', 4)->status());
     }
 
     public function testPartitionKeyMayContainTheSeparator(): void
