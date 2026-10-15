@@ -272,6 +272,30 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
         return new SubscriptionStats($status);
     }
 
+    public function inboxStats(SubscriptionCriteria $criteria): InboxStats
+    {
+        $qb = $this->connection->createQueryBuilder()
+            ->select('COUNT(*) AS messages', sprintf('COUNT(DISTINCT %s.subscription_id) AS partitions', $this->inboxTableName))
+            ->from($this->tableName)
+            ->innerJoin(
+                $this->tableName,
+                $this->inboxTableName,
+                $this->inboxTableName,
+                sprintf(
+                    '%1$s.subscription_id = %2$s.id AND %1$s.message_index > %2$s.position',
+                    $this->inboxTableName,
+                    $this->tableName,
+                ),
+            );
+
+        $this->applyCriteria($qb, $criteria);
+
+        /** @var array{messages: int|string, partitions: int|string} $row */
+        $row = $qb->fetchAssociative();
+
+        return new InboxStats((int)$row['messages'], (int)$row['partitions']);
+    }
+
     /**
      * @param non-empty-list<string> $ids
      *

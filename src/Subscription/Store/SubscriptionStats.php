@@ -14,6 +14,8 @@ final class SubscriptionStats
     /** @param array<value-of<Status>, int> $status number of subscriptions per status, statuses without any are left out */
     public function __construct(
         public readonly array $status = [],
+        /** the inboxes of the matching partitions, null if the store has no partitions support */
+        public readonly InboxStats|null $inbox = null,
     ) {
     }
 

@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\InboxStats;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
@@ -44,6 +45,8 @@ final class FakeSubscriptionEngine implements SubscriptionEngine
     /** @var list<SubscriptionEngineCriteria> */
     public array $statsCriteria = [];
 
+    public InboxStats|null $inbox = null;
+
     public function stats(SubscriptionEngineCriteria|null $criteria = null): SubscriptionStats
     {
         $criteria ??= new SubscriptionEngineCriteria();
@@ -55,7 +58,7 @@ final class FakeSubscriptionEngine implements SubscriptionEngine
             $status[$subscription->status()->value] = ($status[$subscription->status()->value] ?? 0) + 1;
         }
 
-        return new SubscriptionStats($status);
+        return new SubscriptionStats($status, $this->inbox);
     }
 
     /** @return list<Subscription> */

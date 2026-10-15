@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use Closure;
+use Patchlevel\EventSourcing\Subscription\Store\InboxStats;
 use Patchlevel\EventSourcing\Subscription\Store\PartitionInboxStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
@@ -330,6 +331,16 @@ final class SubscriptionManager
     public function stats(SubscriptionCriteria $criteria): SubscriptionStats
     {
         return $this->subscriptionStore->stats($criteria);
+    }
+
+    /** Null if the store has no partitions support. */
+    public function inboxStats(SubscriptionCriteria $criteria): InboxStats|null
+    {
+        if (!$this->subscriptionStore instanceof PartitionInboxStore) {
+            return null;
+        }
+
+        return $this->subscriptionStore->inboxStats($criteria);
     }
 
     public function add(Subscription ...$subscriptions): void

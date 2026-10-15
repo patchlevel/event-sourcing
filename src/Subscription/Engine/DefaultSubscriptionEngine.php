@@ -281,13 +281,16 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
     {
         $criteria ??= new SubscriptionEngineCriteria();
 
-        return $this->subscriptionManager->stats(
-            new SubscriptionCriteria(
-                ids: $criteria->ids,
-                groups: $criteria->groups,
-                status: $criteria->status,
-                partitions: $criteria->partitions,
-            ),
+        $subscriptionCriteria = new SubscriptionCriteria(
+            ids: $criteria->ids,
+            groups: $criteria->groups,
+            status: $criteria->status,
+            partitions: $criteria->partitions,
+        );
+
+        return new SubscriptionStats(
+            $this->subscriptionManager->stats($subscriptionCriteria)->status,
+            $this->subscriptionManager->inboxStats($subscriptionCriteria),
         );
     }
 }

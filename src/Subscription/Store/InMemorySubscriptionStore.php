@@ -14,9 +14,12 @@ use function array_key_exists;
 use function array_keys;
 use function array_slice;
 use function array_values;
+use function count;
 use function in_array;
 use function sort;
 use function sprintf;
+
+use const PHP_INT_MAX;
 
 final class InMemorySubscriptionStore implements PartitionInboxStore
 {
@@ -230,6 +233,25 @@ final class InMemorySubscriptionStore implements PartitionInboxStore
         }
 
         return $inbox;
+    }
+
+    public function inboxStats(SubscriptionCriteria $criteria): InboxStats
+    {
+        $messages = 0;
+        $partitions = 0;
+
+        foreach ($this->find($criteria) as $subscription) {
+            $count = count($this->inbox([$subscription->id() => $subscription->position() ?? -1], PHP_INT_MAX)[$subscription->id()] ?? []);
+
+            if ($count === 0) {
+                continue;
+            }
+
+            $messages += $count;
+            $partitions++;
+        }
+
+        return new InboxStats($messages, $partitions);
     }
 
     /**

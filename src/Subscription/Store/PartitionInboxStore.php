@@ -27,6 +27,9 @@ interface PartitionInboxStore extends SubscriptionStore
      */
     public function inbox(array $afterIndex, int $limit): array;
 
+    /** Counts the messages waiting in the inboxes of the matching partitions, without loading them. */
+    public function inboxStats(SubscriptionCriteria $criteria): InboxStats;
+
     /**
      * Removes active partitions of the subscriber with an empty inbox that were not saved for the given seconds.
      * Partitions that are held by another worker are left out. Only call it while holding the lock of the main

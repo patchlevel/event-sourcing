@@ -172,7 +172,10 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
         }
     }
 
-    /** The number of partitions and how many of them are not active, e.g. "1204 (error: 2, booting: 5)". */
+    /**
+     * The number of partitions, how many of them are not active and how many messages wait in how many inboxes,
+     * e.g. "1204 (error: 2, booting: 5), inbox: 3500 in 120".
+     */
     private static function partitionSummary(SubscriptionStats $stats): string|null
     {
         $total = $stats->total();
@@ -191,11 +194,13 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
             $parts[] = sprintf('%s: %d', $status, $count);
         }
 
-        if ($parts === []) {
-            return (string)$total;
+        $summary = $parts === [] ? (string)$total : sprintf('%d (%s)', $total, implode(', ', $parts));
+
+        if ($stats->inbox === null || $stats->inbox->messages === 0) {
+            return $summary;
         }
 
-        return sprintf('%d (%s)', $total, implode(', ', $parts));
+        return sprintf('%s, inbox: %d in %d', $summary, $stats->inbox->messages, $stats->inbox->partitions);
     }
 
     /** @param list<Subscription> $subscriptions */

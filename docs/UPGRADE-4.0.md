@@ -531,8 +531,8 @@ Adjust the table names if you configured your own.
 
 A custom `SubscriptionStore` has to persist `partitionKey()` and `subscriberId()` and support the new
 `partitions` and `pendingPartitionsOnly` criteria. To support partitions, it also has to implement the
-`PartitionInboxStore` interface with `addToInbox()` and `inbox()`. The inbox of a partition only holds messages after its
-position: updating a partition clears its inbox up to its position, removing it removes its inbox.
+`PartitionInboxStore` interface with `addToInbox()`, `inbox()`, `inboxStats()` and `removeIdlePartitions()`.
+The inbox of a partition only holds messages after its position: updating a partition clears its inbox up to its position, removing it removes its inbox.
 A store without partitions support throws `PartitionsNotSupported` as soon as a partitioned subscriber is processed.
 
 The `ids` of `SubscriptionCriteria` now match the subscription

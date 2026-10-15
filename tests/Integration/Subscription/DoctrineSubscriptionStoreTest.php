@@ -17,6 +17,7 @@ use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Store\InboxStats;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionAlreadyExists;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
@@ -1281,6 +1282,36 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         self::assertSame(3, $stats->total());
         self::assertSame([], $store->stats(new SubscriptionCriteria(ids: ['unknown']))->status);
         self::assertSame(1, $store->stats(new SubscriptionCriteria(status: [Status::Paused]))->total());
+    }
+
+    public function testInboxStats(): void
+    {
+        $store = $this->createStore();
+
+        $main = new Subscription('profile', status: Status::Active, position: 10);
+        $broken = Subscription::partition($main, 'broken', 3);
+        $broken->error('database down');
+
+        $store->add(
+            $main,
+            Subscription::partition($main, 'a', 5),
+            Subscription::partition($main, 'b', 6),
+            $broken,
+            new Subscription('other', status: Status::Paused),
+        );
+        $store->addToInbox([
+            'profile#a' => [6, 7],
+            'profile#b' => [6, 8],
+            'profile#broken' => [9],
+        ]);
+
+        self::assertEquals(
+            new InboxStats(4, 3),
+            $store->inboxStats(new SubscriptionCriteria(ids: ['profile'], partitions: true)),
+            'messages up to the position of a partition are not counted',
+        );
+        self::assertEquals(new InboxStats(1, 1), $store->inboxStats(new SubscriptionCriteria(status: [Status::Error])));
+        self::assertEquals(new InboxStats(), $store->inboxStats(new SubscriptionCriteria(ids: ['other'])));
     }
 
     public function testClaimAll(): void

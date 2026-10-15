@@ -39,6 +39,7 @@ use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Store\InboxStats;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
@@ -120,10 +121,10 @@ final class PartitionedSubscriptionTest extends TestCase
         }
 
         self::assertSame(3, $projection->handled, 'only the partitions call the subscriber, every message once');
-        self::assertSame(
-            ['active' => 3],
-            $engine->stats(new SubscriptionEngineCriteria([self::MAIN], partitions: true))->status,
-        );
+        $stats = $engine->stats(new SubscriptionEngineCriteria([self::MAIN], partitions: true));
+
+        self::assertSame(['active' => 3], $stats->status);
+        self::assertEquals(new InboxStats(0, 0), $stats->inbox, 'nothing left in the inboxes');
 
         foreach ($this->partitions() as $partition) {
             self::assertSame([], $this->subscriptionStore->inbox([$partition->id() => -1], 10), 'processed messages leave the inbox');

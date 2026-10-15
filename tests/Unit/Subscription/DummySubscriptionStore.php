@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription;
 use Closure;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
+use Patchlevel\EventSourcing\Subscription\Store\InboxStats;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\PartitionInboxStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
@@ -125,6 +126,11 @@ final class DummySubscriptionStore implements PartitionInboxStore
     public function inbox(array $afterIndex, int $limit): array
     {
         return $this->parentStore->inbox($afterIndex, $limit);
+    }
+
+    public function inboxStats(SubscriptionCriteria $criteria): InboxStats
+    {
+        return $this->parentStore->inboxStats($criteria);
     }
 
     /**

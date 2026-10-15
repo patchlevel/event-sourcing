@@ -1894,7 +1894,19 @@ $stats = $subscriptionEngine->stats(new SubscriptionEngineCriteria(['profile_1']
 echo $stats->total();
 echo $stats->count(Status::Error);
 ```
+If the store supports partitions, `inbox` holds how many messages wait in the inboxes of the matching partitions
+and in how many partitions, otherwise it is `null`.
 
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$stats = $subscriptionEngine->stats(new SubscriptionEngineCriteria(['profile_1'], partitions: true));
+
+echo $stats->inbox?->messages;
+echo $stats->inbox?->partitions;
+```
 ## Learn more
 
 * [How to use CLI commands](cli.md)

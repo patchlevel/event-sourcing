@@ -7,6 +7,7 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Store;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
 use Patchlevel\EventSourcing\Subscription\Status;
+use Patchlevel\EventSourcing\Subscription\Store\InboxStats;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionAlreadyExists;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
@@ -117,6 +118,34 @@ final class InMemorySubscriptionStoreTest extends TestCase
         self::assertSame(1, $stats->count(Status::Error));
         self::assertSame(0, $stats->count(Status::Failed));
         self::assertSame(['active' => 2, 'error' => 1, 'paused' => 1], $store->stats(new SubscriptionCriteria())->status);
+    }
+
+    public function testInboxStats(): void
+    {
+        $main = new Subscription('profile', status: Status::Active, position: 10);
+        $broken = Subscription::partition($main, 'broken', 3);
+        $broken->error('database down');
+
+        $store = new InMemorySubscriptionStore([
+            $main,
+            Subscription::partition($main, 'a', 5),
+            Subscription::partition($main, 'b', 6),
+            $broken,
+            new Subscription('other', status: Status::Paused),
+        ]);
+        $store->addToInbox([
+            'profile#a' => [6, 7],
+            'profile#b' => [6, 8],
+            'profile#broken' => [9],
+        ]);
+
+        self::assertEquals(
+            new InboxStats(4, 3),
+            $store->inboxStats(new SubscriptionCriteria(ids: ['profile'], partitions: true)),
+            'messages up to the position of a partition are not counted',
+        );
+        self::assertEquals(new InboxStats(1, 1), $store->inboxStats(new SubscriptionCriteria(status: [Status::Error])));
+        self::assertEquals(new InboxStats(), $store->inboxStats(new SubscriptionCriteria(ids: ['other'])));
     }
 
     public function testFind(): void

@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Console\Command\SubscriptionStatusCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
+use Patchlevel\EventSourcing\Subscription\Store\InboxStats;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
@@ -77,12 +78,14 @@ final class SubscriptionStatusCommandTest extends TestCase
             new Subscription('plain', status: Status::Active, position: 3),
         ]);
 
+        $engine->inbox = new InboxStats(7, 2);
+
         $commandTester = new CommandTester(new SubscriptionStatusCommand($engine));
         $commandTester->execute([]);
 
         $display = $commandTester->getDisplay();
 
-        self::assertStringContainsString('3 (error: 1)', $display);
+        self::assertStringContainsString('3 (error: 1), inbox: 7 in 2', $display);
         self::assertStringNotContainsString('└', $display, 'the partitions are only listed with --partitions');
         self::assertEquals(
             [new SubscriptionEngineCriteria(partitions: false)],
