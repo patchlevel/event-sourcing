@@ -170,6 +170,11 @@ final class SubscriptionManager
                             throw $e;
                         } catch (Throwable $e) {
                             foreach ($subscriptions as $subscription) {
+                                // its own error is kept, otherwise it would never be retried
+                                if ($subscription->isError() || $subscription->isFailed()) {
+                                    continue;
+                                }
+
                                 $this->logger?->error(sprintf(
                                     'Subscription Engine: Subscription "%s" failed: %s',
                                     $subscription->id(),

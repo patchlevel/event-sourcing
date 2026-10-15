@@ -14,6 +14,9 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\NameChanged;
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Events\ProfileCreated;
+use RuntimeException;
+
+use function in_array;
 
 /** Collects the names of a batch and only stores them on flush. */
 #[Projector(self::SUBSCRIBER_ID)]
@@ -26,6 +29,9 @@ final class PartitionedBatchProfileProjection
     public array $flushed = [];
 
     public int $flushCount = 0;
+
+    /** @var list<string> names that let the flush fail */
+    public array $failingNames = [];
 
     /** @param ArrayObject<int, array{string, string}> $state */
     #[Subscribe(ProfileCreated::class)]
@@ -55,6 +61,12 @@ final class PartitionedBatchProfileProjection
     public function flush(ArrayObject $state): void
     {
         $this->flushCount++;
+
+        foreach ($state as [, $name]) {
+            if (in_array($name, $this->failingNames, true)) {
+                throw new RuntimeException('Forced flush failure for ' . $name);
+            }
+        }
 
         foreach ($state as [$profileId, $name]) {
             $this->flushed[$profileId][] = $name;

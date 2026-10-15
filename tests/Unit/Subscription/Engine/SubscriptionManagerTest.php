@@ -232,6 +232,32 @@ final class SubscriptionManagerTest extends TestCase
         self::assertSame(Status::Error, $store->get('b')->status());
     }
 
+    public function testForEachClaimedGroupKeepsTheErrorOfAMemberThatAlreadyFailed(): void
+    {
+        $store = new InMemorySubscriptionStore([
+            new Subscription('a', status: Status::Active),
+            new Subscription('b', status: Status::Active),
+        ]);
+
+        $manager = new SubscriptionManager($store);
+
+        $manager->forEachClaimedGroup(
+            new SubscriptionCriteria(),
+            new ClaimGroups(subscriptions: 2),
+            static function (array $subscriptions): never {
+                // the first one failed on its own before the whole group failed
+                $subscriptions[0]->error('handler failed');
+
+                throw new RuntimeException('boom');
+            },
+        );
+
+        $a = $store->get('a');
+        self::assertSame('handler failed', $a->subscriptionError()?->errorMessage);
+        self::assertSame(Status::Active, $a->subscriptionError()->previousStatus, 'it is still retried');
+        self::assertSame('boom', $store->get('b')->subscriptionError()?->errorMessage);
+    }
+
     public function testForEachClaimedGroupOnlyGroupsSubscriptionsWithClosePositions(): void
     {
         $store = new InMemorySubscriptionStore([

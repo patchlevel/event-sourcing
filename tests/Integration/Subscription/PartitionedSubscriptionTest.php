@@ -636,6 +636,44 @@ final class PartitionedSubscriptionTest extends TestCase
         }
     }
 
+    /** A failing flush only stops its own partition, not the others claimed in the same group. */
+    public function testFailingBatchFlushOnlyStopsItsPartition(): void
+    {
+        $projection = new PartitionedBatchProfileProjection();
+        $projection->failingNames = ['broken'];
+        $engine = $this->engine($projection);
+        $subscriberId = PartitionedBatchProfileProjection::SUBSCRIBER_ID;
+
+        $engine->execute(new Setup(skipBooting: true));
+
+        $ids = $this->createProfiles(7, ['name-0', 'name-1', 'name-2', 'broken', 'name-4', 'name-5', 'name-6']);
+
+        // the second message of every partition flushes its batch
+        foreach ($ids as $id) {
+            $this->changeName(ProfileId::fromString($id), 'changed-' . $id);
+        }
+
+        $this->runUntilFinished($engine);
+
+        self::assertSame(Status::Active, $this->subscriptionStore->get($subscriberId)->status(), 'no systemic failure');
+
+        foreach ($ids as $i => $id) {
+            $partition = $this->subscriptionStore->get(Subscription::partitionId($subscriberId, 'profile-' . $id));
+
+            if ($i === 3) {
+                self::assertSame(Status::Error, $partition->status());
+                self::assertSame('Forced flush failure for broken', $partition->subscriptionError()?->errorMessage);
+                self::assertSame(Status::Active, $partition->subscriptionError()->previousStatus, 'it is retried');
+                self::assertArrayNotHasKey($id, $projection->flushed);
+
+                continue;
+            }
+
+            self::assertSame(Status::Active, $partition->status(), $partition->id());
+            self::assertSame(['name-' . $i, 'changed-' . $id], $projection->flushed[$id]);
+        }
+    }
+
     /** @param 'index'|'plain'|'unsupported' $messageLoader */
     private function engine(object $subscriber, string $messageLoader = 'index', bool $inboxStore = true): SubscriptionEngine
     {

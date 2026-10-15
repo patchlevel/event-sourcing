@@ -86,9 +86,7 @@ final class MessageProcessor
                 ),
             );
 
-            $this->success($index, $message, $subscription);
-
-            return null;
+            return $this->success($index, $message, $subscription, $subscriber);
         }
 
         if (!$subscription->isPartition() && $subscriber->metadata()->partition !== null) {
@@ -102,9 +100,7 @@ final class MessageProcessor
                 return $this->error($index, $message, $subscription, $subscriber, $e);
             }
 
-            $this->success($index, $message, $subscription);
-
-            return null;
+            return $this->success($index, $message, $subscription, $subscriber);
         }
 
         try {
@@ -142,7 +138,11 @@ final class MessageProcessor
             return $this->error($index, $message, $subscription, $subscriber, $e);
         }
 
-        $this->success($index, $message, $subscription);
+        $error = $this->success($index, $message, $subscription, $subscriber);
+
+        if ($error !== null) {
+            return $error;
+        }
 
         $this->logger?->debug(
             sprintf(
@@ -156,16 +156,33 @@ final class MessageProcessor
         return null;
     }
 
-    private function success(int $index, Message $message, Subscription $subscription): void
-    {
+    /**
+     * A listener can fail as well, e.g. a batch that is flushed after this message. That is a failure of this
+     * subscription, not of the others processed together with it.
+     *
+     * @param MetadataSubscriberAccessor<object> $subscriber
+     */
+    private function success(
+        int $index,
+        Message $message,
+        Subscription $subscription,
+        MetadataSubscriberAccessor $subscriber,
+    ): Error|null {
         $event = new OnHandleMessageSuccess($subscription, $message, $index);
-        $this->eventDispatcher->dispatch($event);
+
+        try {
+            $this->eventDispatcher->dispatch($event);
+        } catch (Throwable $e) {
+            return $this->error($index, $message, $subscription, $subscriber, $e);
+        }
 
         if (!$event->shouldChangePosition) {
-            return;
+            return null;
         }
 
         $subscription->changePosition($index);
+
+        return null;
     }
 
     /** @param MetadataSubscriberAccessor<object> $subscriber */
