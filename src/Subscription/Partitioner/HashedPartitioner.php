@@ -9,7 +9,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use function hash;
 
 /**
- * Hashes the key of another partitioner, e.g. `new HashedPartitioner(new TagPartitioner('email:'))`.
+ * Hashes the key of another partitioner, e.g. `new HashedPartitioner(new TagPartitioner('email'))`.
  * The key always has the same short length, and keys that only differ in case or contain any characters are fine.
  */
 final class HashedPartitioner implements Partitioner

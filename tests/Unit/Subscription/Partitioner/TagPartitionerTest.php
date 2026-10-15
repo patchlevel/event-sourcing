@@ -19,7 +19,7 @@ final class TagPartitionerTest extends TestCase
 {
     public function testTagWithThePrefix(): void
     {
-        $partitioner = new TagPartitioner('course:');
+        $partitioner = new TagPartitioner('course');
 
         self::assertSame('course:42', $partitioner($this->message(['student:1', 'course:42'])));
     }
@@ -28,14 +28,21 @@ final class TagPartitionerTest extends TestCase
     {
         $this->expectException(TagNotUnique::class);
 
-        (new TagPartitioner('course:'))($this->message(['student:1']));
+        (new TagPartitioner('course'))($this->message(['student:1']));
+    }
+
+    public function testTagWithALongerName(): void
+    {
+        $this->expectException(TagNotUnique::class);
+
+        (new TagPartitioner('course'))($this->message(['courseware:7']));
     }
 
     public function testNoTags(): void
     {
         $this->expectException(TagNotUnique::class);
 
-        (new TagPartitioner('course:'))(Message::create(new ProfileVisited(ProfileId::fromString('1'))));
+        (new TagPartitioner('course'))(Message::create(new ProfileVisited(ProfileId::fromString('1'))));
     }
 
     public function testSeveralTagsWithThePrefix(): void
@@ -43,7 +50,7 @@ final class TagPartitionerTest extends TestCase
         $this->expectException(TagNotUnique::class);
         $this->expectExceptionMessage('course:1, course:2');
 
-        (new TagPartitioner('course:'))($this->message(['course:1', 'course:2']));
+        (new TagPartitioner('course'))($this->message(['course:1', 'course:2']));
     }
 
     /** @param list<string> $tags */
