@@ -386,9 +386,20 @@ final class DoctrineSubscriptionStore implements PartitionInboxStore, DoctrineSc
     /** The inbox of a removed partition is removed as well. */
     public function remove(Subscription ...$subscriptions): void
     {
-        foreach ($subscriptions as $subscription) {
-            $this->connection->delete($this->tableName, ['id' => $subscription->id()]);
-            $this->connection->delete($this->inboxTableName, ['subscription_id' => $subscription->id()]);
+        $ids = array_map(static fn (Subscription $subscription): string => $subscription->id(), array_values($subscriptions));
+
+        // removing a subscriber removes all its partitions, one statement per chunk instead of per partition
+        foreach (array_chunk($ids, self::INBOX_CHUNK) as $chunk) {
+            $this->connection->executeStatement(
+                sprintf('DELETE FROM %s WHERE id IN (?)', $this->tableName),
+                [$chunk],
+                [ArrayParameterType::STRING],
+            );
+            $this->connection->executeStatement(
+                sprintf('DELETE FROM %s WHERE subscription_id IN (?)', $this->inboxTableName),
+                [$chunk],
+                [ArrayParameterType::STRING],
+            );
         }
     }
 

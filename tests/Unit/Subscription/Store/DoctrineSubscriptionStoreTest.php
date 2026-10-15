@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Store;
 
 use DateTimeImmutable;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDO\Exception;
 use Doctrine\DBAL\Exception\DeadlockException;
@@ -494,19 +495,21 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $connection = $this->createMock(Connection::class);
         $connection
             ->expects($this->exactly(2))
-            ->method('delete')
-            ->willReturnCallback(static function (string $table, array $criteria): int {
-                self::assertContains([$table, $criteria], [
-                    ['subscriptions', ['id' => 'foo']],
-                    ['subscriptions_inbox', ['subscription_id' => 'foo']],
+            ->method('executeStatement')
+            ->willReturnCallback(static function (string $sql, array $parameters, array $types): int {
+                self::assertContains($sql, [
+                    'DELETE FROM subscriptions WHERE id IN (?)',
+                    'DELETE FROM subscriptions_inbox WHERE subscription_id IN (?)',
                 ]);
+                self::assertSame([['foo', 'bar']], $parameters);
+                self::assertSame([ArrayParameterType::STRING], $types);
 
-                return 1;
+                return 2;
             });
 
         $store = new DoctrineSubscriptionStore($connection);
 
-        $store->remove(new Subscription('foo'));
+        $store->remove(new Subscription('foo'), new Subscription('bar'));
     }
 
     public function testInLock(): void
