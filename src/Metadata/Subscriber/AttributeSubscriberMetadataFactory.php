@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Attribute\Cleanup;
 use Patchlevel\EventSourcing\Attribute\DisableEventEmitting;
 use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
+use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\RetryStrategy;
 use Patchlevel\EventSourcing\Attribute\Setup;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -232,6 +233,18 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             );
         }
 
+        $partitionAttributes = $reflector->getAttributes(Partition::class);
+        $partitionMetadata = null;
+
+        if ($partitionAttributes !== []) {
+            $partition = $partitionAttributes[0]->newInstance();
+            $partitionMetadata = new PartitionMetadata(
+                $partition->partitioner,
+                $partition->maxConsecutiveFailures,
+                $partition->removeIdleAfter,
+            );
+        }
+
         $metadata = new SubscriberMetadata(
             $subscriberInfo->id,
             $subscriberInfo->group,
@@ -245,6 +258,7 @@ final class AttributeSubscriberMetadataFactory implements SubscriberMetadataFact
             $reflector->getAttributes(EnableEventEmittingDuringBoot::class) !== [],
             $reflector->getAttributes(DisableEventEmitting::class) !== [],
             $batch,
+            $partitionMetadata,
         );
 
         $this->subscriberMetadata[$subscriber] = $metadata;

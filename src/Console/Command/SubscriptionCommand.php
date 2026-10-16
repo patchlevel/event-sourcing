@@ -50,7 +50,10 @@ abstract class SubscriptionCommand extends Command
     protected function resolveCriteriaIntoCriteriaWithOnlyIds(
         SubscriptionEngineCriteria $criteria,
     ): SubscriptionEngineCriteria {
-        $subscriptions = $this->engine->subscriptions($criteria);
+        // a subscriber id includes all its partitions, so only the main subscriptions are needed
+        $subscriptions = $this->engine->subscriptions(
+            new SubscriptionEngineCriteria($criteria->ids, $criteria->groups, partitions: false),
+        );
 
         return new SubscriptionEngineCriteria(
             array_map(

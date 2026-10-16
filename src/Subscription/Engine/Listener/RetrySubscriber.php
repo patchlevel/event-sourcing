@@ -57,17 +57,8 @@ final class RetrySubscriber implements EventSubscriberInterface
                 status: [Status::Error],
             ),
             function (Subscription $subscription) use ($status): void {
-                $error = $subscription->subscriptionError();
-
-                if ($error === null) {
-                    return;
-                }
-
-                if ($error->previousStatus !== $status) {
-                    return;
-                }
-
-                if (!$this->retryStrategy($subscription)->shouldRetry($subscription)) {
+                // checked again, another worker may have retried it since the snapshot
+                if (!$this->isDue($subscription, $status)) {
                     return;
                 }
 
@@ -83,7 +74,20 @@ final class RetrySubscriber implements EventSubscriberInterface
                     ),
                 );
             },
+            // only subscriptions whose retry is due are claimed, with many errored partitions most of them wait
+            filter: fn (Subscription $subscription): bool => $this->isDue($subscription, $status),
         );
+    }
+
+    private function isDue(Subscription $subscription, Status $status): bool
+    {
+        $error = $subscription->subscriptionError();
+
+        if ($error === null || $error->previousStatus !== $status) {
+            return false;
+        }
+
+        return $this->retryStrategy($subscription)->shouldRetry($subscription);
     }
 
     public function onHandleMessageError(OnHandleMessageError $event): void
@@ -102,6 +106,12 @@ final class RetrySubscriber implements EventSubscriberInterface
 
     public function onSuccessHandleMessage(OnHandleMessageSuccess $event): void
     {
+        // the main subscription of a partitioned subscriber only routes, that works even if the partitions fail.
+        // its retries are reset by the circuit breaker once its partitions succeed again.
+        if (!$event->subscription->isPartition() && $this->subscriberRepository->get($event->subscription->subscriberId())?->metadata()->partition !== null) {
+            return;
+        }
+
         $event->subscription->resetRetry();
     }
 

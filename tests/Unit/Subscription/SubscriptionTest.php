@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription;
 
 use DateTimeImmutable;
+use Patchlevel\EventSourcing\Subscription\InvalidPartitionId;
 use Patchlevel\EventSourcing\Subscription\NoErrorToRetry;
+use Patchlevel\EventSourcing\Subscription\PartitionOfPartitionNotPossible;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Patchlevel\EventSourcing\Subscription\ThrowableToErrorContextTransformer;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use stdClass;
@@ -263,5 +266,71 @@ final class SubscriptionTest extends TestCase
 
         self::assertSame([$task], $subscription->cleanupTasks());
         self::assertTrue($subscription->hasCleanupTasks());
+    }
+
+    public function testPartition(): void
+    {
+        $main = new Subscription('profile', 'projector', RunMode::Once, Status::Booting, 10);
+
+        $partition = Subscription::partition($main, 'tenant-a', 4);
+
+        self::assertSame('profile#tenant-a', $partition->id());
+        self::assertSame('profile', $partition->subscriberId());
+        self::assertSame('tenant-a', $partition->partitionKey());
+        self::assertTrue($partition->isPartition());
+        self::assertSame('projector', $partition->group());
+        self::assertSame(RunMode::Once, $partition->runMode());
+        self::assertSame(Status::Booting, $partition->status());
+        self::assertSame(4, $partition->position());
+
+        self::assertFalse($main->isPartition());
+        self::assertSame('profile', $main->subscriberId());
+        self::assertNull($main->partitionKey());
+    }
+
+    /** @return iterable<string, array{Status, Status|null, Status}> main status, status before the error, partition status */
+    public static function partitionStatus(): iterable
+    {
+        yield 'active' => [Status::Active, null, Status::Active];
+        yield 'booting' => [Status::Booting, null, Status::Booting];
+        yield 'error while active' => [Status::Error, Status::Active, Status::Active];
+        yield 'error while booting' => [Status::Error, Status::Booting, Status::Booting];
+        yield 'failed while active' => [Status::Failed, Status::Active, Status::Active];
+    }
+
+    /** The failure of the main subscription is not the one of a partition it creates. */
+    #[DataProvider('partitionStatus')]
+    public function testPartitionStatus(Status $mainStatus, Status|null $previousStatus, Status $expected): void
+    {
+        $main = new Subscription(
+            'profile',
+            status: $mainStatus,
+            position: 10,
+            error: $previousStatus !== null ? new SubscriptionError('routing failed', $previousStatus) : null,
+        );
+
+        self::assertSame($expected, Subscription::partition($main, 'tenant-a', 4)->status());
+    }
+
+    public function testPartitionKeyMayContainTheSeparator(): void
+    {
+        $partition = Subscription::partition(new Subscription('profile'), 'a#b', 0);
+
+        self::assertSame('profile#a#b', $partition->id());
+        self::assertSame('profile', $partition->subscriberId());
+    }
+
+    public function testPartitionOfPartition(): void
+    {
+        $this->expectException(PartitionOfPartitionNotPossible::class);
+
+        Subscription::partition(Subscription::partition(new Subscription('profile'), 'a', 0), 'b', 0);
+    }
+
+    public function testInvalidPartitionId(): void
+    {
+        $this->expectException(InvalidPartitionId::class);
+
+        new Subscription('profile#a', partitionKey: 'b');
     }
 }

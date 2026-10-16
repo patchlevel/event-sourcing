@@ -14,6 +14,7 @@ use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot as BootCommand;
+use Patchlevel\EventSourcing\Subscription\Engine\FailedMessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\BootHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
@@ -60,7 +61,7 @@ final class BootHandlerTest extends TestCase
         $eventDispatcher = new EventDispatcher();
 
         $eventDispatcher->addSubscriber(new RetrySubscriber($subscriptionManager, $subscriberRepository, $retryStrategyRepository, new NullLogger()));
-        $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
+        $eventDispatcher->addSubscriber(new FailSubscriber(new FailedMessageProcessor($subscriptionManager, $subscriberRepository, new NullLogger())));
 
         $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [], new NullLogger());
 

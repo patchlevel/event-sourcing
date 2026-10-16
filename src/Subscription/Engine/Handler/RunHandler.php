@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Subscription\Engine\Handler;
 
+use Patchlevel\EventSourcing\Subscription\Engine\ClaimGroups;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
@@ -14,6 +15,8 @@ use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Throwable;
+
+use function array_map;
 
 /**
  * @internal
@@ -30,24 +33,110 @@ final class RunHandler implements Handler
 
     public function __invoke(Command $command): ProcessedResult
     {
-        /** @var list<ProcessedResult> $results */
-        $results = $this->subscriptionManager->forEachClaimed(
+        $claimGroups = new ClaimGroups(
+            $command->subscriptionsPerClaim,
+            $command->partitionsPerClaim,
+            // the group reads the stream from its lowest position, a larger gap would use up the limit of the others
+            $command->limit ?? ClaimGroups::DEFAULT_POSITION_WINDOW,
+        );
+
+        // only a store with an inbox has partitions, every other store does not need to know the filters
+        if (!$this->subscriptionManager->supportsPartitions()) {
+            return ProcessedResult::merge($this->process(
+                new SubscriptionCriteria(ids: $command->ids, groups: $command->groups, status: [Status::Active]),
+                $claimGroups,
+                $command,
+            ));
+        }
+
+        $results = $this->process(
             new SubscriptionCriteria(
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Active],
+                partitions: false,
             ),
-            fn (Subscription $subscription): ProcessedResult => $this->runner->process(
-                [$subscription],
+            $claimGroups,
+            $command,
+        );
+
+        // the partitions are found after the main subscriptions routed, so they process the new messages right away
+        $results = [
+            ...$results,
+            ...$this->process(
+                new SubscriptionCriteria(
+                    ids: $command->ids,
+                    groups: $command->groups,
+                    status: [Status::Active],
+                    partitions: true,
+                    pendingPartitionsOnly: true,
+                ),
+                $claimGroups,
+                $command,
+            ),
+        ];
+
+        return ProcessedResult::merge([...$results, ...$this->finishPartitions($command, $claimGroups)]);
+    }
+
+    /**
+     * A partition of a subscriber with run mode once can process its inbox before its main subscription finished.
+     * Once the main subscription finished, its partitions that are still active are processed one last time, so that
+     * they finish as well, even if their inbox is already empty.
+     *
+     * @return list<ProcessedResult>
+     */
+    private function finishPartitions(Run $command, ClaimGroups $claimGroups): array
+    {
+        $subscriberIds = [];
+
+        $mains = $this->subscriptionManager->find(new SubscriptionCriteria(
+            ids: $command->ids,
+            groups: $command->groups,
+            status: [Status::Finished],
+            partitions: false,
+        ));
+
+        foreach ($mains as $main) {
+            $subscriberIds[] = $main->id();
+        }
+
+        if ($subscriberIds === []) {
+            return [];
+        }
+
+        $criteria = new SubscriptionCriteria(ids: $subscriberIds, status: [Status::Active], partitions: true);
+
+        // counted on every run, usually all partitions of a finished subscriber are finished as well
+        if ($this->subscriptionManager->stats($criteria)->total() === 0) {
+            return [];
+        }
+
+        // a partition held by another worker is not claimed, every run checks again
+        return $this->process($criteria, $claimGroups, $command);
+    }
+
+    /** @return list<ProcessedResult> */
+    private function process(SubscriptionCriteria $criteria, ClaimGroups $claimGroups, Run $command): array
+    {
+        /** @var list<ProcessedResult> $results */
+        $results = $this->subscriptionManager->forEachClaimedGroup(
+            $criteria,
+            $claimGroups,
+            fn (array $subscriptions): ProcessedResult => $this->runner->process(
+                $subscriptions,
                 $command->limit,
             ),
-            static fn (Subscription $subscription, Throwable $e): ProcessedResult => new ProcessedResult(
+            static fn (array $subscriptions, Throwable $e): ProcessedResult => new ProcessedResult(
                 0,
                 false,
-                [new Error($subscription->id(), $e->getMessage(), $e)],
+                array_map(
+                    static fn (Subscription $subscription): Error => new Error($subscription->id(), $e->getMessage(), $e),
+                    $subscriptions,
+                ),
             ),
         );
 
-        return ProcessedResult::merge($results);
+        return $results;
     }
 }

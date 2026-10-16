@@ -44,6 +44,7 @@ final class TeardownHandler implements Handler
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::Detached],
+                partitions: false,
             ),
             function (Subscription $subscription): Result {
                 if ($subscription->hasCleanupTasks()) {
@@ -123,6 +124,7 @@ final class TeardownHandler implements Handler
             static fn (Subscription $subscription, Throwable $e): Result => new Result(
                 [new Error($subscription->id(), $e->getMessage(), $e)],
             ),
+            wait: true,
         );
 
         return Result::merge($results);

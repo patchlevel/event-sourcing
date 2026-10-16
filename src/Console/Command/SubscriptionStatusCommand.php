@@ -7,15 +7,18 @@ namespace Patchlevel\EventSourcing\Console\Command;
 use Patchlevel\EventSourcing\Console\InputHelper;
 use Patchlevel\EventSourcing\Console\OutputStyle;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use function array_map;
+use function implode;
 use function is_array;
 use function sprintf;
 
@@ -30,11 +33,18 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
     {
         parent::configure();
 
-        $this->addArgument(
-            'id',
-            InputArgument::OPTIONAL,
-            'The subscription to display more information about',
-        );
+        $this
+            ->addArgument(
+                'id',
+                InputArgument::OPTIONAL,
+                'The subscription to display more information about, a partition has the id "{subscriber id}#{partition key}"',
+            )
+            ->addOption(
+                'partitions',
+                null,
+                InputOption::VALUE_NONE,
+                'list the partitions of partitioned subscribers',
+            );
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -44,7 +54,58 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
         $id = InputHelper::nullableString($input->getArgument('id'));
 
         if ($id === null) {
-            $subscriptions = $this->engine->subscriptions($this->subscriptionEngineCriteria($input));
+            $criteria = $this->subscriptionEngineCriteria($input);
+            $showPartitions = InputHelper::bool($input->getOption('partitions'));
+
+            $subscriptions = $this->engine->subscriptions(
+                new SubscriptionEngineCriteria($criteria->ids, $criteria->groups, partitions: false),
+            );
+
+            // a subscriber can have many partitions, they are only loaded to list them
+            $partitionList = $showPartitions && $subscriptions !== []
+                ? $this->engine->subscriptions(
+                    new SubscriptionEngineCriteria($criteria->ids, $criteria->groups, partitions: true),
+                )
+                : [];
+
+            /** @var array<string, list<Subscription>> $partitions */
+            $partitions = [];
+
+            foreach ($partitionList as $partition) {
+                $partitions[$partition->subscriberId()][] = $partition;
+            }
+
+            $rows = [];
+
+            foreach ($subscriptions as $subscription) {
+                $rows[] = [
+                    $subscription->id(),
+                    $subscription->group(),
+                    $subscription->runMode()->value,
+                    $subscription->position(),
+                    $subscription->status()->value,
+                    self::partitionSummary($this->engine->stats(
+                        new SubscriptionEngineCriteria([$subscription->id()], partitions: true),
+                    )),
+                    $subscription->subscriptionError()?->errorMessage,
+                ];
+
+                if (!$showPartitions) {
+                    continue;
+                }
+
+                foreach ($partitions[$subscription->id()] ?? [] as $partition) {
+                    $rows[] = [
+                        '  └ ' . $partition->partitionKey(),
+                        $partition->group(),
+                        $partition->runMode()->value,
+                        $partition->position(),
+                        $partition->status()->value,
+                        null,
+                        $partition->subscriptionError()?->errorMessage,
+                    ];
+                }
+            }
 
             $io->table(
                 [
@@ -53,26 +114,19 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
                     'run mode',
                     'position',
                     'status',
+                    'partitions',
                     'error message',
                 ],
-                array_map(
-                    static fn (Subscription $subscription) => [
-                        $subscription->id(),
-                        $subscription->group(),
-                        $subscription->runMode()->value,
-                        $subscription->position(),
-                        $subscription->status()->value,
-                        $subscription->subscriptionError()?->errorMessage,
-                    ],
-                    $subscriptions,
-                ),
+                $rows,
             );
 
             return 0;
         }
 
+        // the id of a subscriber also matches all its partitions, so the main subscription is looked up on its own
         $subscription = $this->findSubscription(
-            $this->engine->subscriptions(new SubscriptionEngineCriteria([$id])),
+            $this->engine->subscriptions(new SubscriptionEngineCriteria([$id], partitions: false))
+                ?: $this->engine->subscriptions(new SubscriptionEngineCriteria([$id], partitions: true)),
             $id,
         );
 
@@ -116,6 +170,37 @@ final class SubscriptionStatusCommand extends SubscriptionCommand
         foreach ($context['trace'] as $trace) {
             $io->writeln(sprintf('%s: %s', $trace['file'] ?? '#unknown', $trace['line'] ?? '#unknown'));
         }
+    }
+
+    /**
+     * The number of partitions, how many of them are not active and how many messages wait in how many inboxes,
+     * e.g. "1204 (error: 2, booting: 5), inbox: 3500 in 120".
+     */
+    private static function partitionSummary(SubscriptionStats $stats): string|null
+    {
+        $total = $stats->total();
+
+        if ($total === 0) {
+            return null;
+        }
+
+        $parts = [];
+
+        foreach ($stats->status as $status => $count) {
+            if ($status === Status::Active->value) {
+                continue;
+            }
+
+            $parts[] = sprintf('%s: %d', $status, $count);
+        }
+
+        $summary = $parts === [] ? (string)$total : sprintf('%d (%s)', $total, implode(', ', $parts));
+
+        if ($stats->inbox === null || $stats->inbox->messages === 0) {
+            return $summary;
+        }
+
+        return sprintf('%s, inbox: %d in %d', $summary, $stats->inbox->messages, $stats->inbox->partitions);
     }
 
     /** @param list<Subscription> $subscriptions */

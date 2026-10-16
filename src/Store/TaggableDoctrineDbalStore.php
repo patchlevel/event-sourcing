@@ -38,6 +38,7 @@ use Patchlevel\EventSourcing\Store\Criteria\EventIdCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\IndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\TagCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
@@ -247,6 +248,10 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
                 case ToIndexCriterion::class:
                     $builder->andWhere('id < :to_index');
                     $builder->setParameter('to_index', $criterion->toIndex, Types::INTEGER);
+                    break;
+                case IndexCriterion::class:
+                    $builder->andWhere('id IN (:indices)');
+                    $builder->setParameter('indices', $criterion->indices, ArrayParameterType::INTEGER);
                     break;
                 case EventsCriterion::class:
                     $builder->andWhere('event_name IN (:events)');

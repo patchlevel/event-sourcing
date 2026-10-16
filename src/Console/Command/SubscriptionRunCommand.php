@@ -53,6 +53,20 @@ final class SubscriptionRunCommand extends SubscriptionCommand
                 100,
             )
             ->addOption(
+                'subscriptions-per-claim',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'How many subscriptions are claimed and processed together, fewer spread better over several workers',
+                1,
+            )
+            ->addOption(
+                'partitions-per-claim',
+                null,
+                InputOption::VALUE_REQUIRED,
+                'How many partitions are claimed and processed together',
+                100,
+            )
+            ->addOption(
                 'memory-limit',
                 null,
                 InputOption::VALUE_REQUIRED,
@@ -95,6 +109,8 @@ final class SubscriptionRunCommand extends SubscriptionCommand
     {
         $runLimit = InputHelper::nullablePositiveInt($input->getOption('run-limit'));
         $messageLimit = InputHelper::nullablePositiveInt($input->getOption('message-limit'));
+        $subscriptionsPerClaim = InputHelper::positiveInt($input->getOption('subscriptions-per-claim'));
+        $partitionsPerClaim = InputHelper::positiveInt($input->getOption('partitions-per-claim'));
         $memoryLimit = InputHelper::nullableString($input->getOption('memory-limit'));
         $timeLimit = InputHelper::nullablePositiveInt($input->getOption('time-limit'));
         $sleep = InputHelper::positiveIntOrZero($input->getOption('sleep'));
@@ -108,8 +124,14 @@ final class SubscriptionRunCommand extends SubscriptionCommand
         $logger = new ConsoleLogger($output);
 
         $worker = DefaultWorker::create(
-            function () use ($criteria, $messageLimit, $sleep): bool {
-                $result = $this->engine->execute(new Run($criteria->ids, $criteria->groups, $messageLimit));
+            function () use ($criteria, $messageLimit, $sleep, $subscriptionsPerClaim, $partitionsPerClaim): bool {
+                $result = $this->engine->execute(new Run(
+                    $criteria->ids,
+                    $criteria->groups,
+                    $messageLimit,
+                    $subscriptionsPerClaim,
+                    $partitionsPerClaim,
+                ));
 
                 if ($result instanceof ProcessedResult && !$result->finished) {
                     return true;

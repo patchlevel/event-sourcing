@@ -313,6 +313,29 @@ final class DoStuffSubscriber
     }
 }
 ```
+##### Partition Key Resolver
+
+The partition key resolver resolves the key of the [partition](#partitioning) that processes the message.
+It looks for a parameter with the `#[PartitionKey]` attribute, without partitions the value is `null`.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\PartitionKey;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+
+#[Projector('profile_1')]
+#[Partition(new TenantPartitioner())]
+final class ProfileProjector
+{
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(ProfileCreated $event, #[PartitionKey]
+    string $tenant,): void
+    {
+        // write into the database of the tenant
+    }
+}
+```
 ##### Event Emitter Resolver
 
 A subscriber can not only build a projection or trigger a side effect, it can also emit new events
@@ -321,6 +344,7 @@ projection that, after it has been updated, wants a notification subscription to
 
 If you type-hint an `EventEmitter` argument in a subscribe method, it is injected automatically.
 By default the emitted events are written into a dedicated stream named `subscription_<subscription-id>`.
+The [partitions](#partitioning) of a subscriber share the stream of their subscriber.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Subscribe;
@@ -846,6 +870,183 @@ In case of an error, the position remains at the state before the batch started.
 :::tip
 Use `#[BatchFlush(afterMessages: ...)]` or a `#[BatchShouldFlush]` method to prevent memory leaks.
 This allows you to decide when it's suitable to process the data and then release the memory.
+:::
+
+### Partitioning
+
+A subscriber is normally a single subscription: one worker processes it at a time, and an error stops it completely.
+With `#[Partition]` the subscriber is split into one subscription per partition key.
+The partitions are processed independently, so several workers can process them in parallel,
+and an error only stops the partition it happened in.
+
+The `#[Partition]` attribute on the subscriber class takes a partitioner, which returns the partition key of a message.
+Choose a key from your domain that groups everything that has to be processed in order, like the tenant or the aggregate.
+The `StreamPartitioner` creates one partition per stream, e.g. per aggregate.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Attribute\Subscribe;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
+
+#[Projector('profile_1')]
+#[Partition(new StreamPartitioner())]
+final class ProfileProjector
+{
+    #[Subscribe(ProfileCreated::class)]
+    public function onProfileCreated(ProfileCreated $event): void
+    {
+        // ...
+    }
+}
+```
+#### Built-in partitioners
+
+* `StreamPartitioner`: one partition per stream, e.g. per aggregate.
+* `TagPartitioner`: the tag with a prefix is the key, e.g. `new TagPartitioner('course')` for the `course:{id}` tags
+  of `#[EventTag(prefix: 'course')]`. A message needs exactly one tag with the prefix.
+* `BucketPartitioner`: spreads the keys of another partitioner over a fixed number of partitions,
+  e.g. `new BucketPartitioner(new StreamPartitioner(), 16)`. Everything with the same key stays in the same bucket.
+* `HashedPartitioner`: hashes the key of another partitioner, so it is always short and any characters are fine.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Subscription\Partitioner\BucketPartitioner;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
+
+#[Projector('profile_1')]
+#[Partition(new BucketPartitioner(new StreamPartitioner(), 16))]
+final class ProfileProjector
+{
+    // ...
+}
+```
+:::tip
+With one partition per aggregate the number of partitions grows with the aggregates.
+Use the `BucketPartitioner` for a fixed number, or remove idle partitions, see below.
+:::
+
+#### Custom partitioner
+
+For another key, implement the `Partitioner` interface.
+The partitioner is created by the attribute, so it can only get constant values, e.g. the name of a header.
+
+```php
+use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\Partitioner\Partitioner;
+
+final class TenantPartitioner implements Partitioner
+{
+    public function __invoke(Message $message): string
+    {
+        return $message->header(TenantHeader::class)->tenant;
+    }
+}
+```
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+
+#[Projector('profile_1')]
+#[Partition(new TenantPartitioner())]
+final class ProfileProjector
+{
+    // ...
+}
+```
+#### How partitions work
+
+The subscription with the subscriber id is the main subscription. It never calls your subscribe methods.
+Instead, it resolves the partition key of every message exactly once and puts the message into the inbox of that partition.
+Partitions are created on the fly as new keys appear, get the id `{subscriber id}#{partition key}`
+and start with the group, run mode and status of the main subscription.
+A partition only processes the messages in its inbox and is only claimed by a worker if its inbox has messages.
+The built-in message loaders load exactly these messages. A custom message loader can do the same by implementing
+`IndexMessageLoader`, otherwise a partition reads the range of its inbox and skips the other messages.
+
+Setup, teardown and cleanup belong to the subscriber as a whole and only run on the main subscription.
+Removing the main subscription removes its partitions as well.
+If the main subscription is in error, the whole subscriber waits until it is retried.
+
+:::warning
+The order of messages is only guaranteed within a partition, never across partitions.
+Give all events of an aggregate the same key if your projection relies on their order.
+:::
+
+:::note
+The partition key must be a non-empty string and the partition id must not exceed 255 bytes.
+A subscriber id must not contain `#`, it is reserved for the ids of the partitions.
+:::
+
+:::tip
+Changing the partitioner is safe: messages that were already routed stay in their partition.
+Only the order between the old and the new partition of the same aggregate is not guaranteed during the change.
+:::
+
+:::note
+A partition stays booting until it processed the messages routed while booting, new messages it processes until then
+do not emit events. Use `#[EnableEventEmittingDuringBoot]` or the run mode `FromNow` if they have to.
+:::
+
+:::note
+With [batching](#batching), every partition has its own batch and the partitions are processed one after another.
+Many small partitions therefore mean many small batches.
+:::
+
+:::note
+Commands like pause, reactivate, remove or refresh load all partitions of a subscriber at once.
+With very many keys, keep the number of partitions bounded with the `BucketPartitioner` or `removeIdleAfter`.
+:::
+
+#### Removing idle partitions
+
+By default a partition is kept forever, also after it processed its inbox.
+With many keys, like one per aggregate, set `removeIdleAfter` to the seconds after which an idle partition is removed.
+A partition is idle when it is active, its inbox is empty and it was not saved for that long.
+The next message of its key creates it again, so nothing is lost.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
+
+#[Projector('profile_1')]
+#[Partition(new StreamPartitioner(), removeIdleAfter: 3600)]
+final class ProfileProjector
+{
+    // ...
+}
+```
+The main subscription removes the idle partitions of its subscriber in its run, at most 1000 at a time.
+Partitions in error or paused ones are kept.
+
+#### Circuit breaker
+
+A failure that hits every partition, like a database that is down, would put every partition into the error status
+and let each of them use up its retries. To prevent that, the engine counts the failing partitions of a subscriber.
+If a number of them fail in a row, without any success in between, the failure counts as systemic:
+the main subscription goes into the error status, the partitions that failed are set back,
+and no other partition is processed until the main subscription is retried.
+After that, the partitions continue where they were, without having used up any retries.
+
+The default is 5 failures in a row, you can change it on the attribute.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\Projector;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
+
+#[Projector('profile_1')]
+#[Partition(new StreamPartitioner(), maxConsecutiveFailures: 20)]
+final class ProfileProjector
+{
+    // ...
+}
+```
+:::note
+A partition without retries left only fails and calls its `#[OnFailed]` method at the end of the run,
+if the circuit breaker did not trip.
 :::
 
 ## Subscription Engine
@@ -1375,11 +1576,16 @@ You can register your own listeners to hook into the engine, for example for log
 |--------------------------|----------------------------------------------------------------------|
 | `OnCommand`              | A command was passed to the engine for execution                     |
 | `OnSubscriptions`        | The engine determined the subscriptions for the current command      |
+| `OnBeforeHandleMessage`  | Before `OnHandleMessage`, a listener can stop the subscription here  |
 | `OnHandleMessage`        | A message is about to be passed to a subscriber                      |
 | `OnHandleMessageSuccess` | A message was successfully handled by a subscriber                   |
 | `OnHandleMessageError`   | An error occurred while a subscriber was handling a message          |
 | `OnSubscriptionProcessed`| A subscription finished its stream (ended or limit reached)          |
 | `OnResult`               | The engine finished the command and returns the result               |
+
+Every `OnHandleMessage` is followed by exactly one `OnHandleMessageSuccess` or `OnHandleMessageError`.
+With `OnBeforeHandleMessage::$stop` a listener stops the subscription for the rest of the run,
+the message and the following ones are processed in a later run and `OnHandleMessage` is not dispatched.
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
@@ -1560,6 +1766,34 @@ $subscriptionEngine->execute(new Run(limit: 100));
 ```
 The per-subscription order is always preserved. There is no global ordering across different
 subscriptions, but since subscriptions are independent of each other this does not matter.
+To process a single subscriber in parallel, split it into [partitions](#partitioning).
+
+### Processing several subscriptions together
+
+By default every subscription is claimed and processed in its own transaction.
+With `subscriptionsPerClaim`, several subscriptions are processed together: the stream is read once from the lowest
+position, and the group is committed in one transaction.
+Only subscriptions whose positions are at most `limit` apart (1000 without a limit) form a group,
+so a subscription that is rebuilt does not hold back the ones that are up to date.
+Partitions are claimed in groups of 100 by default, because they only read their inbox and are often many.
+The `limit` of a group of subscriptions applies to the whole group, the one of a group of partitions to every
+single partition, so such a group processes up to `partitionsPerClaim × limit` messages in one transaction.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\Command\Run;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$subscriptionEngine->execute(new Run(limit: 100, subscriptionsPerClaim: 10, partitionsPerClaim: 200));
+```
+An error still only stops the subscription it happened in, the others of the group are committed.
+Partitions and other subscriptions are never mixed in one group.
+Subscribers with [batching](#batching) are processed one after another within a group, so their batches never overlap.
+
+:::warning
+A group holds the locks of all its subscriptions until it is committed.
+Large groups make the work spread worse over several workers.
+:::
 
 :::note
 This requires a database that supports `SKIP LOCKED` (PostgreSQL and MySQL do). SQLite serializes
@@ -1643,6 +1877,35 @@ $subscriptions = $subscriptionEngine->subscriptions(new SubscriptionEngineCriter
 foreach ($subscriptions as $subscription) {
     echo $subscription->status()->value;
 }
+```
+The ids of the criteria match the subscription id or the subscriber id,
+so a partitioned subscriber includes all its partitions.
+
+To count the subscriptions per status without loading them, use the `stats` method.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+use Patchlevel\EventSourcing\Subscription\Status;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$stats = $subscriptionEngine->stats(new SubscriptionEngineCriteria(['profile_1'], partitions: true));
+
+echo $stats->total();
+echo $stats->count(Status::Error);
+```
+If the store supports partitions, `inbox` holds how many messages wait in the inboxes of the matching partitions
+and in how many partitions, otherwise it is `null`.
+
+```php
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
+use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+
+/** @var SubscriptionEngine $subscriptionEngine */
+$stats = $subscriptionEngine->stats(new SubscriptionEngineCriteria(['profile_1'], partitions: true));
+
+echo $stats->inbox?->messages;
+echo $stats->inbox?->partitions;
 ```
 ## Learn more
 

@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Listener\DetachListener;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionManager;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
+use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use Patchlevel\EventSourcing\Tests\Unit\Subscription\DummySubscriptionStore;
@@ -84,5 +85,36 @@ final class DetachListenerTest extends TestCase
             new Subscription('paused', Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Detached),
             new Subscription('finished', Subscription::DEFAULT_GROUP, RunMode::FromBeginning, Status::Detached),
         );
+    }
+
+    public function testDetachesEveryPartitionOfTheSubscriber(): void
+    {
+        $main = new Subscription('test', status: Status::Active);
+        $partitions = [];
+
+        foreach ([Status::Booting, Status::Active, Status::Paused, Status::Error, Status::Failed] as $status) {
+            $partition = Subscription::partition($main, $status->value, 0);
+
+            match ($status) {
+                Status::Booting => $partition->booting(),
+                Status::Active => $partition->active(),
+                Status::Paused => $partition->pause(),
+                Status::Error => $partition->error('broken'),
+                default => $partition->failed('broken'),
+            };
+
+            $partitions[] = $partition;
+        }
+
+        $store = new InMemorySubscriptionStore([$main, ...$partitions]);
+
+        $listener = new DetachListener(new SubscriptionManager($store), new MetadataSubscriberAccessorRepository([]));
+        $listener(new OnCommand(new Run()));
+
+        self::assertSame(Status::Detached, $store->get('test')->status());
+
+        foreach ($partitions as $partition) {
+            self::assertSame(Status::Detached, $store->get($partition->id())->status(), $partition->id());
+        }
     }
 }

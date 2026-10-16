@@ -13,6 +13,7 @@ use Patchlevel\EventSourcing\Attribute\Cleanup;
 use Patchlevel\EventSourcing\Attribute\DisableEventEmitting;
 use Patchlevel\EventSourcing\Attribute\EnableEventEmittingDuringBoot;
 use Patchlevel\EventSourcing\Attribute\OnFailed;
+use Patchlevel\EventSourcing\Attribute\Partition;
 use Patchlevel\EventSourcing\Attribute\Processor;
 use Patchlevel\EventSourcing\Attribute\Projector;
 use Patchlevel\EventSourcing\Attribute\RetryStrategy;
@@ -37,7 +38,9 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateSubscribeMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\DuplicateTeardownMethod;
 use Patchlevel\EventSourcing\Metadata\Subscriber\IncompleteBatchMethods;
 use Patchlevel\EventSourcing\Metadata\Subscriber\MixedTeardownAndCleanupMethods;
+use Patchlevel\EventSourcing\Metadata\Subscriber\PartitionMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileCreated;
 use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
@@ -45,6 +48,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Symfony\Component\TypeInfo\Type;
+
+use function serialize;
+use function unserialize;
 
 #[CoversClass(AttributeSubscriberMetadataFactory::class)]
 final class AttributeSubscriberMetadataFactoryTest extends TestCase
@@ -284,6 +290,7 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
         class {
             // phpcs:disable
+            // @phpstan-ignore missingType.parameter (the missing type is what this test is about)
             #[Subscribe(ProfileVisited::class)]
             public function profileVisited($message): void
             {
@@ -800,5 +807,44 @@ final class AttributeSubscriberMetadataFactoryTest extends TestCase
         $metadata = $metadataFactory->metadata($subscriber::class);
 
         self::assertSame('custom_strategy', $metadata->retryStrategy);
+    }
+
+    public function testPartition(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        #[Partition(new StreamPartitioner())]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertEquals(new PartitionMetadata(new StreamPartitioner(), 5, null), $metadata->partition);
+    }
+
+    public function testPartitionWithOptions(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        #[Partition(new StreamPartitioner(), maxConsecutiveFailures: 3, removeIdleAfter: 60)]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertEquals(new PartitionMetadata(new StreamPartitioner(), 3, 60), $metadata->partition);
+        self::assertEquals($metadata, unserialize(serialize($metadata)), 'the metadata caches serialize it');
+    }
+
+    public function testNoPartition(): void
+    {
+        $subscriber = new #[Subscriber('foo', RunMode::FromBeginning)]
+        class {
+        };
+
+        $metadataFactory = new AttributeSubscriberMetadataFactory();
+        $metadata = $metadataFactory->metadata($subscriber::class);
+
+        self::assertNull($metadata->partition);
     }
 }

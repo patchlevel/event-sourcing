@@ -23,6 +23,7 @@ final class SubscriberMetadata
         public readonly bool $enableEventEmittingDuringBoot = false,
         public readonly bool $disableEventEmitting = false,
         public readonly BatchMetadata|null $batch = null,
+        public readonly PartitionMetadata|null $partition = null,
     ) {
     }
 }

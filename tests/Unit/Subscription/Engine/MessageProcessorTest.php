@@ -4,10 +4,17 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Engine;
 
+use Patchlevel\EventSourcing\Attribute\Partition;
+use Patchlevel\EventSourcing\Attribute\PartitionKey;
 use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Attribute\Subscriber;
 use Patchlevel\EventSourcing\Message\Message;
+use Patchlevel\EventSourcing\Subscription\Engine\Error;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnBeforeHandleMessage;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
+use Patchlevel\EventSourcing\Subscription\Engine\ProcessingStopped;
+use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessorRepository;
@@ -138,7 +145,76 @@ final class MessageProcessorTest extends TestCase
 
         $error = $processor->process(1, $message, $subscription);
 
-        self::assertNotNull($error);
+        self::assertInstanceOf(Error::class, $error);
         self::assertInstanceOf(NoSuitableResolver::class, $error->throwable);
+    }
+
+    public function testListenerCanStopTheSubscription(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            public bool $called = false;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(ProfileVisited $event): void
+            {
+                $this->called = true;
+            }
+        };
+
+        $handled = 0;
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(OnBeforeHandleMessage::class, static function (OnBeforeHandleMessage $event): void {
+            $event->stop = true;
+        });
+        $eventDispatcher->addListener(OnHandleMessage::class, static function () use (&$handled): void {
+            $handled++;
+        });
+
+        $processor = new MessageProcessor(
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            $eventDispatcher,
+            [],
+            new NullLogger(),
+        );
+
+        $subscription = new Subscription('test', status: Status::Active, position: 0);
+
+        $error = $processor->process(1, Message::create(new ProfileVisited(ProfileId::fromString('1'))), $subscription);
+
+        self::assertInstanceOf(ProcessingStopped::class, $error);
+        self::assertFalse($subscriber->called);
+        self::assertSame(0, $handled, 'OnHandleMessage is not dispatched, it would have no success or error');
+        self::assertSame(0, $subscription->position(), 'a stopped subscription does not move the position');
+    }
+
+    public function testPartitionGetsItsPartitionKey(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        #[Partition(new StreamPartitioner())]
+        class {
+            public string|null $partitionKey = null;
+
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(ProfileVisited $event, #[PartitionKey]
+            string $partitionKey,): void
+            {
+                $this->partitionKey = $partitionKey;
+            }
+        };
+
+        $processor = new MessageProcessor(
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            new EventDispatcher(),
+            [],
+            new NullLogger(),
+        );
+
+        $partition = Subscription::partition(new Subscription('test', status: Status::Active), 'tenant-a', 0);
+
+        $error = $processor->process(1, Message::create(new ProfileVisited(ProfileId::fromString('1'))), $partition);
+
+        self::assertNull($error);
+        self::assertSame('tenant-a', $subscriber->partitionKey);
     }
 }

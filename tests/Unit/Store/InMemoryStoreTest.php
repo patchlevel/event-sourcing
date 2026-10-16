@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromPlayheadCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\IndexCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\ToIndexCriterion;
 use Patchlevel\EventSourcing\Store\Header\EventIdHeader;
@@ -950,5 +951,27 @@ final class InMemoryStoreTest extends TestCase
         }
 
         return $message;
+    }
+
+    public function testLoadWithIndexCriterion(): void
+    {
+        $messages = [];
+
+        for ($index = 1; $index <= 4; $index++) {
+            $messages[] = (new Message(new ProfileVisited(ProfileId::fromString((string)$index))))
+                ->withHeader(new StreamNameHeader('foo-1'))
+                ->withHeader(new PlayheadHeader($index))
+                ->withHeader(new IndexHeader($index));
+        }
+
+        $store = new InMemoryStore($messages);
+
+        $loaded = $store->load(new Criteria(new IndexCriterion(3, 1)))->toList();
+
+        self::assertSame(
+            [1, 3],
+            [$loaded[0]->header(IndexHeader::class)->index, $loaded[1]->header(IndexHeader::class)->index],
+        );
+        self::assertCount(2, $loaded);
     }
 }

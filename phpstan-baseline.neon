@@ -655,12 +655,6 @@ parameters:
 			path: tests/Unit/Message/Translator/ReplaceEventTranslatorTest.php
 
 		-
-			message: '#^Method class@anonymous/tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest\.php\:284\:\:profileVisited\(\) has parameter \$message with no type specified\.$#'
-			identifier: missingType.parameter
-			count: 1
-			path: tests/Unit/Metadata/Subscriber/AttributeSubscriberMetadataFactoryTest.php
-
-		-
 			message: '#^Cannot access offset 0 on iterable\<int, Patchlevel\\EventSourcing\\QueryBus\\HandlerDescriptor\>\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
 			count: 2

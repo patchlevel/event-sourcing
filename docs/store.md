@@ -370,6 +370,14 @@ use Patchlevel\EventSourcing\Store\Criteria\StreamCriterion;
 $criterion = new StreamCriterion('profile-*', 'hotel-*');
 $criterion = StreamCriterion::startWith('profile-');
 ```
+To load specific messages by their index, use the `IndexCriterion`.
+
+```php
+use Patchlevel\EventSourcing\Store\Criteria\Criteria;
+use Patchlevel\EventSourcing\Store\Criteria\IndexCriterion;
+
+$criteria = new Criteria(new IndexCriterion(12, 57, 103));
+```
 Or you can the criteria builder to create the criteria.
 
 ```php

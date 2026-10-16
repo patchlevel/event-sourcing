@@ -31,11 +31,14 @@ use Patchlevel\EventSourcing\Subscription\Engine\Listener\BatchSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DetachListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DiscoverSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailSubscriber;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\PartitionCircuitBreakerSubscriber;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\RemovePartitionsListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\ClockBasedRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\NoRetryStrategy;
 use Patchlevel\EventSourcing\Subscription\RetryStrategy\RetryStrategyRepository;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\ArgumentResolver;
 use Patchlevel\EventSourcing\Subscription\Subscriber\ArgumentResolver\BatchArgumentResolver;
@@ -167,6 +170,30 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             ),
         );
 
+        $failedMessageProcessor = new FailedMessageProcessor(
+            $this->subscriptionManager,
+            $this->subscriberRepository,
+            $this->logger,
+        );
+
+        $this->eventDispatcher->addSubscriber(
+            new PartitionCircuitBreakerSubscriber(
+                $this->subscriptionManager,
+                $this->subscriberRepository,
+                $this->retryStrategyRepository,
+                $failedMessageProcessor,
+                $this->logger,
+            ),
+        );
+
+        $this->eventDispatcher->addSubscriber(
+            new RemovePartitionsListener(
+                $this->subscriptionManager,
+                $this->eventDispatcher,
+                $this->logger,
+            ),
+        );
+
         $this->eventDispatcher->addSubscriber(
             new BatchSubscriber(
                 $batchManager,
@@ -175,13 +202,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             ),
         );
 
-        $this->eventDispatcher->addSubscriber(
-            new FailSubscriber(
-                $this->subscriptionManager,
-                $this->subscriberRepository,
-                $this->logger,
-            ),
-        );
+        $this->eventDispatcher->addSubscriber(new FailSubscriber($failedMessageProcessor));
 
         $this->eventDispatcher->addListener(
             OnCommand::class,
@@ -250,7 +271,26 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
             new SubscriptionCriteria(
                 ids: $criteria->ids,
                 groups: $criteria->groups,
+                status: $criteria->status,
+                partitions: $criteria->partitions,
             ),
+        );
+    }
+
+    public function stats(SubscriptionEngineCriteria|null $criteria = null): SubscriptionStats
+    {
+        $criteria ??= new SubscriptionEngineCriteria();
+
+        $subscriptionCriteria = new SubscriptionCriteria(
+            ids: $criteria->ids,
+            groups: $criteria->groups,
+            status: $criteria->status,
+            partitions: $criteria->partitions,
+        );
+
+        return new SubscriptionStats(
+            $this->subscriptionManager->stats($subscriptionCriteria)->status,
+            $this->subscriptionManager->inboxStats($subscriptionCriteria),
         );
     }
 }

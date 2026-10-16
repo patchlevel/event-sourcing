@@ -26,4 +26,13 @@ final class RemoveSubscriptionStreamListenerTest extends TestCase
         $listener = new RemoveSubscriptionStreamListener($store);
         $listener(new OnSubscriptionRemoved(new Subscription('foo')));
     }
+
+    public function testKeepsTheStreamWhenAPartitionIsRemoved(): void
+    {
+        $store = $this->createMock(Store::class);
+        $store->expects($this->never())->method('remove');
+
+        $listener = new RemoveSubscriptionStreamListener($store);
+        $listener(new OnSubscriptionRemoved(Subscription::partition(new Subscription('foo'), 'tenant-a', 0)));
+    }
 }

@@ -17,14 +17,17 @@ use Patchlevel\EventSourcing\Subscription\Cleanup\Dbal\DropTableTask;
 use Patchlevel\EventSourcing\Subscription\RunMode;
 use Patchlevel\EventSourcing\Subscription\Status;
 use Patchlevel\EventSourcing\Subscription\Store\DoctrineSubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Store\InboxStats;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionAlreadyExists;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionNotFound;
 use Patchlevel\EventSourcing\Subscription\Subscription;
+use Patchlevel\EventSourcing\Subscription\SubscriptionError;
 use Patchlevel\EventSourcing\Tests\DbalManager;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use RuntimeException;
 
 use function array_map;
@@ -1027,6 +1030,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $found = $store->find(new SubscriptionCriteria(ids: ['foo']));
 
         self::assertCount(1, $found);
+        self::assertTrue((new ReflectionClass(Subscription::class))->isUninitializedLazyObject($found[0]), 'the cleanup tasks are loaded lazily');
+        self::assertEquals([new DropTableTask('baz')], $found[0]->cleanupTasks());
         self::assertEquals($subscription, $found[0]);
     }
 
@@ -1089,5 +1094,421 @@ final class DoctrineSubscriptionStoreTest extends TestCase
     private function ids(array $subscriptions): array
     {
         return array_map(static fn (Subscription $subscription) => $subscription->id(), $subscriptions);
+    }
+
+    public function testFindPartitions(): void
+    {
+        $store = $this->createStore();
+
+        $main = new Subscription('profile', status: Status::Active, position: 0);
+        $partition = Subscription::partition($main, 'tenant-a', 0);
+        $other = new Subscription('other');
+
+        $store->add($other);
+        $store->add($main);
+        $store->add($partition);
+
+        self::assertSame(
+            ['profile', 'profile#tenant-a'],
+            array_map(static fn (Subscription $s) => $s->id(), $store->find(new SubscriptionCriteria(ids: ['profile']))),
+            'the subscriber id includes its partitions',
+        );
+        self::assertSame(
+            ['profile#tenant-a'],
+            array_map(static fn (Subscription $s) => $s->id(), $store->find(new SubscriptionCriteria(ids: ['profile#tenant-a']))),
+            'a single partition can be targeted by its id',
+        );
+        self::assertSame(
+            ['other', 'profile'],
+            array_map(static fn (Subscription $s) => $s->id(), $store->find(new SubscriptionCriteria(partitions: false))),
+        );
+        self::assertSame(
+            ['profile#tenant-a'],
+            array_map(static fn (Subscription $s) => $s->id(), $store->find(new SubscriptionCriteria(partitions: true))),
+        );
+
+        $found = $store->get('profile#tenant-a');
+        self::assertSame('profile', $found->subscriberId());
+        self::assertSame('tenant-a', $found->partitionKey());
+    }
+
+    public function testInbox(): void
+    {
+        $store = $this->createStore();
+
+        $main = new Subscription('profile', status: Status::Active, position: 0);
+        $a = Subscription::partition($main, 'a', 0);
+        $b = Subscription::partition($main, 'b', 0);
+        $store->add($main, $a, $b);
+
+        $store->addToInbox(['profile#a' => [5, 3, 9], 'profile#b' => [4]]);
+
+        self::assertSame(['profile#a' => [3, 5, 9]], $store->inbox(['profile#a' => -1], 10));
+        self::assertSame(['profile#a' => [5, 9]], $store->inbox(['profile#a' => 3], 10));
+        self::assertSame(
+            ['profile#a' => [3, 5], 'profile#b' => [4]],
+            $store->inbox(['profile#a' => -1, 'profile#b' => -1], 2),
+            'the limit applies to every subscription',
+        );
+        self::assertSame([], $store->inbox(['profile#c' => -1], 10), 'an empty inbox is left out');
+
+        $a->changePosition(5);
+        $b->changePosition(3);
+        $store->update($a, $b);
+
+        self::assertSame(
+            ['profile#a' => [9], 'profile#b' => [4]],
+            $store->inbox(['profile#a' => -1, 'profile#b' => -1], 10),
+            'updating a partition clears its inbox up to its position',
+        );
+    }
+
+    public function testInboxOfManyPartitions(): void
+    {
+        $store = $this->createStore();
+
+        $afterIndex = [];
+        $expected = [];
+
+        for ($i = 0; $i < 150; $i++) {
+            $id = Subscription::partitionId('profile', 'k' . $i);
+            $store->addToInbox([$id => [1000 + $i, $i + 1]]);
+            $afterIndex[$id] = 0;
+            $expected[$id] = [$i + 1];
+        }
+
+        self::assertEquals($expected, $store->inbox($afterIndex, 1), 'more partitions than one query reads');
+    }
+
+    public function testPendingPartitionsOnly(): void
+    {
+        $store = $this->createStore();
+
+        $main = new Subscription('profile', status: Status::Active, position: 0);
+        $store->add($main);
+        $store->add(Subscription::partition($main, 'pending', 3));
+        $store->add(Subscription::partition($main, 'processed', 7));
+        $store->add(Subscription::partition($main, 'empty', 0));
+
+        $store->addToInbox(['profile#pending' => [4], 'profile#processed' => [7]]);
+
+        self::assertSame(
+            ['profile', 'profile#pending'],
+            array_map(
+                static fn (Subscription $s) => $s->id(),
+                $store->find(new SubscriptionCriteria(pendingPartitionsOnly: true)),
+            ),
+        );
+
+        self::assertNotSame([], $store->claim(['profile#pending'], new SubscriptionCriteria(pendingPartitionsOnly: true)));
+        self::assertSame([], $store->claim(['profile#empty'], new SubscriptionCriteria(pendingPartitionsOnly: true)));
+    }
+
+    public function testRemoveAlsoRemovesTheInbox(): void
+    {
+        $store = $this->createStore();
+
+        $partition = Subscription::partition(new Subscription('profile'), 'a', 0);
+        $store->add($partition);
+        $store->addToInbox([$partition->id() => [1, 2]]);
+
+        $store->remove($partition);
+        $store->add($partition);
+
+        self::assertSame([], $store->inbox([$partition->id() => -1], 10));
+    }
+
+    private function createStore(): DoctrineSubscriptionStore
+    {
+        $store = new DoctrineSubscriptionStore(
+            $this->connection,
+            new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00')),
+        );
+
+        (new DoctrineSchemaDirector($this->connection, $store))->create();
+
+        return $store;
+    }
+
+    public function testRemoveIdlePartitions(): void
+    {
+        $clock = new FrozenClock(new DateTimeImmutable('2021-01-01T00:00:00'));
+        $store = new DoctrineSubscriptionStore($this->connection, $clock);
+        (new DoctrineSchemaDirector($this->connection, $store))->create();
+
+        $main = new Subscription('profile', status: Status::Active, position: 10);
+        $other = new Subscription('other', status: Status::Active, position: 10);
+        $idle = Subscription::partition($main, 'idle', 1);
+        $withInbox = Subscription::partition($main, 'inbox', 1);
+        $failing = Subscription::partition($main, 'error', 1);
+        $failing->error('broken');
+        $otherIdle = Subscription::partition($other, 'idle', 1);
+        $store->add($main, $other, $idle, $withInbox, $failing, $otherIdle);
+        $store->addToInbox([$withInbox->id() => [5]]);
+
+        $clock->sleep(30);
+        $recent = Subscription::partition($main, 'recent', 1);
+        $store->add($recent);
+
+        $clock->sleep(40);
+
+        self::assertSame(1, $store->removeIdlePartitions('profile', 60, 10));
+        self::assertSame(
+            ['other', 'other#idle', 'profile', 'profile#error', 'profile#inbox', 'profile#recent'],
+            array_map(static fn (Subscription $subscription): string => $subscription->id(), $store->find()),
+        );
+        self::assertSame(0, $store->removeIdlePartitions('profile', 60, 10), 'nothing left to remove');
+    }
+
+    public function testStats(): void
+    {
+        $store = $this->createStore();
+
+        $main = new Subscription('profile', status: Status::Active, position: 10);
+        $broken = Subscription::partition($main, 'broken', 3);
+        $broken->error('database down');
+
+        $store->add(
+            $main,
+            Subscription::partition($main, 'a', 5),
+            Subscription::partition($main, 'b', 6),
+            $broken,
+            new Subscription('other', status: Status::Paused),
+        );
+
+        $stats = $store->stats(new SubscriptionCriteria(ids: ['profile'], partitions: true));
+
+        self::assertEquals(['active' => 2, 'error' => 1], $stats->status);
+        self::assertSame(3, $stats->total());
+        self::assertSame([], $store->stats(new SubscriptionCriteria(ids: ['unknown']))->status);
+        self::assertSame(1, $store->stats(new SubscriptionCriteria(status: [Status::Paused]))->total());
+    }
+
+    public function testInboxStats(): void
+    {
+        $store = $this->createStore();
+
+        $main = new Subscription('profile', status: Status::Active, position: 10);
+        $broken = Subscription::partition($main, 'broken', 3);
+        $broken->error('database down');
+
+        $store->add(
+            $main,
+            Subscription::partition($main, 'a', 5),
+            Subscription::partition($main, 'b', 6),
+            $broken,
+            new Subscription('other', status: Status::Paused),
+        );
+        $store->addToInbox([
+            'profile#a' => [6, 7],
+            'profile#b' => [6, 8],
+            'profile#broken' => [9],
+        ]);
+
+        self::assertEquals(
+            new InboxStats(4, 3),
+            $store->inboxStats(new SubscriptionCriteria(ids: ['profile'], partitions: true)),
+            'messages up to the position of a partition are not counted',
+        );
+        self::assertEquals(new InboxStats(1, 1), $store->inboxStats(new SubscriptionCriteria(status: [Status::Error])));
+        self::assertEquals(new InboxStats(), $store->inboxStats(new SubscriptionCriteria(ids: ['other'])));
+    }
+
+    public function testClaimAll(): void
+    {
+        $store = $this->createStore();
+
+        $store->add(new Subscription('a', status: Status::Active));
+        $store->add(new Subscription('b', status: Status::Paused));
+        $store->add(new Subscription('c', status: Status::Active));
+
+        self::assertSame(
+            ['a', 'c'],
+            array_map(
+                static fn (Subscription $s) => $s->id(),
+                $store->claim(['a', 'b', 'c', 'unknown'], new SubscriptionCriteria(status: [Status::Active])),
+            ),
+        );
+    }
+
+    public function testAddAll(): void
+    {
+        $store = $this->createStore();
+
+        $main = new Subscription('foo', 'bar', RunMode::Once, Status::Active, 10, null, 3, null, [new DropTableTask('baz')]);
+        $main->error('error message');
+        $partition = Subscription::partition(new Subscription('foo', status: Status::Booting), 'tenant-a', 5);
+
+        $store->add(...[$main, $partition, new Subscription('other')]);
+
+        self::assertEquals($main, $store->get('foo'));
+        self::assertEquals($partition, $store->get('foo#tenant-a'));
+        self::assertSame('foo', $store->get('foo#tenant-a')->subscriberId());
+        self::assertSame(Status::New, $store->get('other')->status());
+    }
+
+    public function testAddAllDuplicate(): void
+    {
+        $store = $this->createStore();
+        $store->add(new Subscription('foo'));
+
+        $this->expectException(SubscriptionAlreadyExists::class);
+
+        $store->add(...[new Subscription('bar'), new Subscription('foo')]);
+    }
+
+    public function testUpdateAll(): void
+    {
+        $store = $this->createStore();
+
+        $store->add(...[
+            new Subscription('a', status: Status::Active, position: 1),
+            new Subscription('b', status: Status::Active, position: 1),
+            new Subscription('c', status: Status::Active, position: 1),
+        ]);
+
+        $a = $store->get('a');
+        $a->changePosition(42);
+        $a->changeGroup('other');
+        $a->changeRunMode(RunMode::Once);
+        $a->replaceCleanupTasks([new DropIndexTask('idx', 'table')]);
+
+        $b = $store->get('b');
+        $b->error(new RuntimeException('error message'));
+
+        $store->update(...[$a, $b]);
+
+        $loadedA = $store->get('a');
+        self::assertSame(42, $loadedA->position());
+        self::assertSame('other', $loadedA->group());
+        self::assertSame(RunMode::Once, $loadedA->runMode());
+        self::assertEquals([new DropIndexTask('idx', 'table')], $loadedA->cleanupTasks());
+        self::assertNull($loadedA->subscriptionError());
+
+        $loadedB = $store->get('b');
+        self::assertSame(Status::Error, $loadedB->status());
+        self::assertSame(1, $loadedB->position());
+        self::assertSame('error message', $loadedB->subscriptionError()?->errorMessage);
+        self::assertSame(RuntimeException::class, $loadedB->subscriptionError()?->errorContext[0]['class'] ?? null);
+
+        self::assertSame(1, $store->get('c')->position(), 'other subscriptions are not touched');
+    }
+
+    public function testUpdateAllWithoutChanges(): void
+    {
+        $store = $this->createStore();
+
+        $store->add(...[new Subscription('a'), new Subscription('b')]);
+
+        // mysql and mariadb report no affected rows if nothing changed
+        $store->update(...[$store->get('a'), $store->get('b')]);
+        $store->update(...[$store->get('a'), $store->get('b')]);
+
+        self::assertSame(Status::New, $store->get('a')->status());
+    }
+
+    public function testUpdateAllUnknownSubscription(): void
+    {
+        $store = $this->createStore();
+        $store->add(new Subscription('a'));
+
+        $this->expectException(SubscriptionNotFound::class);
+
+        $store->update(...[$store->get('a'), new Subscription('unknown')]);
+    }
+
+    public function testUpdateAllInChunks(): void
+    {
+        $store = $this->createStore();
+
+        $subscriptions = [];
+
+        for ($i = 0; $i < 250; $i++) {
+            $subscriptions[] = new Subscription('s' . $i, status: Status::Active, position: 0);
+        }
+
+        $store->add(...$subscriptions);
+
+        foreach ($subscriptions as $i => $subscription) {
+            $subscription->changePosition($i + 1);
+        }
+
+        $store->update(...$subscriptions);
+
+        self::assertCount(250, $store->find());
+        self::assertSame(1, $store->get('s0')->position());
+        self::assertSame(250, $store->get('s249')->position());
+    }
+
+    public function testFindLoadsErrorContextAndCleanupTasksOnAccess(): void
+    {
+        $store = $this->createStore();
+
+        $subscription = new Subscription('foo', status: Status::Active, position: 3, cleanupTasks: [new DropTableTask('baz')]);
+        $subscription->error(new RuntimeException('error message'));
+        $store->add($subscription);
+
+        [$lazy] = $store->find(new SubscriptionCriteria(ids: ['foo']));
+
+        $reflector = new ReflectionClass(Subscription::class);
+        $errorReflector = new ReflectionClass(SubscriptionError::class);
+        $error = $lazy->subscriptionError();
+
+        self::assertNotNull($error);
+        self::assertSame('error message', $error->errorMessage);
+        self::assertSame(Status::Active, $error->previousStatus);
+        self::assertSame(3, $lazy->position());
+        self::assertTrue($reflector->isUninitializedLazyObject($lazy), 'cheap fields do not load anything');
+        self::assertTrue($errorReflector->isUninitializedLazyObject($error));
+
+        self::assertSame(RuntimeException::class, $error->errorContext[0]['class'] ?? null);
+        self::assertEquals([new DropTableTask('baz')], $lazy->cleanupTasks());
+        self::assertEquals($store->get('foo'), $lazy);
+    }
+
+    public function testUpdateOfALazySubscriptionKeepsErrorContextAndCleanupTasks(): void
+    {
+        $store = $this->createStore();
+
+        $subscription = new Subscription('foo', status: Status::Active, position: 3, cleanupTasks: [new DropTableTask('baz')]);
+        $subscription->error(new RuntimeException('error message'));
+        $store->add($subscription);
+
+        [$lazy] = $store->find(new SubscriptionCriteria(ids: ['foo']));
+        $lazy->changePosition(10);
+        $store->update($lazy);
+
+        $loaded = $store->get('foo');
+
+        self::assertSame(10, $loaded->position());
+        self::assertEquals([new DropTableTask('baz')], $loaded->cleanupTasks());
+        self::assertSame(RuntimeException::class, $loaded->subscriptionError()?->errorContext[0]['class'] ?? null);
+    }
+
+    public function testLazySubscriptionThatWasRemoved(): void
+    {
+        $store = $this->createStore();
+        $store->add(new Subscription('foo', cleanupTasks: [new DropTableTask('baz')]));
+
+        [$lazy] = $store->find(new SubscriptionCriteria(ids: ['foo']));
+        $store->remove($store->get('foo'));
+
+        $this->expectException(SubscriptionNotFound::class);
+
+        self::assertNull($lazy->cleanupTasks());
+    }
+
+    public function testFindWithoutErrorContextAndCleanupTasksIsNotLazy(): void
+    {
+        $store = $this->createStore();
+
+        $subscription = new Subscription('foo', status: Status::Active, position: 3);
+        $subscription->error('error message');
+        $store->add($subscription);
+
+        [$found] = $store->find(new SubscriptionCriteria(ids: ['foo']));
+
+        self::assertFalse((new ReflectionClass(Subscription::class))->isUninitializedLazyObject($found));
+        self::assertEquals($subscription, $found, 'nothing to load, so it is a plain object');
     }
 }

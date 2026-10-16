@@ -11,6 +11,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\ProcessedResult;
 use Patchlevel\EventSourcing\Subscription\Engine\Result;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngine;
 use Patchlevel\EventSourcing\Subscription\Engine\SubscriptionEngineCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -71,6 +72,19 @@ final class CatchUpSubscriptionEngineTest extends TestCase
         $result = $engine->execute($command);
 
         self::assertEquals(new ProcessedResult(2), $result);
+    }
+
+    public function testStats(): void
+    {
+        $parent = $this->createMock(SubscriptionEngine::class);
+
+        $engine = new CatchUpSubscriptionEngine($parent);
+        $criteria = new SubscriptionEngineCriteria(['foo']);
+        $stats = new SubscriptionStats(['active' => 2]);
+
+        $parent->expects($this->once())->method('stats')->with($criteria)->willReturn($stats);
+
+        self::assertSame($stats, $engine->stats($criteria));
     }
 
     public function testSubscriptions(): void

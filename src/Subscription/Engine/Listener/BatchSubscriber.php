@@ -45,7 +45,8 @@ final class BatchSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $subscriber = $this->subscriberRepository->get($subscriberId);
+        // the batch belongs to the subscription, a partition shares its subscriber with the other partitions
+        $subscriber = $this->subscriberRepository->get($event->subscription->subscriberId());
         $batchMetadata = $subscriber?->metadata()->batch;
 
         if ($subscriber === null || $batchMetadata === null) {

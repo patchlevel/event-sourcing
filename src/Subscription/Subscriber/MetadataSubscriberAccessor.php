@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Attribute\Subscribe;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscribeMethodMetadata;
 use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
+use Patchlevel\EventSourcing\Subscription\Partitioner\Partitioner;
 use Throwable;
 
 use function array_key_exists;
@@ -82,6 +83,11 @@ final class MetadataSubscriberAccessor
         }
 
         return $this->subscriber->$method(...);
+    }
+
+    public function partitioner(): Partitioner|null
+    {
+        return $this->metadata->partition?->partitioner;
     }
 
     /** @return list<class-string|'*'> */

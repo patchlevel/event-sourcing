@@ -15,6 +15,7 @@ use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot as BootCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Run as RunCommand;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnCommand;
+use Patchlevel\EventSourcing\Subscription\Engine\FailedMessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\BootHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\Handler\RunHandler;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\BatchSubscriber;
@@ -71,7 +72,7 @@ final class BatchSubscriberTest extends TestCase
 
         $eventDispatcher->addSubscriber(new BatchSubscriber($batchManager, $subscriberRepository, new NullLogger()));
         $eventDispatcher->addSubscriber(new RetrySubscriber($subscriptionManager, $subscriberRepository, $retryStrategyRepository, new NullLogger()));
-        $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
+        $eventDispatcher->addSubscriber(new FailSubscriber(new FailedMessageProcessor($subscriptionManager, $subscriberRepository, new NullLogger())));
 
         $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [new BatchArgumentResolver($batchManager)], new NullLogger());
 
@@ -102,7 +103,7 @@ final class BatchSubscriberTest extends TestCase
 
         $eventDispatcher->addSubscriber(new BatchSubscriber($batchManager, $subscriberRepository, new NullLogger()));
         $eventDispatcher->addSubscriber(new RetrySubscriber($subscriptionManager, $subscriberRepository, $retryStrategyRepository, new NullLogger()));
-        $eventDispatcher->addSubscriber(new FailSubscriber($subscriptionManager, $subscriberRepository, new NullLogger()));
+        $eventDispatcher->addSubscriber(new FailSubscriber(new FailedMessageProcessor($subscriptionManager, $subscriberRepository, new NullLogger())));
         $eventDispatcher->addListener(OnCommand::class, new DetachListener($subscriptionManager, $subscriberRepository, new NullLogger()), 32);
 
         $messageProcessor = new MessageProcessor($subscriberRepository, $eventDispatcher, [new BatchArgumentResolver($batchManager)], new NullLogger());

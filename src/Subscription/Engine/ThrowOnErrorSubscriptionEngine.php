@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
 final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine
@@ -30,5 +31,10 @@ final class ThrowOnErrorSubscriptionEngine implements SubscriptionEngine
     public function subscriptions(SubscriptionEngineCriteria|null $criteria = null): array
     {
         return $this->parent->subscriptions($criteria);
+    }
+
+    public function stats(SubscriptionEngineCriteria|null $criteria = null): SubscriptionStats
+    {
+        return $this->parent->stats($criteria);
     }
 }

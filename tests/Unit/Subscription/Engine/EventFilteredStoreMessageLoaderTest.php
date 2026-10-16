@@ -12,6 +12,7 @@ use Patchlevel\EventSourcing\Metadata\Subscriber\SubscriberMetadata;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\EventsCriterion;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\IndexCriterion;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\EventFilteredStoreMessageLoader;
 use Patchlevel\EventSourcing\Subscription\Subscriber\MetadataSubscriberAccessor;
@@ -146,5 +147,25 @@ final class EventFilteredStoreMessageLoaderTest extends TestCase
         );
 
         self::assertSame(5, $loader->lastIndex());
+    }
+
+    public function testLoadIndices(): void
+    {
+        $stream = new Stream();
+
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(new IndexCriterion(3, 7)))
+            ->willReturn($stream);
+
+        $loader = new EventFilteredStoreMessageLoader(
+            $store,
+            new AttributeEventMetadataFactory(),
+            $this->createMock(SubscriberAccessorRepository::class),
+        );
+
+        self::assertSame($stream, $loader->loadIndices([3, 7]));
     }
 }

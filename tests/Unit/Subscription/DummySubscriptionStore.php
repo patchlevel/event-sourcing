@@ -7,14 +7,16 @@ namespace Patchlevel\EventSourcing\Tests\Unit\Subscription;
 use Closure;
 use DateTimeImmutable;
 use Patchlevel\EventSourcing\Clock\FrozenClock;
+use Patchlevel\EventSourcing\Subscription\Store\InboxStats;
 use Patchlevel\EventSourcing\Subscription\Store\InMemorySubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Store\PartitionInboxStore;
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
-use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStore;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 use PHPUnit\Framework\Assert;
 use Psr\Clock\ClockInterface;
 
-final class DummySubscriptionStore implements SubscriptionStore
+final class DummySubscriptionStore implements PartitionInboxStore
 {
     private readonly ClockInterface $clock;
 
@@ -29,6 +31,9 @@ final class DummySubscriptionStore implements SubscriptionStore
     /** @var list<Subscription> */
     public array $removedSubscriptions = [];
 
+    /** @var list<string> */
+    public array $claimedIds = [];
+
     /** @param list<Subscription> $subscriptions */
     public function __construct(
         array $subscriptions = [],
@@ -42,15 +47,29 @@ final class DummySubscriptionStore implements SubscriptionStore
         return $this->parentStore->get($subscriptionId);
     }
 
+    public function stats(SubscriptionCriteria $criteria): SubscriptionStats
+    {
+        return $this->parentStore->stats($criteria);
+    }
+
     /** @return list<Subscription> */
     public function find(SubscriptionCriteria|null $criteria = null): array
     {
         return $this->parentStore->find($criteria);
     }
 
-    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null
+    /**
+     * @param non-empty-list<string> $ids
+     *
+     * @return list<Subscription>
+     */
+    public function claim(array $ids, SubscriptionCriteria $criteria, bool $wait = false): array
     {
-        return $this->parentStore->claim($id, $criteria);
+        foreach ($ids as $id) {
+            $this->claimedIds[] = $id;
+        }
+
+        return $this->parentStore->claim($ids, $criteria, $wait);
     }
 
     /**
@@ -65,22 +84,62 @@ final class DummySubscriptionStore implements SubscriptionStore
         return $this->parentStore->inLock($closure);
     }
 
-    public function add(Subscription $subscription): void
+    public function add(Subscription ...$subscriptions): void
     {
-        $this->parentStore->add($subscription);
-        $this->addedSubscriptions[] = clone $subscription;
+        $this->parentStore->add(...$subscriptions);
+
+        foreach ($subscriptions as $subscription) {
+            $this->addedSubscriptions[] = clone $subscription;
+        }
     }
 
-    public function update(Subscription $subscription): void
+    public function update(Subscription ...$subscriptions): void
     {
-        $this->parentStore->update($subscription);
-        $this->updatedSubscriptions[] = clone $subscription;
+        $this->parentStore->update(...$subscriptions);
+
+        foreach ($subscriptions as $subscription) {
+            $this->updatedSubscriptions[] = clone $subscription;
+        }
     }
 
-    public function remove(Subscription $subscription): void
+    public function remove(Subscription ...$subscriptions): void
     {
-        $this->parentStore->remove($subscription);
-        $this->removedSubscriptions[] = clone $subscription;
+        $this->parentStore->remove(...$subscriptions);
+
+        foreach ($subscriptions as $subscription) {
+            $this->removedSubscriptions[] = clone $subscription;
+        }
+    }
+
+    /** @param array<string, non-empty-list<int>> $indices */
+    public function addToInbox(array $indices): void
+    {
+        $this->parentStore->addToInbox($indices);
+    }
+
+    /**
+     * @param array<string, int> $afterIndex
+     * @param positive-int       $limit
+     *
+     * @return array<string, non-empty-list<int>>
+     */
+    public function inbox(array $afterIndex, int $limit): array
+    {
+        return $this->parentStore->inbox($afterIndex, $limit);
+    }
+
+    public function inboxStats(SubscriptionCriteria $criteria): InboxStats
+    {
+        return $this->parentStore->inboxStats($criteria);
+    }
+
+    /**
+     * @param positive-int $idleSeconds
+     * @param positive-int $limit
+     */
+    public function removeIdlePartitions(string $subscriberId, int $idleSeconds, int $limit): int
+    {
+        return $this->parentStore->removeIdlePartitions($subscriberId, $idleSeconds, $limit);
     }
 
     public function reset(): void

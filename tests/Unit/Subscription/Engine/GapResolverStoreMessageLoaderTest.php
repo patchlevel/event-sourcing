@@ -9,6 +9,7 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Message\Stream;
 use Patchlevel\EventSourcing\Store\Criteria\Criteria;
 use Patchlevel\EventSourcing\Store\Criteria\FromIndexCriterion;
+use Patchlevel\EventSourcing\Store\Criteria\IndexCriterion;
 use Patchlevel\EventSourcing\Store\Header\RecordedOnHeader;
 use Patchlevel\EventSourcing\Store\Store;
 use Patchlevel\EventSourcing\Subscription\Engine\GapResolverStoreMessageLoader;
@@ -232,5 +233,21 @@ final class GapResolverStoreMessageLoaderTest extends TestCase
         }
 
         self::assertEquals($expected, $result);
+    }
+
+    public function testLoadIndices(): void
+    {
+        $stream = new Stream();
+
+        $store = $this->createMock(Store::class);
+        $store
+            ->expects($this->once())
+            ->method('load')
+            ->with(new Criteria(new IndexCriterion(3, 7)))
+            ->willReturn($stream);
+
+        $loader = new GapResolverStoreMessageLoader($store);
+
+        self::assertSame($stream, $loader->loadIndices([3, 7]));
     }
 }

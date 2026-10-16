@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Unit\Subscription\Store;
 
 use DateTimeImmutable;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Driver\PDO\Exception;
 use Doctrine\DBAL\Exception\DeadlockException;
@@ -61,6 +62,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                 'retry_attempt' => 0,
                 'last_saved_at' => '2024-01-01 10:00:00',
                 'cleanup_tasks' => null,
+                'subscriber_id' => 'foo',
+                'partition_key' => null,
             ]);
 
         $store = new DoctrineSubscriptionStore($connection);
@@ -111,6 +114,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                 'retry_attempt' => 2,
                 'last_saved_at' => '2024-01-01 10:00:00',
                 'cleanup_tasks' => serialize([$task]),
+                'subscriber_id' => 'foo',
+                'partition_key' => null,
             ]);
 
         $store = new DoctrineSubscriptionStore($connection);
@@ -187,12 +192,16 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                     'retry_attempt' => 0,
                     'last_saved_at' => '2024-01-01 10:00:00',
                     'cleanup_tasks' => null,
+                    'subscriber_id' => 'foo',
+                    'partition_key' => null,
+                    'has_error_context' => 0,
+                    'has_cleanup_tasks' => 0,
                 ],
             ]);
         $connection
             ->expects($this->once())
             ->method('executeQuery')
-            ->with('SELECT * FROM subscriptions ORDER BY id', [], $this->isArray())
+            ->with('SELECT id, group_name, run_mode, position, status, error_message, error_previous_status, retry_attempt, last_saved_at, subscriber_id, partition_key, CASE WHEN error_context IS NULL THEN 0 ELSE 1 END AS has_error_context, CASE WHEN cleanup_tasks IS NULL THEN 0 ELSE 1 END AS has_cleanup_tasks FROM subscriptions ORDER BY id', [], $this->isArray())
             ->willReturn($result);
 
         $store = new DoctrineSubscriptionStore($connection);
@@ -225,9 +234,10 @@ final class DoctrineSubscriptionStoreTest extends TestCase
             ->expects($this->once())
             ->method('executeQuery')
             ->with(
-                'SELECT * FROM subscriptions WHERE (id IN (:ids)) AND (group_name IN (:groups)) AND (status IN (:status)) ORDER BY id',
+                'SELECT id, group_name, run_mode, position, status, error_message, error_previous_status, retry_attempt, last_saved_at, subscriber_id, partition_key, CASE WHEN error_context IS NULL THEN 0 ELSE 1 END AS has_error_context, CASE WHEN cleanup_tasks IS NULL THEN 0 ELSE 1 END AS has_cleanup_tasks FROM subscriptions WHERE (id IN (:ids) OR subscriber_id IN (:subscriber_ids)) AND (group_name IN (:groups)) AND (status IN (:status)) ORDER BY id',
                 [
                     'ids' => ['foo'],
+                    'subscriber_ids' => ['foo'],
                     'groups' => ['default'],
                     'status' => ['active'],
                 ],
@@ -256,27 +266,31 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $result = $this->createMock(Result::class);
         $result
             ->expects($this->once())
-            ->method('fetchAssociative')
+            ->method('fetchAllAssociative')
             ->willReturn([
-                'id' => 'foo',
-                'group_name' => 'default',
-                'run_mode' => 'from_beginning',
-                'position' => null,
-                'status' => 'active',
-                'error_message' => null,
-                'error_previous_status' => null,
-                'error_context' => null,
-                'retry_attempt' => 0,
-                'last_saved_at' => '2024-01-01 10:00:00',
-                'cleanup_tasks' => null,
+                [
+                    'id' => 'foo',
+                    'group_name' => 'default',
+                    'run_mode' => 'from_beginning',
+                    'position' => null,
+                    'status' => 'active',
+                    'error_message' => null,
+                    'error_previous_status' => null,
+                    'error_context' => null,
+                    'retry_attempt' => 0,
+                    'last_saved_at' => '2024-01-01 10:00:00',
+                    'cleanup_tasks' => null,
+                    'subscriber_id' => 'foo',
+                    'partition_key' => null,
+                ],
             ]);
         $connection
             ->expects($this->once())
             ->method('executeQuery')
             ->with(
-                'SELECT * FROM subscriptions WHERE (id = :id) AND (status IN (:status))',
+                'SELECT * FROM subscriptions WHERE (id IN (:claim_ids)) AND (status IN (:status)) ORDER BY id',
                 [
-                    'id' => 'foo',
+                    'claim_ids' => ['foo'],
                     'status' => ['active'],
                 ],
                 $this->isArray(),
@@ -285,10 +299,10 @@ final class DoctrineSubscriptionStoreTest extends TestCase
 
         $store = new DoctrineSubscriptionStore($connection);
 
-        $subscription = $store->claim('foo', new SubscriptionCriteria(status: [Status::Active]));
+        $subscriptions = $store->claim(['foo'], new SubscriptionCriteria(status: [Status::Active]));
 
-        self::assertInstanceOf(Subscription::class, $subscription);
-        self::assertSame('foo', $subscription->id());
+        self::assertCount(1, $subscriptions);
+        self::assertSame('foo', $subscriptions[0]->id());
     }
 
     public function testClaimNotFound(): void
@@ -307,8 +321,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
         $result = $this->createMock(Result::class);
         $result
             ->expects($this->once())
-            ->method('fetchAssociative')
-            ->willReturn(false);
+            ->method('fetchAllAssociative')
+            ->willReturn([]);
         $connection
             ->expects($this->once())
             ->method('executeQuery')
@@ -316,7 +330,7 @@ final class DoctrineSubscriptionStoreTest extends TestCase
 
         $store = new DoctrineSubscriptionStore($connection);
 
-        self::assertNull($store->claim('foo', new SubscriptionCriteria(status: [Status::Active])));
+        self::assertSame([], $store->claim(['foo'], new SubscriptionCriteria(status: [Status::Active])));
     }
 
     public function testAdd(): void
@@ -347,6 +361,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                     'retry_attempt' => 0,
                     'last_saved_at' => $now,
                     'cleanup_tasks' => null,
+                    'subscriber_id' => 'foo',
+                    'partition_key' => null,
                 ],
                 ['last_saved_at' => Types::DATETIME_IMMUTABLE],
             );
@@ -384,6 +400,8 @@ final class DoctrineSubscriptionStoreTest extends TestCase
                     'retry_attempt' => 0,
                     'last_saved_at' => $now,
                     'cleanup_tasks' => null,
+                    'subscriber_id' => 'foo',
+                    'partition_key' => null,
                 ],
                 ['last_saved_at' => Types::DATETIME_IMMUTABLE],
             );
@@ -476,13 +494,22 @@ final class DoctrineSubscriptionStoreTest extends TestCase
     {
         $connection = $this->createMock(Connection::class);
         $connection
-            ->expects($this->once())
-            ->method('delete')
-            ->with('subscriptions', ['id' => 'foo']);
+            ->expects($this->exactly(2))
+            ->method('executeStatement')
+            ->willReturnCallback(static function (string $sql, array $parameters, array $types): int {
+                self::assertContains($sql, [
+                    'DELETE FROM subscriptions WHERE id IN (?)',
+                    'DELETE FROM subscriptions_inbox WHERE subscription_id IN (?)',
+                ]);
+                self::assertSame([['foo', 'bar']], $parameters);
+                self::assertSame([ArrayParameterType::STRING], $types);
+
+                return 2;
+            });
 
         $store = new DoctrineSubscriptionStore($connection);
 
-        $store->remove(new Subscription('foo'));
+        $store->remove(new Subscription('foo'), new Subscription('bar'));
     }
 
     public function testInLock(): void
@@ -574,10 +601,26 @@ final class DoctrineSubscriptionStoreTest extends TestCase
             ->setNotnull(true);
         $table->addColumn('cleanup_tasks', Types::TEXT)
             ->setNotnull(false);
+        $table->addColumn('subscriber_id', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $table->addColumn('partition_key', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(false);
 
         $table->setPrimaryKey(['id']);
         $table->addIndex(['group_name']);
         $table->addIndex(['status']);
+        $table->addIndex(['partition_key', 'status']);
+        $table->addIndex(['subscriber_id', 'status', 'last_saved_at']);
+
+        $inbox = $expectedSchema->createTable('subscriptions_inbox');
+        $inbox->addColumn('subscription_id', Types::STRING)
+            ->setLength(255)
+            ->setNotnull(true);
+        $inbox->addColumn('message_index', Types::INTEGER)
+            ->setNotnull(true);
+        $inbox->setPrimaryKey(['subscription_id', 'message_index']);
 
         $schema = new Schema();
         $store->configureSchema($schema, $connection);

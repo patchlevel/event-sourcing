@@ -71,6 +71,7 @@ use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfilePr
 use Patchlevel\EventSourcing\Tests\Integration\Subscription\Subscriber\ProfileProjectionWithCleanup;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -1272,7 +1273,7 @@ final class SubscriptionTest extends TestCase
                     cleanupTasks: [new DropTableTask('projection_profile_1')],
                 ),
             ],
-            $firstEngine->subscriptions(),
+            self::loaded($firstEngine->subscriptions()),
         );
 
         // Run first version
@@ -1294,7 +1295,7 @@ final class SubscriptionTest extends TestCase
                     cleanupTasks: [new DropTableTask('projection_profile_1')],
                 ),
             ],
-            $firstEngine->subscriptions(),
+            self::loaded($firstEngine->subscriptions()),
         );
 
         // deploy second version
@@ -1329,7 +1330,7 @@ final class SubscriptionTest extends TestCase
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
             ],
-            $firstEngine->subscriptions(),
+            self::loaded($firstEngine->subscriptions()),
         );
 
         // switch traffic
@@ -1356,7 +1357,7 @@ final class SubscriptionTest extends TestCase
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
             ],
-            $secondEngine->subscriptions(),
+            self::loaded($secondEngine->subscriptions()),
         );
 
         // shutdown second version (with cleanup)
@@ -1374,7 +1375,7 @@ final class SubscriptionTest extends TestCase
                     lastSavedAt: new DateTimeImmutable('2021-01-01T00:00:00'),
                 ),
             ],
-            $secondEngine->subscriptions(),
+            self::loaded($secondEngine->subscriptions()),
         );
 
         self::assertFalse(
@@ -1839,21 +1840,21 @@ final class SubscriptionTest extends TestCase
         $criteria = new SubscriptionCriteria(status: [Status::Active]);
 
         $this->connection->beginTransaction();
-        $claimedByA = $storeWorkerA->claim('a', $criteria);
+        $claimedByA = $storeWorkerA->claim(['a'], $criteria)[0] ?? null;
 
         self::assertNotNull($claimedByA);
         self::assertSame('a', $claimedByA->id());
 
-        $lockedClaim = $storeWorkerB->claim('a', $criteria);
+        $lockedClaim = $storeWorkerB->claim(['a'], $criteria)[0] ?? null;
         self::assertNull($lockedClaim);
 
-        $claimedByB = $storeWorkerB->claim('b', $criteria);
+        $claimedByB = $storeWorkerB->claim(['b'], $criteria)[0] ?? null;
         self::assertNotNull($claimedByB);
         self::assertSame('b', $claimedByB->id());
 
         $this->connection->commit();
 
-        $reclaimed = $storeWorkerB->claim('a', $criteria);
+        $reclaimed = $storeWorkerB->claim(['a'], $criteria)[0] ?? null;
         self::assertNotNull($reclaimed);
         self::assertSame('a', $reclaimed->id());
     }
@@ -1920,5 +1921,23 @@ final class SubscriptionTest extends TestCase
         $engine->execute(new Remove());
 
         self::assertNotContains('subscription_emitting', $store->streams());
+    }
+
+    /**
+     * Subscriptions with cleanup tasks or an error context are lazy objects, assertEquals does not initialize them.
+     *
+     * @param list<Subscription> $subscriptions
+     *
+     * @return list<Subscription>
+     */
+    private static function loaded(array $subscriptions): array
+    {
+        $reflector = new ReflectionClass(Subscription::class);
+
+        foreach ($subscriptions as $subscription) {
+            $reflector->initializeLazyObject($subscription);
+        }
+
+        return $subscriptions;
     }
 }

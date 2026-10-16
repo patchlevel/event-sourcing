@@ -3,6 +3,10 @@ searchable: false
 ---
 # Upgrade 4.0
 
+## PHP
+
+The minimum PHP version is now 8.4.
+
 ## Aggregates
 
 ### Aggregate Root
@@ -467,22 +471,37 @@ This is mostly transparent, but a few contracts changed.
 #### SubscriptionStore
 
 `claim()` and `inLock()` are now mandatory parts of the `SubscriptionStore` interface, and the
-separate `LockableSubscriptionStore` interface has been removed. Every custom store has to implement
-both:
+separate `LockableSubscriptionStore` interface has been removed. `add()`, `update()` and `remove()` take
+several subscriptions at once. Every custom store has to implement:
 
 ```php
 use Patchlevel\EventSourcing\Subscription\Store\SubscriptionCriteria;
+use Patchlevel\EventSourcing\Subscription\Store\SubscriptionStats;
 use Patchlevel\EventSourcing\Subscription\Subscription;
 
 interface SubscriptionStore
 {
-    // ... get/find/add/update/remove ...
+    // ... get/find ...
+
+    /** Count the matching subscriptions per status, without loading them. */
+    public function stats(SubscriptionCriteria $criteria): SubscriptionStats;
 
     /**
-     * Claim exactly one subscription via a row lock (SKIP LOCKED). Return null if the row is held
-     * by another worker or no longer matches the criteria.
+     * Claim the subscriptions via row locks. Leave out the ones that no longer match the criteria,
+     * and the ones held by another worker (SKIP LOCKED). With $wait, wait for them instead,
+     * commands like pause or remove have to reach every subscription.
+     *
+     * @param non-empty-list<string> $ids
+     *
+     * @return list<Subscription>
      */
-    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null;
+    public function claim(array $ids, SubscriptionCriteria $criteria, bool $wait = false): array;
+
+    public function add(Subscription ...$subscriptions): void;
+
+    public function update(Subscription ...$subscriptions): void;
+
+    public function remove(Subscription ...$subscriptions): void;
 
     /**
      * @param Closure():T $closure
@@ -497,14 +516,22 @@ interface SubscriptionStore
 `find()` no longer locks the matched rows: it is now a plain, unlocked snapshot read. The locking
 happens per subscription inside `claim()`.
 
+The `SubscriptionEngine` interface has the new method `stats()` as well, a custom engine or decorator passes it on.
+
+The `DoctrineSubscriptionStore` loads the error context and the cleanup tasks of the subscriptions from `find()`
+lazily. Subscriptions that have one of them are native lazy objects, which `var_dump()` and `assertEquals()` show
+without these fields until they are accessed.
+
 #### Message limit is now per subscription
 
 For `Run` and `Boot`, the `limit` used to cap the total number of messages across the shared stream.
 Because there is no shared stream anymore, `limit` now caps the messages **per subscription**. One
 `subscription:run` pass therefore processes up to `limit × number of subscriptions` messages. The
-CLI default of `message-limit=100` now means "100 per subscription". It also defines the
-checkpoint/lock-hold granularity: a unit of at most `limit` messages commits atomically and releases
-the lock afterwards.
+CLI default of `message-limit=100` now means "100 per subscription".
+It also defines the checkpoint/lock-hold granularity: a unit of at most `limit` messages commits atomically and
+releases the lock afterwards. If several subscriptions are claimed together with `subscriptionsPerClaim`, the limit
+applies to the whole group. Partitions claimed together with `partitionsPerClaim` each process up to `limit`
+messages, so such a group commits up to `partitionsPerClaim × limit` messages at once.
 
 #### Error isolation
 
@@ -513,6 +540,48 @@ An error in one subscription no longer aborts the whole run. Transient errors
 are logged and retried on the next pass without landing in `result.errors`. Any other error locks
 that single subscription into status `Error` and surfaces in `result.errors`, while the remaining
 subscriptions keep processing.
+
+#### Subscription partitions
+
+Subscribers can be split into partitions with `#[Partition]`, see the subscription docs.
+A subscriber id must no longer contain `#`, it is reserved for the ids of the partitions.
+The subscription table gets the columns `subscriber_id` and `partition_key`, and there is a new table
+`subscriptions_inbox` (or `{table name}_inbox`). Since `subscriber_id` is not nullable, fill it before
+making it `NOT NULL`, otherwise the migration fails on existing rows:
+
+```sql
+ALTER TABLE subscriptions ADD subscriber_id VARCHAR(255) DEFAULT NULL;
+ALTER TABLE subscriptions ADD partition_key VARCHAR(255) DEFAULT NULL;
+UPDATE subscriptions SET subscriber_id = id;
+ALTER TABLE subscriptions ALTER COLUMN subscriber_id SET NOT NULL;
+CREATE INDEX IDX_SUBSCRIPTIONS_SUBSCRIBER_ID ON subscriptions (subscriber_id, status, last_saved_at);
+CREATE INDEX IDX_SUBSCRIPTIONS_PARTITION_KEY ON subscriptions (partition_key, status);
+CREATE TABLE subscriptions_inbox (subscription_id VARCHAR(255) NOT NULL, message_index INT NOT NULL, PRIMARY KEY (subscription_id, message_index));
+```
+On MySQL and MariaDB the ids and the partition key are compared binary, so that partition keys that only differ in
+case are different partitions:
+
+```sql
+ALTER TABLE subscriptions ADD subscriber_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL;
+ALTER TABLE subscriptions ADD partition_key VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL;
+UPDATE subscriptions SET subscriber_id = id;
+ALTER TABLE subscriptions MODIFY subscriber_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL;
+ALTER TABLE subscriptions MODIFY id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL;
+CREATE INDEX IDX_SUBSCRIPTIONS_SUBSCRIBER_ID ON subscriptions (subscriber_id, status, last_saved_at);
+CREATE INDEX IDX_SUBSCRIPTIONS_PARTITION_KEY ON subscriptions (partition_key, status);
+CREATE TABLE subscriptions_inbox (subscription_id VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL, message_index INT NOT NULL, PRIMARY KEY (subscription_id, message_index));
+```
+Adjust the table names if you configured your own.
+
+A custom `SubscriptionStore` has to persist `partitionKey()` and `subscriberId()` and support the new
+`partitions` and `pendingPartitionsOnly` criteria. To support partitions, it also has to implement the
+`PartitionInboxStore` interface with `addToInbox()`, `inbox()`, `inboxStats()` and `removeIdlePartitions()`.
+The inbox of a partition only holds messages after its position: updating a partition clears its inbox up to its position, removing it removes its inbox.
+A store without partitions support throws `PartitionsNotSupported` as soon as a partitioned subscriber is processed.
+
+The `ids` of `SubscriptionCriteria` now match the subscription
+id or the subscriber id, so the id of a partitioned subscriber also selects its partitions.
+For subscribers without partitions nothing changes, because the subscriber id is the subscription id.
 
 #### No global ordering across subscriptions
 

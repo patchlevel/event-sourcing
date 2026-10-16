@@ -11,13 +11,23 @@ use Psr\Clock\ClockInterface;
 
 use function array_filter;
 use function array_key_exists;
+use function array_keys;
+use function array_slice;
 use function array_values;
+use function count;
 use function in_array;
+use function sort;
+use function sprintf;
 
-final class InMemorySubscriptionStore implements SubscriptionStore
+use const PHP_INT_MAX;
+
+final class InMemorySubscriptionStore implements PartitionInboxStore
 {
     /** @var array<string, Subscription> */
     private array $subscriptions = [];
+
+    /** @var array<string, array<int, true>> */
+    private array $inbox = [];
 
     /** @param list<Subscription> $subscriptions */
     public function __construct(
@@ -50,24 +60,46 @@ final class InMemorySubscriptionStore implements SubscriptionStore
         return array_values(
             array_filter(
                 $subscriptions,
-                static fn (Subscription $subscription): bool => self::matches($subscription, $criteria),
+                fn (Subscription $subscription): bool => $this->matches($subscription, $criteria),
             ),
         );
     }
 
-    public function claim(string $id, SubscriptionCriteria $criteria): Subscription|null
+    public function stats(SubscriptionCriteria $criteria): SubscriptionStats
     {
-        if (!array_key_exists($id, $this->subscriptions)) {
-            return null;
+        $status = [];
+
+        foreach ($this->find($criteria) as $subscription) {
+            $status[$subscription->status()->value] = ($status[$subscription->status()->value] ?? 0) + 1;
         }
 
-        $subscription = $this->subscriptions[$id];
+        return new SubscriptionStats($status);
+    }
 
-        if (!self::matches($subscription, $criteria)) {
-            return null;
+    /**
+     * @param non-empty-list<string> $ids
+     *
+     * @return list<Subscription>
+     */
+    public function claim(array $ids, SubscriptionCriteria $criteria, bool $wait = false): array
+    {
+        $claimed = [];
+
+        foreach ($ids as $id) {
+            if (!array_key_exists($id, $this->subscriptions)) {
+                continue;
+            }
+
+            $subscription = $this->subscriptions[$id];
+
+            if (!$this->matches($subscription, $criteria)) {
+                continue;
+            }
+
+            $claimed[] = $subscription;
         }
 
-        return $subscription;
+        return $claimed;
     }
 
     /**
@@ -82,10 +114,13 @@ final class InMemorySubscriptionStore implements SubscriptionStore
         return $closure();
     }
 
-    private static function matches(Subscription $subscription, SubscriptionCriteria $criteria): bool
+    private function matches(Subscription $subscription, SubscriptionCriteria $criteria): bool
     {
         if ($criteria->ids !== null) {
-            if (!in_array($subscription->id(), $criteria->ids, true)) {
+            if (
+                !in_array($subscription->id(), $criteria->ids, true)
+                && !in_array($subscription->subscriberId(), $criteria->ids, true)
+            ) {
                 return false;
             }
         }
@@ -102,38 +137,157 @@ final class InMemorySubscriptionStore implements SubscriptionStore
             }
         }
 
+        if ($criteria->partitions !== null && $subscription->isPartition() !== $criteria->partitions) {
+            return false;
+        }
+
+        if ($criteria->pendingPartitionsOnly && $subscription->isPartition()) {
+            return $this->inbox([$subscription->id() => $subscription->position() ?? -1], 1) !== [];
+        }
+
         return true;
     }
 
-    public function add(Subscription $subscription): void
+    public function add(Subscription ...$subscriptions): void
     {
-        if (array_key_exists($subscription->id(), $this->subscriptions)) {
-            throw new SubscriptionAlreadyExists($subscription->id());
+        foreach ($subscriptions as $subscription) {
+            if (array_key_exists($subscription->id(), $this->subscriptions)) {
+                throw new SubscriptionAlreadyExists($subscription->id());
+            }
+
+            $subscription->updateLastSavedAt($this->clock->now());
+
+            $this->subscriptions[$subscription->id()] = $subscription;
         }
-
-        $subscription->updateLastSavedAt($this->clock->now());
-
-        $this->subscriptions[$subscription->id()] = $subscription;
     }
 
-    public function update(Subscription $subscription): void
+    /** The inbox of an updated partition is cleared up to its position. */
+    public function update(Subscription ...$subscriptions): void
     {
-        if (!array_key_exists($subscription->id(), $this->subscriptions)) {
-            throw new SubscriptionNotFound($subscription->id());
+        foreach ($subscriptions as $subscription) {
+            if (!array_key_exists($subscription->id(), $this->subscriptions)) {
+                throw new SubscriptionNotFound($subscription->id());
+            }
+
+            $subscription->updateLastSavedAt($this->clock->now());
+
+            $this->subscriptions[$subscription->id()] = $subscription;
+
+            $position = $subscription->position();
+
+            if (!$subscription->isPartition() || $position === null) {
+                continue;
+            }
+
+            foreach (array_keys($this->inbox[$subscription->id()] ?? []) as $messageIndex) {
+                if ($messageIndex > $position) {
+                    continue;
+                }
+
+                unset($this->inbox[$subscription->id()][$messageIndex]);
+            }
         }
-
-        $subscription->updateLastSavedAt($this->clock->now());
-
-        $this->subscriptions[$subscription->id()] = $subscription;
     }
 
-    public function remove(Subscription $subscription): void
+    /** The inbox of a removed partition is removed as well. */
+    public function remove(Subscription ...$subscriptions): void
     {
-        unset($this->subscriptions[$subscription->id()]);
+        foreach ($subscriptions as $subscription) {
+            unset($this->subscriptions[$subscription->id()], $this->inbox[$subscription->id()]);
+        }
+    }
+
+    /** @param array<string, non-empty-list<int>> $indices */
+    public function addToInbox(array $indices): void
+    {
+        foreach ($indices as $subscriptionId => $messageIndices) {
+            foreach ($messageIndices as $messageIndex) {
+                $this->inbox[$subscriptionId][$messageIndex] = true;
+            }
+        }
+    }
+
+    /**
+     * @param array<string, int> $afterIndex
+     * @param positive-int       $limit
+     *
+     * @return array<string, non-empty-list<int>>
+     */
+    public function inbox(array $afterIndex, int $limit): array
+    {
+        $inbox = [];
+
+        foreach ($afterIndex as $subscriptionId => $index) {
+            $indices = array_values(array_filter(
+                array_keys($this->inbox[$subscriptionId] ?? []),
+                static fn (int $messageIndex): bool => $messageIndex > $index,
+            ));
+
+            if ($indices === []) {
+                continue;
+            }
+
+            sort($indices);
+
+            $inbox[$subscriptionId] = array_slice($indices, 0, $limit);
+        }
+
+        return $inbox;
+    }
+
+    public function inboxStats(SubscriptionCriteria $criteria): InboxStats
+    {
+        $messages = 0;
+        $partitions = 0;
+
+        foreach ($this->find($criteria) as $subscription) {
+            $count = count($this->inbox([$subscription->id() => $subscription->position() ?? -1], PHP_INT_MAX)[$subscription->id()] ?? []);
+
+            if ($count === 0) {
+                continue;
+            }
+
+            $messages += $count;
+            $partitions++;
+        }
+
+        return new InboxStats($messages, $partitions);
+    }
+
+    /**
+     * @param positive-int $idleSeconds
+     * @param positive-int $limit
+     */
+    public function removeIdlePartitions(string $subscriberId, int $idleSeconds, int $limit): int
+    {
+        $idleSince = $this->clock->now()->modify(sprintf('-%d seconds', $idleSeconds));
+        $removed = 0;
+
+        foreach ($this->subscriptions as $id => $subscription) {
+            if ($removed >= $limit) {
+                break;
+            }
+
+            if (
+                !$subscription->isPartition()
+                || $subscription->subscriberId() !== $subscriberId
+                || !$subscription->isActive()
+                || ($this->inbox[$id] ?? []) !== []
+                || ($subscription->lastSavedAt() ?? $idleSince) >= $idleSince
+            ) {
+                continue;
+            }
+
+            unset($this->subscriptions[$id], $this->inbox[$id]);
+            $removed++;
+        }
+
+        return $removed;
     }
 
     public function clear(): void
     {
         $this->subscriptions = [];
+        $this->inbox = [];
     }
 }

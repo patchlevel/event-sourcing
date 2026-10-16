@@ -23,6 +23,11 @@ final class RemoveSubscriptionStreamListener
 
     public function __invoke(OnSubscriptionRemoved $event): void
     {
+        // partitions write into the stream of their subscriber, it is removed with the main subscription
+        if ($event->subscription->isPartition()) {
+            return;
+        }
+
         $streamName = 'subscription_' . $event->subscription->id();
 
         $this->store->remove(

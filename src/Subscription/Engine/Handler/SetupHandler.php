@@ -49,6 +49,7 @@ final class SetupHandler implements Handler
                 ids: $command->ids,
                 groups: $command->groups,
                 status: [Status::New],
+                partitions: false,
             ),
             function (Subscription $subscription) use ($command, &$latestIndex): Result {
                 $latestIndex ??= $this->messageLoader->lastIndex();
@@ -99,6 +100,7 @@ final class SetupHandler implements Handler
             static fn (Subscription $subscription, Throwable $e): Result => new Result(
                 [new Error($subscription->id(), $e->getMessage(), $e)],
             ),
+            wait: true,
         );
 
         return Result::merge($results);
