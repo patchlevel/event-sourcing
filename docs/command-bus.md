@@ -291,21 +291,24 @@ you can use the `InstantRetryCommandBus` command bus decorator.
 use Patchlevel\EventSourcing\CommandBus\CommandBus;
 use Patchlevel\EventSourcing\CommandBus\InstantRetryCommandBus;
 use Patchlevel\EventSourcing\Repository\AggregateOutdated;
+use Patchlevel\EventSourcing\Store\AppendConditionNotMet;
 
 /** @var CommandBus $commandBus */
 $commandBus = new InstantRetryCommandBus(
     $commandBus,
     3, // maximum number of retries, default is 3
-    [AggregateOutdated::class], // exceptions to retry, default is [AggregateOutdated::class]
+    [AggregateOutdated::class, AppendConditionNotMet::class], // exceptions to retry, default is [AggregateOutdated::class, AppendConditionNotMet::class]
 );
 ```
-After that, you need to mark the command class with the `#[InstantRetry]` attribute,
-to indicate that the command should be retried when the condition is met.
+Every command is retried with the default values if one of the defined exceptions occurs.
+If you want to use other values for a specific command, you can mark the command class
+with the `#[InstantRetry]` attribute and override the maximum number of retries and the exceptions.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\InstantRetry;
+use Patchlevel\EventSourcing\Repository\AggregateOutdated;
 
-#[InstantRetry]
+#[InstantRetry(5, [AggregateOutdated::class])]
 final class CreateProfile
 {
     public function __construct(
@@ -316,17 +319,8 @@ final class CreateProfile
 }
 ```
 :::tip
-You can override the default values for the maximum number of retries and the conditions
-by passing them to the `InstantRetry` attribute.
-
-```php
-use Patchlevel\EventSourcing\Attribute\InstantRetry;
-
-#[InstantRetry(3, [AggregateOutdated::class])]
-final class CreateProfile
-{
-}
-```
+If you only want to retry commands marked with the `#[InstantRetry]` attribute,
+pass an empty list as default exceptions and define the exceptions in the attribute.
 :::
 
 ## Provider

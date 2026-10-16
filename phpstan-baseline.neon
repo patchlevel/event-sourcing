@@ -421,18 +421,6 @@ parameters:
 			path: tests/Unit/CommandBus/Handler/CreateAggregateHandlerTest.php
 
 		-
-			message: '#^Call to method PHPUnit\\Framework\\Assert\:\:assertTrue\(\) with true will always evaluate to true\.$#'
-			identifier: method.alreadyNarrowedType
-			count: 3
-			path: tests/Unit/CommandBus/InstantRetryCommandBusTest.php
-
-		-
-			message: '#^Parameter \#1 \$aggregate of class Patchlevel\\EventSourcing\\Repository\\AggregateOutdated constructor expects class\-string\<Patchlevel\\EventSourcing\\Aggregate\\AggregateRoot\>, string given\.$#'
-			identifier: argument.type
-			count: 5
-			path: tests/Unit/CommandBus/InstantRetryCommandBusTest.php
-
-		-
 			message: '#^Call to static method PHPUnit\\Framework\\Assert\:\:assertInstanceOf\(\) with ''Patchlevel\\\\EventSourcing\\\\Console\\\\Command\\\\DebugCommand'' and Patchlevel\\EventSourcing\\Console\\Command\\DebugCommand will always evaluate to true\.$#'
 			identifier: staticMethod.alreadyNarrowedType
 			count: 8

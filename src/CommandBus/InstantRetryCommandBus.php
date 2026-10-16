@@ -37,10 +37,6 @@ final class InstantRetryCommandBus implements CommandBus
         } catch (Throwable $exception) {
             $configuration = $this->configuration($command);
 
-            if ($configuration === null) {
-                throw $exception;
-            }
-
             $exceptions = $configuration->exceptions ?? $this->defaultExceptions;
             $maxRetries = $configuration->maxRetries ?? $this->defaultMaxRetries;
 

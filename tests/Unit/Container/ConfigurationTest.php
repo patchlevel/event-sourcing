@@ -10,6 +10,7 @@ use Patchlevel\EventSourcing\Container\InvalidConfiguration;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventMetadataFactory;
 use Patchlevel\EventSourcing\Repository\AggregateOutdated;
 use Patchlevel\EventSourcing\Repository\MessageDecorator\SplitStreamDecorator;
+use Patchlevel\EventSourcing\Store\AppendConditionNotMet;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -49,7 +50,7 @@ final class ConfigurationTest extends TestCase
                     'instant_retry' => [
                         'enabled' => true,
                         'default_max_retries' => 3,
-                        'default_exceptions' => [AggregateOutdated::class],
+                        'default_exceptions' => [AggregateOutdated::class, AppendConditionNotMet::class],
                     ],
                 ],
                 'query_bus' => ['enabled' => true, 'handlers' => [], 'handler_providers' => []],
