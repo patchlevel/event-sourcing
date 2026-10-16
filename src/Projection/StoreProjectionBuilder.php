@@ -17,9 +17,11 @@ final class StoreProjectionBuilder implements ProjectionBuilder
     }
 
     /**
-     * @param array<string, Projection> $projections
+     * @param array<K, Projection> $projections
      *
-     * @return array<string, mixed>
+     * @return array<K, mixed>
+     *
+     * @template K of array-key
      */
     public function build(
         array $projections,
@@ -36,6 +38,9 @@ final class StoreProjectionBuilder implements ProjectionBuilder
             $state = $projection->apply($state, $message);
         }
 
-        return $state;
+        /** @var array<K, mixed> $result */
+        $result = $state;
+
+        return $result;
     }
 }

@@ -4,9 +4,8 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\Tests\Benchmark;
 
-use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
+use Patchlevel\EventSourcing\DecisionModel\DecisionFactory;
 use Patchlevel\EventSourcing\DecisionModel\EventAppender;
-use Patchlevel\EventSourcing\DecisionModel\StoreDecisionModelBuilder;
 use Patchlevel\EventSourcing\DecisionModel\StoreEventAppender;
 use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
@@ -51,7 +50,7 @@ final class DynamicConsistencyBoundaryBench
     private const CHECKPOINT_EVERY = 100;
 
     private TaggableDoctrineDbalStore $store;
-    private DecisionModelBuilder $decisionModelBuilder;
+    private DecisionFactory $decisionFactory;
     private EventAppender $eventAppender;
 
     private int $newStudent = 0;
@@ -66,8 +65,8 @@ final class DynamicConsistencyBoundaryBench
             (new AttributeEventRegistryFactory())->create([__DIR__ . '/DynamicConsistencyBoundary/Events']),
         );
 
-        $this->decisionModelBuilder = new StoreDecisionModelBuilder($this->store);
         $this->eventAppender = new StoreEventAppender($this->store);
+        $this->decisionFactory = new DecisionFactory($this->store, $this->eventAppender);
 
         $schemaDirector = new DoctrineSchemaDirector(
             $connection,
@@ -123,15 +122,13 @@ final class DynamicConsistencyBoundaryBench
     #[Bench\Revs(10)]
     public function benchDecisionModelSmall(): void
     {
-        $this->decisionModelBuilder->build([
-            'courseExists' => new CourseExists('c500'),
-        ]);
+        $this->decisionFactory->begin()->read(new CourseExists('c500'));
     }
 
     #[Bench\Revs(10)]
     public function benchDecisionModelComposite(): void
     {
-        $this->decisionModelBuilder->build([
+        $this->decisionFactory->begin()->read([
             'courseExists' => new CourseExists('c500'),
             'courseCapacity' => new CourseCapacity('c500'),
             'numberOfCourseSubscriptions' => new NumberOfCourseSubscriptions('c500'),
@@ -141,27 +138,32 @@ final class DynamicConsistencyBoundaryBench
     }
 
     #[Bench\Revs(10)]
+    public function benchDecisionModelSingleReads(): void
+    {
+        $decision = $this->decisionFactory->begin();
+        $decision->read(new CourseExists('c500'));
+        $decision->read(new CourseCapacity('c500'));
+        $decision->read(new NumberOfCourseSubscriptions('c500'));
+        $decision->read(new NumberOfStudentSubscriptions('s42'));
+        $decision->read(new StudentAlreadySubscribed('c500', 's42'));
+    }
+
+    #[Bench\Revs(10)]
     public function benchDecisionModel10000Events(): void
     {
-        $this->decisionModelBuilder->build([
-            'numberOfCourseSubscriptions' => new NumberOfCourseSubscriptions('long'),
-        ]);
+        $this->decisionFactory->begin()->read(new NumberOfCourseSubscriptions('long'));
     }
 
     #[Bench\Revs(10)]
     public function benchDecisionModel10000EventsWithCheckpoint(): void
     {
-        $this->decisionModelBuilder->build([
-            'numberOfCourseSubscriptions' => new NumberOfCourseSubscriptionsWithCheckpoint('checkpoint'),
-        ]);
+        $this->decisionFactory->begin()->read(new NumberOfCourseSubscriptionsWithCheckpoint('checkpoint'));
     }
 
     #[Bench\Revs(10)]
     public function benchDecisionModelOnlyLastEvent(): void
     {
-        $this->decisionModelBuilder->build([
-            'nextInvoiceNumber' => new NextInvoiceNumber(),
-        ]);
+        $this->decisionFactory->begin()->read(new NextInvoiceNumber());
     }
 
     #[Bench\Revs(10)]
@@ -169,18 +171,29 @@ final class DynamicConsistencyBoundaryBench
     {
         $studentId = sprintf('new%d', ++$this->newStudent);
 
-        $decisionModel = $this->decisionModelBuilder->build([
+        $decision = $this->decisionFactory->begin();
+        $decision->read([
             'courseExists' => new CourseExists('c500'),
             'courseCapacity' => new CourseCapacity('c500'),
             'numberOfCourseSubscriptions' => new NumberOfCourseSubscriptions('c500'),
             'numberOfStudentSubscriptions' => new NumberOfStudentSubscriptions($studentId),
             'studentAlreadySubscribed' => new StudentAlreadySubscribed('c500', $studentId),
         ]);
+        $decision->append([new StudentSubscribedToCourse('c500', $studentId)]);
+    }
 
-        $this->eventAppender->append(
-            [new StudentSubscribedToCourse('c500', $studentId)],
-            $decisionModel->appendCondition,
-        );
+    #[Bench\Revs(10)]
+    public function benchDecideAndAppendSingleReads(): void
+    {
+        $studentId = sprintf('new%d', ++$this->newStudent);
+
+        $decision = $this->decisionFactory->begin();
+        $decision->read(new CourseExists('c500'));
+        $decision->read(new CourseCapacity('c500'));
+        $decision->read(new NumberOfCourseSubscriptions('c500'));
+        $decision->read(new NumberOfStudentSubscriptions($studentId));
+        $decision->read(new StudentAlreadySubscribed('c500', $studentId));
+        $decision->append([new StudentSubscribedToCourse('c500', $studentId)]);
     }
 
     #[Bench\Revs(10)]

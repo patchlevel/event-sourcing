@@ -187,6 +187,9 @@ Each projection:
 * Applies only the few events relevant to compute the decision value
 * Optionally filters events by tags
 
+The generic type of `BasicProjection` is the type of the state.
+Static analysis like PHPStan uses it to know what reading the projection returns.
+
 The first projection answers only whether the hotel already exists.
 
 ```php
@@ -194,6 +197,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Projection\BasicProjection;
 
+/** @extends BasicProjection<bool> */
 final class HotelExists extends BasicProjection
 {
     public function __construct(
@@ -226,6 +230,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Projection\BasicProjection;
 
+/** @extends BasicProjection<int> */
 final class NumberOfGuestsInHotel extends BasicProjection
 {
     public function __construct(
@@ -264,6 +269,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Projection\BasicProjection;
 
+/** @extends BasicProjection<bool> */
 final class GuestAlreadyCheckedIn extends BasicProjection
 {
     public function __construct(
@@ -312,6 +318,7 @@ use Patchlevel\EventSourcing\Attribute\Checkpoint;
 use Patchlevel\EventSourcing\Identifier\Uuid;
 use Patchlevel\EventSourcing\Projection\BasicProjection;
 
+/** @extends BasicProjection<int> */
 final class NumberOfGuestsInHotel extends BasicProjection
 {
     public function __construct(
@@ -363,72 +370,114 @@ If a projection only ever needs its last event, you can override `lastEventIsEno
 ## Define handlers
 
 We’ll implement three command handlers corresponding to our commands.
+Each handler gets a `Decision` as second argument, a new one for every command.
+It reads the projections it needs and appends the new events.
 
 First, we implement the handler for the `CreateHotel` command.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DecisionModel\EventAppender;
+use Patchlevel\EventSourcing\DecisionModel\Decision;
 
 final class CreateHotelHandler
 {
-    public function __construct(
-        private readonly DecisionModelBuilder $decisionModelBuilder,
-        private readonly EventAppender $eventAppender,
-    ) {
-    }
-
     #[Handle]
-    public function __invoke(CreateHotel $command): void
+    public function __invoke(CreateHotel $command, Decision $decision): void
     {
-        $state = $this->decisionModelBuilder->build([
-            'hotelExists' => new HotelExists($command->hotelId),
-        ]);
-
-        if ($state['hotelExists']) {
+        if ($decision->read(new HotelExists($command->hotelId))) {
             throw new RuntimeException('Hotel already exists');
         }
 
-        $this->eventAppender->append([
+        $decision->append([
             new HotelCreated($command->hotelId, $command->hotelName),
-        ], $state->appendCondition);
+        ]);
     }
 }
 ```
 :::note
-Handlers build a Decision Model from the projections and then append events with an optimistic AppendCondition.
-If any relevant event arrives between read and write, the append fails and you can retry.
-The AppendCondition contains the query of the Decision Model and the index of the last event it has seen as `after`.
-The append fails if an event matching the query exists with a higher index than `after`.
+The decision remembers everything it has read.
+The events are only appended if no event matching these reads was appended in the meantime.
+Otherwise an `AppendConditionNotMet` exception is thrown and you can retry the command.
 :::
 
 :::tip
-To get type security, you can use our [phpstan extension](https://github.com/patchlevel/event-sourcing-phpstan-extension).
+Use the [instant retry](command-bus.md) of the command bus to retry the command automatically.
 :::
 
 The next handler implements the `CheckIn` command.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DecisionModel\EventAppender;
+use Patchlevel\EventSourcing\DecisionModel\Decision;
 
 final class CheckInHandler
 {
-    public function __construct(
-        private readonly DecisionModelBuilder $decisionModelBuilder,
-        private readonly EventAppender $eventAppender,
-    ) {
-    }
-
     #[Handle]
-    public function __invoke(CheckIn $command): void
+    public function __invoke(CheckIn $command, Decision $decision): void
     {
-        $state = $this->decisionModelBuilder->build([
+        if (!$decision->read(new HotelExists($command->hotelId))) {
+            throw new RuntimeException('Hotel does not exist');
+        }
+
+        if ($decision->read(new GuestAlreadyCheckedIn($command->hotelId, $command->guestName))) {
+            throw new RuntimeException(sprintf('Guest "%s" already checked in', $command->guestName));
+        }
+
+        // Optional policy example: max 5 guests
+        if ($decision->read(new NumberOfGuestsInHotel($command->hotelId)) >= 5) {
+            throw new RuntimeException('Hotel is full');
+        }
+
+        $decision->append([
+            new GuestIsCheckedIn($command->hotelId, $command->guestName),
+        ]);
+    }
+}
+```
+And the last handler implements the `CheckOut` command.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\DecisionModel\Decision;
+
+final class CheckOutHandler
+{
+    #[Handle]
+    public function __invoke(CheckOut $command, Decision $decision): void
+    {
+        if (!$decision->read(new HotelExists($command->hotelId))) {
+            throw new RuntimeException('Hotel does not exist');
+        }
+
+        if (!$decision->read(new GuestAlreadyCheckedIn($command->hotelId, $command->guestName))) {
+            throw new RuntimeException(sprintf('Guest "%s" is not checked in', $command->guestName));
+        }
+
+        $decision->append([
+            new GuestIsCheckedOut($command->hotelId, $command->guestName),
+        ]);
+    }
+}
+```
+### Reading several projections at once
+
+Every read is a query to the event store.
+To save queries, pass an array of projections.
+They are read with one query and the states are returned with the same keys.
+
+```php
+use Patchlevel\EventSourcing\Attribute\Handle;
+use Patchlevel\EventSourcing\DecisionModel\Decision;
+
+final class CheckInHandler
+{
+    #[Handle]
+    public function __invoke(CheckIn $command, Decision $decision): void
+    {
+        $state = $decision->read([
             'hotelExists' => new HotelExists($command->hotelId),
-            'guestCount' => new NumberOfGuestsInHotel($command->hotelId),
             'alreadyIn' => new GuestAlreadyCheckedIn($command->hotelId, $command->guestName),
+            'guestCount' => new NumberOfGuestsInHotel($command->hotelId),
         ]);
 
         if (!$state['hotelExists']) {
@@ -439,51 +488,82 @@ final class CheckInHandler
             throw new RuntimeException(sprintf('Guest "%s" already checked in', $command->guestName));
         }
 
-        // Optional policy example: max 5 guests
         if ($state['guestCount'] >= 5) {
             throw new RuntimeException('Hotel is full');
         }
 
-        $this->eventAppender->append([
+        $decision->append([
             new GuestIsCheckedIn($command->hotelId, $command->guestName),
-        ], $state->appendCondition);
+        ]);
     }
 }
 ```
-And the last handler implements the `CheckOut` command.
+:::tip
+With our [phpstan extension](https://github.com/patchlevel/event-sourcing-phpstan-extension),
+PHPStan knows the type of each state in the array, here `array{hotelExists: bool, alreadyIn: bool, guestCount: int}`.
+:::
+
+### Chained reads
+
+Sometimes you only know which events a decision needs after you have read others.
+For example, moving all guests of one hotel to another is only allowed if none of them is already checked in there.
+Which guests you have to check depends on the first read.
+
+Since the decision remembers all reads, you can simply read again based on what you have read before.
 
 ```php
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DecisionModel\EventAppender;
+use Patchlevel\EventSourcing\DecisionModel\Decision;
 
-final class CheckOutHandler
+final class MoveGuestsHandler
+{
+    #[Handle]
+    public function __invoke(MoveGuests $command, Decision $decision): void
+    {
+        $events = [];
+
+        foreach ($decision->read(new GuestsInHotel($command->fromHotelId)) as $guestName) {
+            if ($decision->read(new GuestAlreadyCheckedIn($command->toHotelId, $guestName))) {
+                throw new RuntimeException(sprintf('Guest "%s" is already checked in', $guestName));
+            }
+
+            $events[] = new GuestIsCheckedOut($command->fromHotelId, $guestName);
+            $events[] = new GuestIsCheckedIn($command->toHotelId, $guestName);
+        }
+
+        $decision->append($events);
+    }
+}
+```
+If a guest checks into the first hotel in the meantime, the append fails,
+even though the second read never looked at this guest.
+
+### Without the command bus
+
+If you don't use our command bus, for example with Symfony Messenger,
+inject the `DecisionFactory` and start a new decision for each command.
+
+```php
+use Patchlevel\EventSourcing\DecisionModel\DecisionFactory;
+
+final class CreateHotelHandler
 {
     public function __construct(
-        private readonly DecisionModelBuilder $decisionModelBuilder,
-        private readonly EventAppender $eventAppender,
+        private readonly DecisionFactory $decisionFactory,
     ) {
     }
 
-    #[Handle]
-    public function __invoke(CheckOut $command): void
+    public function __invoke(CreateHotel $command): void
     {
-        $state = $this->decisionModelBuilder->build([
-            'hotelExists' => new HotelExists($command->hotelId),
-            'alreadyIn' => new GuestAlreadyCheckedIn($command->hotelId, $command->guestName),
+        $decision = $this->decisionFactory->begin();
+
+        if ($decision->read(new HotelExists($command->hotelId))) {
+            throw new RuntimeException('Hotel already exists');
+        }
+
+        $decision->append([
+            new HotelCreated($command->hotelId, $command->hotelName),
         ]);
-
-        if (!$state['hotelExists']) {
-            throw new RuntimeException('Hotel does not exist');
-        }
-
-        if (!$state['alreadyIn']) {
-            throw new RuntimeException(sprintf('Guest "%s" is not checked in', $command->guestName));
-        }
-
-        $this->eventAppender->append([
-            new GuestIsCheckedOut($command->hotelId, $command->guestName),
-        ], $state->appendCondition);
     }
 }
 ```
@@ -497,8 +577,8 @@ use Doctrine\DBAL\DriverManager;
 use Doctrine\DBAL\Tools\DsnParser;
 use Patchlevel\EventSourcing\CommandBus\ServiceHandlerProvider;
 use Patchlevel\EventSourcing\CommandBus\SyncCommandBus;
-use Patchlevel\EventSourcing\DecisionModel\StoreDecisionModelBuilder;
-use Patchlevel\EventSourcing\DecisionModel\StoreEventAppender;
+use Patchlevel\EventSourcing\DecisionModel\DecisionFactory;
+use Patchlevel\EventSourcing\DecisionModel\DecisionParameterResolver;
 use Patchlevel\EventSourcing\Metadata\Event\AttributeEventRegistryFactory;
 use Patchlevel\EventSourcing\Serializer\DefaultEventSerializer;
 use Patchlevel\EventSourcing\Store\Dbal\PostgreSQLPlatformMiddleware;
@@ -513,14 +593,16 @@ $serializer = new DefaultEventSerializer($eventRegistry);
 
 $eventStore = new TaggableDoctrineDbalStore($connection, $serializer, $eventRegistry);
 
-$decisionModelBuilder = new StoreDecisionModelBuilder($eventStore);
-$eventAppender = new StoreEventAppender($eventStore);
+$decisionFactory = new DecisionFactory($eventStore);
 
-$provider = new ServiceHandlerProvider([
-    new CreateHotelHandler($decisionModelBuilder, $eventAppender),
-    new CheckInHandler($decisionModelBuilder, $eventAppender),
-    new CheckOutHandler($decisionModelBuilder, $eventAppender),
-]);
+$provider = new ServiceHandlerProvider(
+    [
+        new CreateHotelHandler(),
+        new CheckInHandler(),
+        new CheckOutHandler(),
+    ],
+    new DecisionParameterResolver($decisionFactory),
+);
 
 $commandBus = new SyncCommandBus($provider);
 ```
@@ -534,8 +616,7 @@ see [TaggableDoctrineDbalStore](store.md#taggabledoctrinedbalstore).
 
 :::tip
 For tests you can replace the `TaggableDoctrineDbalStore` with an `InMemoryStore`. It implements the
-same tag query and conditional append, so the decision model and the append condition behave the same
-way without a database.
+same tag query and conditional append, so decisions behave the same way without a database.
 :::
 
 :::note

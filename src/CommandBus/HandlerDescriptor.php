@@ -12,10 +12,10 @@ final class HandlerDescriptor
     private readonly Closure $callable;
     private readonly string $name;
 
-    public function __construct(callable $callable)
+    public function __construct(callable $callable, string|null $name = null)
     {
         $this->callable = $callable(...);
-        $this->name = self::closureName($this->callable);
+        $this->name = $name ?? self::closureName($this->callable);
     }
 
     public function name(): string

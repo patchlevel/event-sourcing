@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Handler;
 
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DecisionModel\EventAppender;
+use Patchlevel\EventSourcing\DecisionModel\Decision;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Command\ChangeCourseCapacity;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Event\CourseCapacityChanged;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Projection\CourseCapacityProjection;
@@ -15,35 +14,22 @@ use RuntimeException;
 
 final class ChangeCourseCapacityHandler
 {
-    public function __construct(
-        private readonly DecisionModelBuilder $decisionModelBuilder,
-        private readonly EventAppender $eventAppender,
-    ) {
-    }
-
     #[Handle]
-    public function __invoke(ChangeCourseCapacity $command): void
+    public function __invoke(ChangeCourseCapacity $command, Decision $decision): void
     {
-        $state = $this->decisionModelBuilder->build(
-            [
-                'courseExists' => new CourseExists($command->courseId),
-                'courseCapacity' => new CourseCapacityProjection($command->courseId),
-            ],
-        );
-
-        if (!$state['courseExists']) {
+        if (!$decision->read(new CourseExists($command->courseId))) {
             throw new RuntimeException('Course does not exist');
         }
 
-        if ($state['courseCapacity'] === $command->capacity) {
+        if ($decision->read(new CourseCapacityProjection($command->courseId)) === $command->capacity) {
             return;
         }
 
-        $this->eventAppender->append([
+        $decision->append([
             new CourseCapacityChanged(
                 $command->courseId,
                 $command->capacity,
             ),
-        ], $state->appendCondition);
+        ]);
     }
 }

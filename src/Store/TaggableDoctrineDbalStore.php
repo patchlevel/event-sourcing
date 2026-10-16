@@ -557,6 +557,29 @@ final class TaggableDoctrineDbalStore implements Store, AppendStore, ListenableS
         );
     }
 
+    /** @return positive-int|0 */
+    public function head(): int
+    {
+        $builder = $this->connection->createQueryBuilder()
+            ->select('MAX(id)')
+            ->from($this->config['table_name']);
+
+        $result = $this->connection->fetchOne($builder->getSQL());
+
+        if ($result === null) {
+            return 0;
+        }
+
+        if (!is_int($result) && !is_string($result)) {
+            throw new WrongQueryResult();
+        }
+
+        /** @var positive-int $head */
+        $head = (int)$result;
+
+        return $head;
+    }
+
     /**
      * @param Closure():ClosureReturn $function
      *

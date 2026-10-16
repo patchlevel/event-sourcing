@@ -8,6 +8,7 @@ use Patchlevel\EventSourcing\Attribute\Apply;
 use Patchlevel\EventSourcing\Projection\BasicProjection;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Invoice\Event\InvoiceCreated;
 
+/** @extends BasicProjection<int> */
 final class NextInvoiceNumberProjection extends BasicProjection
 {
     /** @return list<string> */

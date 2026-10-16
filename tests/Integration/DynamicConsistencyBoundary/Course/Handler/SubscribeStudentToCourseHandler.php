@@ -5,8 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Handler;
 
 use Patchlevel\EventSourcing\Attribute\Handle;
-use Patchlevel\EventSourcing\DecisionModel\DecisionModelBuilder;
-use Patchlevel\EventSourcing\DecisionModel\EventAppender;
+use Patchlevel\EventSourcing\DecisionModel\Decision;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Command\SubscribeStudentToCourse;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Event\StudentSubscribedToCourse;
 use Patchlevel\EventSourcing\Tests\Integration\DynamicConsistencyBoundary\Course\Projection\CourseCapacityProjection;
@@ -18,27 +17,19 @@ use RuntimeException;
 
 final class SubscribeStudentToCourseHandler
 {
-    public function __construct(
-        private readonly DecisionModelBuilder $decisionModelBuilder,
-        private readonly EventAppender $eventAppender,
-    ) {
-    }
-
     #[Handle]
-    public function __invoke(SubscribeStudentToCourse $command): void
+    public function __invoke(SubscribeStudentToCourse $command, Decision $decision): void
     {
-        $state = $this->decisionModelBuilder->build(
-            projections: [
-                'courseExists' => new CourseExists($command->courseId),
-                'courseCapacity' => new CourseCapacityProjection($command->courseId),
-                'numberOfCourseSubscriptions' => new NumberOfCourseSubscriptionsProjection($command->courseId),
-                'numberOfStudentSubscriptions' => new NumberOfStudentSubscriptionsProjection($command->studentId),
-                'studentAlreadySubscribed' => new StudentAlreadySubscribedProjection(
-                    $command->studentId,
-                    $command->courseId,
-                ),
-            ],
-        );
+        $state = $decision->read([
+            'courseExists' => new CourseExists($command->courseId),
+            'courseCapacity' => new CourseCapacityProjection($command->courseId),
+            'numberOfCourseSubscriptions' => new NumberOfCourseSubscriptionsProjection($command->courseId),
+            'numberOfStudentSubscriptions' => new NumberOfStudentSubscriptionsProjection($command->studentId),
+            'studentAlreadySubscribed' => new StudentAlreadySubscribedProjection(
+                $command->studentId,
+                $command->courseId,
+            ),
+        ]);
 
         if (!$state['courseExists']) {
             throw new RuntimeException("Course {$command->courseId->toString()} does not exist");
@@ -56,11 +47,11 @@ final class SubscribeStudentToCourseHandler
             throw new RuntimeException("Student {$command->studentId->toString()} is already subscribed to 5 courses");
         }
 
-        $this->eventAppender->append([
+        $decision->append([
             new StudentSubscribedToCourse(
                 $command->studentId,
                 $command->courseId,
             ),
-        ], $state->appendCondition);
+        ]);
     }
 }

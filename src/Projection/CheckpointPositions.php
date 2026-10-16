@@ -19,9 +19,9 @@ final class CheckpointPositions
      * Returns for each projection the index from which on it needs events.
      * That is the index of its last checkpoint event, or 0 if it has none.
      *
-     * @param array<string, Projection> $projections
+     * @param array<array-key, Projection> $projections
      *
-     * @return array<string, positive-int|0>
+     * @return array<array-key, positive-int|0>
      */
     public static function resolve(AppendStore $store, array $projections): array
     {

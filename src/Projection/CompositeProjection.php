@@ -14,8 +14,8 @@ use function array_map;
 final class CompositeProjection
 {
     /**
-     * @param array<string, Projection>     $projections
-     * @param array<string, positive-int|0> $from        messages before this index are not applied to the projection
+     * @param array<array-key, Projection>     $projections
+     * @param array<array-key, positive-int|0> $from        messages before this index are not applied to the projection
      */
     public function __construct(
         private readonly array $projections,
@@ -40,7 +40,7 @@ final class CompositeProjection
         return $query->optimize();
     }
 
-    /** @return array<string, mixed> */
+    /** @return array<array-key, mixed> */
     public function initialState(): array
     {
         return array_map(static function (Projection $projection) {
@@ -49,9 +49,9 @@ final class CompositeProjection
     }
 
     /**
-     * @param array<string, mixed> $state
+     * @param array<array-key, mixed> $state
      *
-     * @return array<string, mixed>
+     * @return array<array-key, mixed>
      */
     public function apply(mixed $state, Message $message): mixed
     {
