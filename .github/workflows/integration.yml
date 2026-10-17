@@ -10,7 +10,7 @@ on:
             - "renovate/*"
 
 concurrency:
-    group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+    group: ${{ github.workflow_ref }}
     cancel-in-progress: true
 
 jobs:
