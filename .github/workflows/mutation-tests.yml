@@ -9,6 +9,10 @@ on:
             - "[0-9]+.[0-9]+.x"
             - "renovate/*"
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+    cancel-in-progress: true
+
 jobs:
     mutation-tests:
         name: "Mutation tests"

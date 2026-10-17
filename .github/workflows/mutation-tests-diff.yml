@@ -5,6 +5,10 @@ name: "Mutation tests on diff"
 on:
     pull_request:
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+    cancel-in-progress: true
+
 jobs:
     mutation-tests-diff:
         name: "Mutation tests on diff"
