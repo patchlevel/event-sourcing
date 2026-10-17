@@ -8,6 +8,10 @@ on:
         branches:
             - "[0-9]+.[0-9]+.x"
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+    cancel-in-progress: true
+
 jobs:
     checkdocs:
         name: "Check Docs"

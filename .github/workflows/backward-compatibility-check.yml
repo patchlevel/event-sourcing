@@ -5,6 +5,10 @@ name: "Backward Compatibility Check"
 on:
   pull_request:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   roave-backwards-compatibility-check:
     name: "Backward Compatibility Check"
