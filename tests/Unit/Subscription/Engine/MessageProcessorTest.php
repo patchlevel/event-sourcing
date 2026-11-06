@@ -12,6 +12,8 @@ use Patchlevel\EventSourcing\Message\Message;
 use Patchlevel\EventSourcing\Subscription\Engine\Error;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnBeforeHandleMessage;
 use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessage;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageError;
+use Patchlevel\EventSourcing\Subscription\Engine\Event\OnHandleMessageSuccess;
 use Patchlevel\EventSourcing\Subscription\Engine\MessageProcessor;
 use Patchlevel\EventSourcing\Subscription\Engine\ProcessingStopped;
 use Patchlevel\EventSourcing\Subscription\Partitioner\StreamPartitioner;
@@ -25,11 +27,84 @@ use Patchlevel\EventSourcing\Tests\Unit\Fixture\ProfileVisited;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
+use RuntimeException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 #[CoversClass(MessageProcessor::class)]
 final class MessageProcessorTest extends TestCase
 {
+    public function testFailingTerminalListenerIsReportedAsError(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+            #[Subscribe(ProfileVisited::class)]
+            public function onProfileVisited(ProfileVisited $event): void
+            {
+            }
+        };
+
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(
+            OnHandleMessageSuccess::class,
+            static fn (): never => throw new RuntimeException('FLUSH FAILED'),
+        );
+
+        $errorEvents = [];
+        $eventDispatcher->addListener(
+            OnHandleMessageError::class,
+            static function (OnHandleMessageError $event) use (&$errorEvents): void {
+                $errorEvents[] = $event;
+            },
+        );
+
+        $processor = new MessageProcessor(
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            $eventDispatcher,
+            [],
+            new NullLogger(),
+        );
+
+        $message = Message::create(new ProfileVisited(ProfileId::fromString('1')));
+        $subscription = new Subscription('test', status: Status::Active);
+
+        $error = $processor->process(1, $message, $subscription);
+
+        // a listener which fails on the terminal event must not escape as an exception,
+        // and must not leave the message without a terminal event
+        self::assertInstanceOf(Error::class, $error);
+        self::assertSame('FLUSH FAILED', $error->message);
+        self::assertCount(1, $errorEvents);
+        self::assertNull($subscription->position());
+    }
+
+    public function testFailingTerminalListenerWithoutSubscribeMethodIsReportedAsError(): void
+    {
+        $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]
+        class {
+        };
+
+        $eventDispatcher = new EventDispatcher();
+        $eventDispatcher->addListener(
+            OnHandleMessageSuccess::class,
+            static fn (): never => throw new RuntimeException('FLUSH FAILED'),
+        );
+
+        $processor = new MessageProcessor(
+            new MetadataSubscriberAccessorRepository([$subscriber]),
+            $eventDispatcher,
+            [],
+            new NullLogger(),
+        );
+
+        $message = Message::create(new ProfileVisited(ProfileId::fromString('1')));
+        $subscription = new Subscription('test', status: Status::Active);
+
+        $error = $processor->process(1, $message, $subscription);
+
+        self::assertInstanceOf(Error::class, $error);
+        self::assertSame('FLUSH FAILED', $error->message);
+    }
+
     public function testProcessInvokesSubscribeMethod(): void
     {
         $subscriber = new #[Subscriber('test', RunMode::FromBeginning)]

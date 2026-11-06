@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Patchlevel\EventSourcing\Subscription\Engine;
 
 use InvalidArgumentException;
+use Patchlevel\EventSourcing\Message\Context\MessageContext;
 use Patchlevel\EventSourcing\Subscription\Cleanup\Cleaner;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Boot;
 use Patchlevel\EventSourcing\Subscription\Engine\Command\Command;
@@ -31,6 +32,7 @@ use Patchlevel\EventSourcing\Subscription\Engine\Listener\BatchSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DetachListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\DiscoverSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\FailSubscriber;
+use Patchlevel\EventSourcing\Subscription\Engine\Listener\MessageContextSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\PartitionCircuitBreakerSubscriber;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RemovePartitionsListener;
 use Patchlevel\EventSourcing\Subscription\Engine\Listener\RetrySubscriber;
@@ -70,6 +72,7 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         private readonly Cleaner|null $cleaner = null,
         private readonly EventDispatcherInterface $eventDispatcher = new EventDispatcher(),
         iterable $argumentResolvers = [],
+        MessageContext|null $messageContext = null,
     ) {
         $this->subscriptionManager = new SubscriptionManager($subscriptionStore, $this->logger);
 
@@ -203,6 +206,12 @@ final class DefaultSubscriptionEngine implements SubscriptionEngine
         );
 
         $this->eventDispatcher->addSubscriber(new FailSubscriber($failedMessageProcessor));
+
+        if ($messageContext instanceof MessageContext) {
+            $this->eventDispatcher->addSubscriber(
+                new MessageContextSubscriber($messageContext),
+            );
+        }
 
         $this->eventDispatcher->addListener(
             OnCommand::class,

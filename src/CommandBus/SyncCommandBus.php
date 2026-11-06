@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Patchlevel\EventSourcing\CommandBus;
 
+use Patchlevel\EventSourcing\Message\Context\MessageContext;
 use Patchlevel\EventSourcing\Metadata\AggregateRoot\AggregateRootRegistry;
 use Patchlevel\EventSourcing\Repository\RepositoryManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 
 use function count;
 use function is_array;
@@ -21,6 +23,7 @@ final class SyncCommandBus implements CommandBus
     public function __construct(
         iterable|HandlerProvider $handlerProviders,
         private readonly LoggerInterface|null $logger = null,
+        private readonly MessageContext|null $messageContext = null,
     ) {
         if (!$handlerProviders instanceof HandlerProvider) {
             $this->handlerProvider = new ChainHandlerProvider($handlerProviders);
@@ -50,7 +53,18 @@ final class SyncCommandBus implements CommandBus
             throw new MultipleHandlersFound($command::class);
         }
 
-        ($handlers[0]->callable())($command);
+        // seed the correlation id once per command, so that all messages
+        // recorded while handling this command share the same correlation id
+        $this->messageContext?->push(
+            $this->messageContext->causationId(),
+            $this->messageContext->correlationId() ?? Uuid::uuid7()->toString(),
+        );
+
+        try {
+            ($handlers[0]->callable())($command);
+        } finally {
+            $this->messageContext?->pop();
+        }
     }
 
     public static function createForAggregateHandlers(
@@ -58,6 +72,7 @@ final class SyncCommandBus implements CommandBus
         RepositoryManager $repositoryManager,
         ContainerInterface|null $container = null,
         LoggerInterface|null $logger = null,
+        MessageContext|null $messageContext = null,
     ): self {
         return new self(
             new AggregateHandlerProvider(
@@ -66,6 +81,7 @@ final class SyncCommandBus implements CommandBus
                 $container,
             ),
             $logger,
+            $messageContext,
         );
     }
 }
