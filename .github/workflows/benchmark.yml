@@ -18,7 +18,7 @@ jobs:
     services:
       postgres:
         # Docker Hub image
-        image: "postgres:18.7"
+        image: "postgres:19.0"
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
